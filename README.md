@@ -66,6 +66,8 @@ ai-configs/
 │   └── skills/           # Reusable skills
 │       ├── go-backend/SKILL.md
 │       └── ...
+├── setup-cursor.sh       # Setup script (Linux/macOS)
+├── setup-cursor.ps1      # Setup script (Windows)
 ├── LICENSE
 └── README.md
 ```
@@ -98,6 +100,125 @@ Use agents in your prompts:
 @be-engineer Implement a new user service
 @fe-engineer Create a dashboard component
 @product-owner Write a user story for notifications
+```
+
+## Reusing Across Projects
+
+Instead of copying files to each project, use **symlinks** to share configurations from a central location. This keeps your configs in sync and makes updates easy.
+
+### One-Time Setup
+
+Clone this repo to a central location:
+
+```bash
+# Linux/macOS
+git clone https://github.com/your-org/ai-configs.git ~/ai-configs
+
+# Windows (PowerShell)
+git clone https://github.com/your-org/ai-configs.git C:\ai-configs
+```
+
+### Per-Project Setup
+
+#### Linux/macOS
+
+```bash
+cd /path/to/your-project
+
+# Create .cursor/rules directory
+mkdir -p .cursor/rules
+
+# Symlink shared rules (01-11), skills, and agents
+for rule in ~/ai-configs/.cursor/rules/0[1-9]*.mdc ~/ai-configs/.cursor/rules/1*.mdc; do
+  ln -s "$rule" .cursor/rules/
+done
+ln -s ~/ai-configs/.cursor/skills .cursor/skills
+ln -s ~/ai-configs/.cursor/agents .cursor/agents
+
+# Copy project-specific context (customize this file)
+cp ~/ai-configs/.cursor/rules/00-project-context.mdc .cursor/rules/
+```
+
+#### Windows (PowerShell as Administrator)
+
+```powershell
+cd C:\path\to\your-project
+
+# Create .cursor\rules directory
+New-Item -ItemType Directory -Path ".cursor\rules" -Force
+
+# Symlink shared rules (01-11)
+Get-ChildItem "C:\ai-configs\.cursor\rules\*.mdc" | Where-Object { $_.Name -notmatch "^00-" } | ForEach-Object {
+    New-Item -ItemType SymbolicLink -Path ".cursor\rules\$($_.Name)" -Target $_.FullName
+}
+
+# Symlink skills and agents
+New-Item -ItemType SymbolicLink -Path ".cursor\skills" -Target "C:\ai-configs\.cursor\skills"
+New-Item -ItemType SymbolicLink -Path ".cursor\agents" -Target "C:\ai-configs\.cursor\agents"
+
+# Copy project-specific context (customize this file)
+Copy-Item "C:\ai-configs\.cursor\rules\00-project-context.mdc" ".cursor\rules\"
+```
+
+> **Note**: Windows symlinks require either Administrator privileges or [Developer Mode](https://docs.microsoft.com/en-us/windows/apps/get-started/enable-your-device-for-development) enabled.
+
+### What Gets Linked vs. Copied
+
+| Type | Files | Reason |
+|------|-------|--------|
+| **Symlinked** (shared) | `rules/01-11*.mdc`, `skills/`, `agents/` | Generic, reusable across all projects |
+| **Copied** (per-project) | `rules/00-project-context.mdc` | Must be customized for each project |
+
+### Updating Shared Configs
+
+When you want to update all linked projects with the latest configs:
+
+```bash
+cd ~/ai-configs  # or C:\ai-configs on Windows
+git pull
+```
+
+All symlinked projects automatically get the updates.
+
+### Setup Scripts
+
+Use the included setup scripts for quick project configuration:
+
+#### Linux/macOS
+
+```bash
+cd /path/to/your-project
+~/ai-configs/setup-cursor.sh
+```
+
+Or specify a project path:
+```bash
+~/ai-configs/setup-cursor.sh /path/to/your-project
+```
+
+#### Windows (PowerShell as Administrator)
+
+```powershell
+cd C:\path\to\your-project
+C:\ai-configs\setup-cursor.ps1
+```
+
+Or specify a project path:
+```powershell
+C:\ai-configs\setup-cursor.ps1 -ProjectPath "C:\path\to\your-project"
+```
+
+#### Environment Variable
+
+Override the default source location:
+
+```bash
+# Linux/macOS
+AI_CONFIGS_PATH=/opt/ai-configs ./setup-cursor.sh
+
+# Windows
+$env:AI_CONFIGS_PATH = "D:\ai-configs"
+.\setup-cursor.ps1
 ```
 
 ## IDE Compatibility
