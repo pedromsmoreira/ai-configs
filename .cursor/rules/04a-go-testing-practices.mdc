@@ -1,0 +1,200 @@
+---
+description: "Go backend testing practices and guidelines"
+globs:
+  - "**/*_test.go"
+alwaysApply: true
+---
+
+# Go Testing Practices
+
+For the full TDD workflow (Red-Green-Refactor), see `09-test-driven-development.mdc`.
+
+## Test Structure
+
+- Use `testify` for assertions
+- Always use `t.Run` with descriptive test names for each test case
+- Use individual test functions with descriptive names
+
+```go
+// ✅ GOOD: Individual test functions with descriptive names
+func TestNewEmail_WithValidEmail_ReturnsEmail(t *testing.T) {
+    t.Run("creates email successfully", func(t *testing.T) {
+        email, err := NewEmail("user@example.com")
+        assert.NoError(t, err)
+        assert.Equal(t, "user@example.com", email.Value())
+    })
+}
+
+func TestNewEmail_WithInvalidEmail_ReturnsError(t *testing.T) {
+    t.Run("returns error for invalid email format", func(t *testing.T) {
+        _, err := NewEmail("not-an-email")
+        assert.Error(t, err)
+        assert.Equal(t, ErrInvalidEmail, err)
+    })
+}
+```
+
+## Unit Tests
+
+- Test one thing at a time
+- Use mocks for dependencies
+- Test behavior, not implementation
+- Keep tests fast (< 100ms each)
+
+```go
+// ✅ GOOD: Unit test with mock
+func TestUserService_GetUser(t *testing.T) {
+    ctrl := gomock.NewController(t)
+    defer ctrl.Finish()
+    
+    mockRepo := mocks.NewMockUserRepository(ctrl)
+    mockRepo.EXPECT().
+        GetByID("123").
+        Return(&domain.User{ID: "123"}, nil)
+    
+    service := NewUserService(mockRepo)
+    user, err := service.GetUser(context.Background(), "123")
+    
+    assert.NoError(t, err)
+    assert.Equal(t, "123", user.ID)
+}
+```
+
+## Integration Tests
+
+There are two types of integration tests in this project:
+
+### 1. Service-Level Integration Tests (in `internal/`)
+
+For testing service + repository + database without HTTP:
+
+- Use `testcontainers-go` for database
+- Test files next to source code (`*_test.go`)
+- Use shared test database
+- Clean up after tests
+
+```go
+// ✅ GOOD: Service-level integration test (in internal/)
+func TestEntityRepository_Create_WithValidEntity_PersistsToDatabase(t *testing.T) {
+    t.Run("persists entity and retrieves it", func(t *testing.T) {
+        ctx := context.Background()
+        db := setupTestDB(t)
+        defer db.Close()
+        
+        repo := repository.NewEntityRepository(db)
+        
+        entity, err := repo.Create(ctx, testEntity)
+        require.NoError(t, err)
+        
+        found, err := repo.GetByID(ctx, entity.ID)
+        require.NoError(t, err)
+        assert.Equal(t, entity.ID, found.ID)
+    })
+}
+```
+
+### 2. E2E/API Integration Tests (in `test/`)
+
+For testing complete HTTP workflows with BDD stage patterns:
+
+> **Important**: E2E tests in the `test/` folder **must** follow `11-go-e2e-testing-standards.mdc` for Given-When-Then architecture, stage files, and HTTP/event testing.
+
+```go
+// ✅ GOOD: E2E test using BDD stage pattern (in test/)
+func TestCreateEntity(t *testing.T) {
+    t.Run("when creating an entity returns 201 created", func(t *testing.T) {
+        given, when, then := newCreateEntityStage(t)
+        
+        given.aCreateEntityRequestIsPrepared()
+        when.createEntityEndpointIsCalled()
+        then.responseShouldHaveStatusCode(http.StatusCreated)
+    })
+}
+```
+
+## Test Naming
+
+- Format: `Test<Function>_<Scenario>_<ExpectedResult>`
+- Be descriptive about what is being tested
+- Use subtests for multiple scenarios
+
+```go
+// ✅ GOOD: Descriptive test names
+func TestUser_ChangeEmail_WithValidEmail_UpdatesEmail(t *testing.T)
+func TestUser_ChangeEmail_WithSameEmail_ReturnsError(t *testing.T)
+func TestEntityService_Create_WithUnauthorizedUser_ReturnsForbidden(t *testing.T)
+```
+
+## Test Organization
+
+### File Structure
+
+- Test files next to source: `user_test.go`
+- Integration tests in `test/integration/`
+- Test utilities in `test/`
+
+### Test Categories
+
+1. **Unit Tests**: Fast, isolated, mock dependencies
+2. **Integration Tests**: Test multiple components together
+
+## Test Coverage
+
+- Maintain >80% code coverage
+- Focus on critical paths (business logic, error handling)
+- Don't chase 100% coverage (test quality > quantity)
+- Use coverage reports to find untested code
+
+## Best Practices
+
+### DO
+
+- ✅ Write tests before implementation (TDD)
+- ✅ Test behavior, not implementation
+- ✅ Keep tests independent and isolated
+- ✅ Use descriptive test names
+- ✅ Clean up test data
+- ✅ Test error cases and edge cases
+- ✅ Use mocks for external dependencies
+
+### DON'T
+
+- ❌ Test implementation details
+- ❌ Write tests that depend on other tests
+- ❌ Ignore flaky tests (fix them)
+- ❌ Write tests that are too complex
+- ❌ Test framework code
+- ❌ Skip error case testing
+- ❌ Commit tests that don't pass
+
+## Running Tests
+
+```bash
+go test ./...                    # All tests
+go test -v ./internal/service    # Verbose output
+go test -cover ./...             # With coverage
+make test-integration            # Integration tests
+```
+
+## Test Data
+
+- Use factories/builders for test data
+- Keep test data realistic
+- Use constants for shared test data
+- Clean up test data after tests
+
+```go
+// ✅ GOOD: Test data factory
+func NewTestUser(opts ...UserOption) *domain.User {
+    user := &domain.User{
+        ID:       uuid.New().String(),
+        Username: "testuser",
+        Email:    "test@example.com",
+        UserType: domain.RoleX,  // or appropriate role from domain
+    }
+    for _, opt := range opts {
+        opt(user)
+    }
+    return user
+}
+```

@@ -1,0 +1,162 @@
+---
+description: "Domain-Driven Design patterns, layered architecture, and architectural principles"
+globs:
+  - "internal/**/*.go"
+  - "cmd/**/*.go"
+alwaysApply: true
+---
+
+# Architecture Patterns and DDD Principles
+
+## Layered Architecture
+
+The system follows a **strict layered architecture** with clear boundaries:
+
+```
+Handler → Service → Domain → Repository
+```
+
+### Layer Responsibilities
+
+1. **Handler Layer** (`internal/handler/`)
+   - Convert proto messages ↔ domain models
+   - Call service layer
+   - Handle gRPC errors and status codes
+   - **DO NOT** implement business logic
+
+2. **Service Layer** (`internal/service/`)
+   - Orchestrate business operations
+   - Perform authorization checks (using Principal from context)
+   - Coordinate multiple repositories
+   - **DO NOT** contain domain logic (that belongs in domain layer)
+
+3. **Domain Layer** (`internal/domain/`)
+   - Entities with business behavior
+   - Value objects with validation
+   - Business rules and invariants
+   - **MUST** be framework-agnostic (no protobuf, no database types)
+
+4. **Repository Layer** (`internal/repository/`)
+   - Data access abstraction
+   - Domain ↔ Database mapping
+   - SQL query execution
+   - **DO NOT** expose database types to domain
+
+## Domain-Driven Design Patterns
+
+### Entities
+
+Entities should have **behavior**, not just data:
+
+```go
+// ✅ GOOD: Entity with behavior
+func (u *User) ChangeEmail(newEmail Email) error {
+    if u.email == newEmail {
+        return ErrEmailUnchanged
+    }
+    // Validate, check uniqueness, etc.
+    u.email = newEmail
+    u.updatedAt = time.Now()
+    return nil
+}
+
+// ❌ BAD: Anemic domain model
+type User struct {
+    Email string  // Just data, no behavior
+}
+```
+
+### Value Objects
+
+Use value objects instead of primitives:
+
+```go
+// ✅ GOOD: Value object with validation
+type Email struct {
+    value string
+}
+
+func NewEmail(value string) (Email, error) {
+    if !isValidEmail(value) {
+        return Email{}, ErrInvalidEmail
+    }
+    return Email{value: strings.ToLower(value)}, nil
+}
+
+// ❌ BAD: Primitive obsession
+type User struct {
+    Email string  // No validation, no encapsulation
+}
+```
+
+### Aggregates
+
+- Identify aggregate roots (e.g. see project context)
+- Maintain consistency boundaries within aggregates
+- Access entities only through aggregate root
+- One transaction = one aggregate
+
+### Business Logic Location
+
+- **Domain Layer**: Business rules, invariants, entity behavior
+- **Service Layer**: Orchestration, authorization, transaction management
+- **Handler Layer**: Protocol transformation only
+
+```go
+// ✅ GOOD: Business logic in domain
+func (e *Entity) AssociateResource(resourceID UserID, effectiveDate time.Time) error {
+    if e.isAssociated {
+        return ErrResourceState  // Business rule in domain
+    }
+    // ... logic
+}
+
+// ❌ BAD: Business logic in service
+func (s *EntityService) AssociateResource(...) {
+    if entity.IsAssociated {  // Business rule in wrong layer
+        return errors.NewAlreadyExistsError(...)
+    }
+}
+```
+
+## Dependency Direction
+
+**Rule**: Dependencies point **inward** toward domain:
+
+- Handler depends on Service
+- Service depends on Domain
+- Repository depends on Domain
+- **Domain depends on NOTHING** (no protobuf, no database types)
+
+## Repository Pattern
+
+- Repository interfaces should use domain types
+- Implementations in `internal/repository/`
+- Return domain entities, not database models
+- Use aggregate-based repositories when possible
+
+```go
+// ✅ GOOD: Domain-focused repository
+type EntityRepository interface {
+    Save(entity *domain.Entity) error
+    FindByID(id string) (*domain.Entity, error)
+    FindByOwner(ownerID string) ([]*domain.Entity, error)
+}
+
+// ❌ BAD: Database-focused repository
+type EntityRepository interface {
+    SaveEntity(db *sql.DB, entity *db.Entity) error  // Exposes DB types
+}
+```
+
+## Error Handling
+
+- Use domain errors (`pkg/errors/`)
+- Map domain errors to gRPC status codes in handlers
+- Never expose internal errors to clients
+
+## Configuration Separation
+
+- Main app config: e.g. `internal/config/` (see project context)
+- Gateway config: e.g. `internal/gateway/config/` (see project context)
+- Keep configurations separate and focused

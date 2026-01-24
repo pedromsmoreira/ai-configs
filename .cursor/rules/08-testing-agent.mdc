@@ -1,0 +1,204 @@
+---
+description: "Instructions for AI agents focused on testing the application and creating bug reports"
+alwaysApply: false
+---
+
+# Testing Agent Guidelines
+
+## Primary Objective
+
+The main objective of a **testing agent** is to:
+1. **Test the application** thoroughly (backend, frontend, and integration)
+2. **Identify bugs and issues** through systematic testing
+3. **Create comprehensive bug reports** for issues found
+4. **Verify fixes** when bugs are resolved
+
+## Testing Approach
+
+### Systematic Testing
+
+1. **Start with Core Functionality**
+   - Test authentication and authorization flows
+   - Test CRUD operations for all entities
+   - Test business logic and validation rules
+
+2. **Test User Flows**
+   - Complete end-to-end workflows
+   - Test all user/actor types (see project context)
+   - Test error scenarios and edge cases
+   - Don't mix user flows in a test. Create a new test when this happens
+
+3. **Test Integration Points**
+   - Backend API (gRPC and REST Gateway)
+   - Frontend-backend communication
+   - Database operations and migrations
+
+4. **Test UI/UX**
+   - Component rendering and interactions
+   - Form validation and submission
+   - Navigation and routing
+   - Responsive design (desktop and mobile)
+
+### Testing Tools
+
+- **Backend**: See project context for test commands (e.g. `make test-integration`)
+- **Frontend**: Use browser tools to test UI interactions
+- **API Testing**: See project context for gRPC and REST Gateway ports
+- **Manual Testing**: Use browser MCP tools to interact with the frontend
+
+## Bug Handling and Prioritization
+
+### Critical Bugs
+
+**Critical bugs** are issues that prevent the application from working or cause data loss. These must be **fixed immediately**:
+
+- Application crashes or fails to start
+- Core functionality completely broken
+- Data corruption or loss
+- Security vulnerabilities
+- Authentication/authorization failures
+- Database connection failures
+
+**Process for Critical Bugs:**
+1. **Stop current work** and assess the severity
+2. **Fix immediately** following TDD principles
+3. **Write regression tests** to prevent recurrence
+4. **Verify fix** with integration tests
+5. **Document the issue and resolution** if significant
+
+### Low Priority Issues
+
+**Low priority issues** are bugs that don't prevent the application from working but may affect user experience or non-critical functionality:
+
+- UI display issues (cosmetic)
+- Minor validation edge cases
+- Performance issues in non-critical paths
+- Documentation inconsistencies
+- Non-blocking error messages
+
+**Process for Low Priority Issues:**
+1. **Create a bug report** in `docs/backlog/<phase>/` (or equivalent; see project context)
+2. **Follow bug report template** (see project context for backlog layout and format)
+3. **Include**:
+   - Clear description of the issue
+   - Steps to reproduce
+   - Expected vs actual behavior
+   - Environment details (if relevant)
+   - Screenshots/logs (if applicable)
+4. **Do NOT fix immediately** - add to backlog for prioritization
+5. **Continue with current work** unless explicitly asked to fix
+
+### Bug Report Naming Convention
+
+Bug reports should follow the pattern: `BUG_NNN_description.md` where:
+- `NNN` is a zero-padded 3-digit number (e.g., `BUG_001`, `BUG_002`)
+- `description` is a short, kebab-case description
+
+Example: `BUG_003_resource_status_display.md` (see project context for backlog layout)
+
+### Determining Bug Priority
+
+**Ask these questions:**
+1. Does this prevent the application from running? → **Critical**
+2. Does this prevent core functionality? → **Critical**
+3. Does this cause data loss or security issues? → **Critical**
+4. Is this a minor UI issue or edge case? → **Low Priority**
+5. Can users work around this issue? → **Low Priority**
+
+**When in doubt, create a bug report** and let the team prioritize.
+
+## Bug Report Template
+
+When creating a bug report, use the following structure (based on existing bug reports):
+
+```markdown
+# Bug: [Short Description]
+
+## Issue
+[Clear, concise description of the problem]
+
+## Root Cause
+[Analysis of why the issue occurs, including technical details]
+
+## Impact
+- **User Experience**: [How this affects users]
+- **Affected Components**: [List of components/files affected]
+- **Severity**: [Low/Medium/High/Critical]
+
+## Solution
+[Proposed solution or multiple options]
+
+## Files to Modify
+[List of files that need to be changed]
+
+## Verification
+[Steps to verify the fix works]
+
+## Related Files
+[Links to related code, documentation, or similar bugs]
+
+---
+**Status**: 🐛 Open  
+**Priority**: [Low/Medium/High/Critical]  
+**Date**: [YYYY-MM-DD]  
+**Assigned**: Unassigned
+```
+
+## Testing Checklist
+
+Before completing testing work:
+
+- [ ] Tested all core functionality
+- [ ] Tested all user/actor types (see project context)
+- [ ] Tested error scenarios
+- [ ] Tested edge cases
+- [ ] Verified UI responsiveness (desktop and mobile)
+- [ ] Tested API endpoints (gRPC and REST)
+- [ ] Created bug reports for all non-critical issues found
+- [ ] Documented critical bugs that were fixed
+- [ ] Updated backlog README with new bug entries
+
+## Testing Workflow
+
+1. **Start Application**
+   - See project context for run commands and ports (backend, gateway, frontend)
+
+2. **Execute Test Plan**
+   - Follow systematic testing approach
+   - Document findings as you go
+   - Take screenshots/logs for bug reports
+
+3. **Create Bug Reports**
+   - Use the bug report template
+   - Follow naming convention
+   - Update backlog README
+
+4. **Verify Critical Fixes**
+   - If fixing critical bugs, verify the fix works
+   - Run integration tests
+   - Test the specific scenario that was broken
+
+## Best Practices
+
+### DO
+
+- ✅ Test systematically and thoroughly
+- ✅ Document all bugs found, even minor ones
+- ✅ Include clear reproduction steps
+- ✅ Provide context and technical details
+- ✅ Suggest solutions when possible
+- ✅ Test fixes before marking bugs as resolved
+
+### DON'T
+
+- ❌ Skip testing because something "looks fine"
+- ❌ Create bug reports without clear reproduction steps
+- ❌ Fix low priority bugs without explicit request
+- ❌ Ignore edge cases or error scenarios
+- ❌ Forget to update backlog README
+
+## Integration with Other Agents
+
+- **Development Agents**: Testing agents identify bugs that development agents fix
+- **Bug Reports**: Serve as input for prioritization and planning
+- **Documentation**: Bug reports help document known issues and solutions

@@ -1,0 +1,340 @@
+---
+description: "React, TypeScript, and frontend development patterns"
+globs:
+  - "frontend/**/*.ts"
+  - "frontend/**/*.tsx"
+alwaysApply: true
+---
+
+# Frontend Patterns and Guidelines
+
+## TypeScript Standards
+
+### Type Safety
+
+- **Always** use TypeScript types, avoid `any`
+- Define interfaces for API responses
+- Use union types for enums/constants
+- Leverage type inference where appropriate
+
+```typescript
+// ✅ GOOD: Strong typing
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  userType: string;  // or 'role1' | 'role2' per project
+}
+
+// ❌ BAD: Using any
+function getUser(id: any): any {
+  // ...
+}
+```
+
+### File Organization
+
+- One component per file
+- Co-locate related files (component + test + styles)
+- Use index files for clean imports
+
+```
+components/
+├── UserCard/
+│   ├── UserCard.tsx
+│   ├── UserCard.test.tsx
+│   └── index.ts
+```
+
+## React Patterns
+
+### Component Structure
+
+- Use functional components with hooks
+- Extract custom hooks for reusable logic
+- Keep components focused and small
+
+```typescript
+// ✅ GOOD: Functional component with hooks
+export function UserCard({ userId }: UserCardProps) {
+  const { data: user, isLoading } = useUser(userId);
+  
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+  if (!user) {
+    return <ErrorMessage />;
+  }
+  
+  return (
+    <Card>
+      <CardContent>
+        <Typography>{user.username}</Typography>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+### State Management
+
+- **Zustand** for global state (auth, user preferences)
+- **React Query** for server state (API data, caching)
+- **Local state** for component-specific UI state
+
+```typescript
+// ✅ GOOD: Appropriate state management
+// Global auth state
+const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  token: null,
+  setUser: (user) => set({ user }),
+}));
+
+// Server state with React Query
+const { data: items } = useQuery({
+  queryKey: ['items'],
+  queryFn: () => api.getItems(),
+});
+```
+
+### API Integration
+
+- Use Axios for HTTP requests
+- Configure base URL per project (see project context for base URL)
+- Add JWT token via interceptors
+- Handle token refresh automatically
+
+```typescript
+// ✅ GOOD: Axios with interceptors
+axios.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+```
+
+### Error Handling
+
+- Use error boundaries for component errors
+- Handle API errors gracefully
+- Show user-friendly error messages
+- Log errors for debugging
+
+```typescript
+// ✅ GOOD: Error handling
+try {
+  const user = await api.getUser(id);
+} catch (error) {
+  if (error.response?.status === 401) {
+    // Handle unauthorized - redirect to login
+    navigate('/login');
+  } else {
+    // Show user-friendly error
+    showError('Failed to load user. Please try again.');
+  }
+}
+```
+
+## Material-UI Guidelines
+
+### Component Usage
+
+- Use MUI components consistently
+- Follow MUI design patterns
+- Customize via theme, not inline styles
+- Use `sx` prop for one-off styling
+
+```typescript
+// ✅ GOOD: MUI components with theme
+<Button
+  variant="contained"
+  color="primary"
+  sx={{ mt: 2 }}
+  onClick={handleSubmit}
+>
+  Submit
+</Button>
+```
+
+### Theming
+
+- Define theme in `src/styles/theme.ts`
+- Use theme values for colors, spacing, typography
+- Support light/dark mode if needed
+
+## Testing Patterns
+
+### Component Testing
+
+- Use React Testing Library
+- Test user interactions, not implementation
+- Use custom render with providers
+
+```typescript
+// ✅ GOOD: Testing user behavior
+test('displays user information', () => {
+  render(<UserCard userId="123" />);
+  expect(screen.getByText('John Doe')).toBeInTheDocument();
+});
+
+// ❌ BAD: Testing implementation
+test('calls getUser with correct id', () => {
+  const getUser = jest.fn();
+  // Testing internal implementation
+});
+```
+
+### Test Utilities
+
+- Use `src/__tests__/setup.ts` for test configuration
+- Create custom render function with providers
+- Mock API calls with MSW or jest.mock
+
+## Routing
+
+- Use React Router for navigation
+- Protect routes with `ProtectedRoute` component
+- Handle authentication redirects
+
+```typescript
+// ✅ GOOD: Protected route
+<Route
+  path="/items"
+  element={
+    <ProtectedRoute>
+      <ItemsPage />
+    </ProtectedRoute>
+  }
+/>
+// Or see project context for routes
+```
+
+## Form Handling
+
+- Use React Hook Form for forms
+- Validate with Zod schemas
+- Show validation errors clearly
+
+```typescript
+// ✅ GOOD: Form with validation
+const schema = z.object({
+  email: z.string().email('Invalid email'),
+  password: z.string().min(8, 'Password too short'),
+});
+
+const { register, handleSubmit, formState: { errors } } = useForm({
+  resolver: zodResolver(schema),
+});
+```
+
+## Performance
+
+- Use `React.memo` for expensive components
+- Lazy load routes with `React.lazy`
+- Optimize re-renders with proper dependencies
+- Use React Query caching effectively
+
+## Code Organization
+
+```
+src/
+├── api/              # API client and services
+├── components/       # Reusable components
+├── pages/           # Page components
+├── store/           # Zustand stores
+├── types/           # TypeScript types
+├── utils/           # Utility functions
+├── constants/       # App constants
+└── styles/          # Global styles and theme
+```
+
+## Code Quality Checks
+
+### Unused Variables and Imports
+
+- **Always** remove unused imports and variables
+- TypeScript will error on unused variables in strict mode
+- Use your IDE's "organize imports" feature to clean up
+- Check for unused variables before committing
+
+```typescript
+// ❌ BAD: Unused import
+import { handleApiError } from '@/utils/error-handling';
+// handleApiError is never used
+
+// ✅ GOOD: Only import what you use
+import { CreateItemRequest } from '@/types/api.types';
+import apiClient from '@/api/client';
+```
+
+### TypeScript Strict Mode
+
+- The project uses strict TypeScript checking
+- All type errors must be fixed before committing
+- Common issues:
+  - Unused variables/imports (TS6133)
+  - Type mismatches (TS2322)
+  - Missing type annotations
+
+### Control Flow Statements
+
+- **Always** use curly braces `{}` for `if`, `else`, `for`, `while`, and `do-while` statements
+- This prevents bugs when adding code to control flow statements
+- Even single-line statements must use braces
+
+```typescript
+// ✅ GOOD: Always use braces
+if (isLoading) {
+  return <LoadingSpinner />;
+}
+
+if (error) {
+  showError('Failed to load');
+} else {
+  showSuccess('Loaded successfully');
+}
+
+for (const item of items) {
+  processItem(item);
+}
+
+// ❌ BAD: Missing braces
+if (isLoading) return <LoadingSpinner />;
+
+if (error) showError('Failed to load');
+else showSuccess('Loaded successfully');
+
+for (const item of items) processItem(item);
+```
+
+### Pre-Commit Checklist
+
+Before committing frontend code:
+
+1. ✅ Remove all unused imports
+2. ✅ Remove all unused variables
+3. ✅ Fix all TypeScript errors
+4. ✅ Run `npm run build` to verify compilation
+5. ✅ Test Docker build if applicable
+
+```bash
+# Check for TypeScript errors
+cd frontend && npm run build
+
+# Or use tsc directly
+cd frontend && npx tsc --noEmit
+```
+
+## Best Practices
+
+1. **Always** handle loading and error states
+2. **Always** validate user input
+3. **Always** provide accessible UI (ARIA labels, keyboard navigation)
+4. **Never** commit API keys or secrets
+5. **Never** ignore TypeScript errors
+6. **Never** commit unused imports or variables
+7. **Always** verify the build succeeds before committing
+8. **Always** write tests for critical paths

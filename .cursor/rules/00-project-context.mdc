@@ -1,0 +1,201 @@
+---
+description: "Project overview, tech stack, and high-level context for [PROJECT_NAME]"
+alwaysApply: true
+---
+
+> **Single source of project context.** Rules (01-11), agents, and skills are agnostic; they reference this file for project name, structure, ports, commands, and domain concepts.
+
+<!--
+=============================================================================
+PROJECT CONTEXT TEMPLATE
+=============================================================================
+
+This file is the SINGLE SOURCE OF TRUTH for project-specific information.
+All other rules, agents, and skills reference this file for context.
+
+HOW TO USE THIS TEMPLATE:
+1. Copy this file to your project's .cursor/rules/ directory
+2. Replace all [PLACEHOLDER] values with your project specifics
+3. Remove this instruction block and the example section at the bottom
+4. Keep the structure - other rules depend on these sections existing
+
+WHAT TO INCLUDE:
+- Project name and one-sentence description
+- Tech stack (backend, frontend, database, etc.)
+- Project structure with key directories
+- Design principles your project follows
+- Current implementation status
+- Ports, commands, and quick reference info
+
+WHAT NOT TO INCLUDE:
+- Detailed implementation guides (use skills for that)
+- Coding standards (use other rules for that)
+- Step-by-step tutorials
+=============================================================================
+-->
+
+# [PROJECT_NAME] - Project Context
+
+## Project Overview
+
+<!-- One paragraph describing what the project does and its key characteristics -->
+
+This is a **[brief description]** built with **[key methodology/pattern]**. The system [primary functionality and domain].
+
+## Tech Stack
+
+### Backend
+- **Language**: [Language and version]
+- **API Framework**: [Framework name]
+- **Database**: [Database type]
+- **Authentication**: [Auth method]
+- **Migrations**: [Migration tool]
+- **Testing**: [Testing frameworks]
+
+### Frontend
+<!-- Remove this section if no frontend -->
+- **Framework**: [Framework and version]
+- **Build Tool**: [Build tool]
+- **UI Library**: [UI library]
+- **State Management**: [State library]
+- **HTTP Client**: [HTTP client]
+- **Testing**: [Testing frameworks]
+
+## Project Structure
+
+<!--
+Show the key directories and their purpose.
+Focus on what developers need to navigate the codebase.
+-->
+
+```
+[project-name]/
+├── [directory]/          # [Purpose]
+├── [directory]/          # [Purpose]
+└── [directory]/          # [Purpose]
+```
+
+## Key Design Principles
+
+<!-- List 3-5 principles that guide development decisions -->
+
+1. **[Principle]**: [Brief explanation]
+2. **[Principle]**: [Brief explanation]
+3. **[Principle]**: [Brief explanation]
+
+## Domain Concepts
+
+<!-- Define key domain terms that appear throughout the codebase -->
+
+- **[Term]**: [Definition]
+- **[Term]**: [Definition]
+- **[Term]**: [Definition]
+
+## Current Status
+
+<!-- Track what's done and what's planned -->
+
+- ✅ [Completed feature]
+- ✅ [Completed feature]
+- 📋 [Planned feature]
+- 📋 [Planned feature]
+
+## Quick Reference
+
+<!-- Commands and ports developers need frequently -->
+
+- **Backend Port**: [port]
+- **Frontend Port**: [port]
+- **Database**: [database info]
+- **Test Command**: `[command]`
+- **Run Command**: `[command]`
+
+---
+
+<!--
+=============================================================================
+EXAMPLE: URL Shortener
+=============================================================================
+Below is a complete example of how to fill out this template.
+DELETE THIS SECTION when creating your own project context.
+=============================================================================
+-->
+
+# URL Shortener - Project Context (EXAMPLE)
+
+## Project Overview
+
+This is a **high-performance URL shortening service** built with **Domain-Driven Design (DDD)** and **Test-Driven Development (TDD)** principles. The system creates short URLs, tracks click analytics, and provides user management with API key authentication.
+
+## Tech Stack
+
+### Backend
+- **Language**: Go 1.24+
+- **API Framework**: Chi router with REST API
+- **Database**: PostgreSQL + Redis (caching)
+- **Authentication**: API keys (stateless)
+- **Migrations**: golang-migrate
+- **Testing**: testcontainers-go, testify
+
+### Frontend
+- **Framework**: React 18+ with TypeScript
+- **Build Tool**: Vite
+- **UI Library**: Tailwind CSS + shadcn/ui
+- **State Management**: Zustand
+- **HTTP Client**: Axios
+- **Testing**: Vitest, React Testing Library
+
+## Project Structure
+
+```
+url-shortener/
+├── cmd/
+│   └── shortener/        # Main HTTP server (Port 8080)
+├── internal/
+│   ├── domain/           # Domain models (URL, Click, User)
+│   ├── service/          # Business logic (shortening, analytics)
+│   ├── handler/          # HTTP handlers
+│   ├── repository/       # Data access layer
+│   └── config/           # Configuration
+├── pkg/
+│   ├── shortcode/        # Short code generation
+│   └── errors/           # Error definitions
+├── frontend/             # React dashboard
+├── migrations/           # Database migrations
+└── test/integration/     # Integration tests
+```
+
+## Key Design Principles
+
+1. **Domain-Driven Design**: Business logic in domain layer, entities with behavior
+2. **Layered Architecture**: Clear separation (Handler → Service → Domain → Repository)
+3. **Test-Driven Development**: Write tests first, maintain >80% coverage
+4. **Performance First**: Redis caching for hot URLs, optimized redirects
+5. **Analytics Focus**: Track clicks without impacting redirect latency
+
+## Domain Concepts
+
+- **ShortURL**: A shortened URL with code, original URL, and metadata
+- **Click**: A recorded visit to a short URL with timestamp and referrer
+- **User**: An account that owns short URLs and has API access
+- **ShortCode**: The unique 6-8 character identifier (e.g., `abc123`)
+
+## Current Status
+
+- ✅ Core URL shortening with custom codes
+- ✅ Redis caching for redirects
+- ✅ Click tracking and analytics
+- ✅ User authentication with API keys
+- ✅ Rate limiting per API key
+- 📋 QR code generation (planned)
+- 📋 Link expiration (planned)
+- 📋 Custom domains (planned)
+
+## Quick Reference
+
+- **API Port**: 8080
+- **Frontend Port**: 5173 (dev)
+- **Database**: PostgreSQL (5432), Redis (6379)
+- **Test Command**: `make test`
+- **Run Command**: `make run`
+- **Redirect Endpoint**: `GET /:code` (e.g., `GET /abc123`)

@@ -1,0 +1,437 @@
+---
+description: BDD testing standards and stage-based architecture for Go tests
+globs: test/**/*.go
+alwaysApply: false
+---
+
+# Go E2E Testing Standards
+
+> **Scope**: This rule applies only to E2E/integration tests in the `test/` folder. For general Go testing practices (unit tests, mocks, coverage), see `04a-go-testing-practices.mdc`.
+
+This project uses a sophisticated BDD-style testing architecture with stage-based patterns for integration tests.
+
+## Architecture Overview
+
+Tests follow a **Given-When-Then** pattern with dedicated stage files:
+
+- `*_test.go` - Test cases and scenarios
+- `*_test_stage.go` - Stage struct, constructor, and methods
+- `*_test_opts.go` - Functional options for test data setup
+
+## File Organization
+
+### Test File Naming
+
+```go
+// ✅ GOOD
+tests/create_user_test.go
+tests/create_user_test_stage.go
+tests/create_user_test_opts.go
+
+tests/update_user_test.go
+tests/update_user_test_stage.go
+// (opts file optional if not needed)
+
+// ❌ BAD
+tests/user_creation_test.go
+tests/createUserStage.go
+tests/user_test_helpers.go
+```
+
+### File Structure
+
+**Test File** (`*_test.go`):
+- Contains only test functions with `t.Run()` calls
+- Clear, descriptive test names using "when...should..." or "when...returns..." patterns
+- No test logic implementation (delegated to stage methods)
+
+**Stage File** (`*_test_stage.go`):
+- Stage struct definition with all test dependencies
+- Constructor function returning three pointers (given, when, then)
+- All stage methods for test phases
+- Methods return `*stage` for chaining
+
+**Opts File** (`*_test_opts.go`):
+- Functional options for flexible test data setup
+- Each option returns `func(*RequestType)`
+
+## Given-When-Then Pattern
+
+```go
+// ✅ GOOD
+func TestCreateUser(t *testing.T) {
+	t.Run("when creating a user returns user with 201 created status code", func(t *testing.T) {
+		given, when, then := newCreateUserStage(t)
+
+		given.aCreateUserRequestIsPrepared()
+		when.createUserEndpointIsCalled()
+		then.responseShouldHaveValidUserAndStatusCode(http.StatusCreated).
+			createdEventIsReceived(given.createdUserId)
+	})
+}
+
+// ❌ BAD - Logic in test function
+func TestCreateUser(t *testing.T) {
+	t.Run("test create user", func(t *testing.T) {
+		request := &CreateUserRequest{FirstName: "test"}
+		payload, _ := json.Marshal(request)
+		resp, _ := http.Post(url, "application/json", bytes.NewBuffer(payload))
+		assert.Equal(t, 201, resp.StatusCode)
+	})
+}
+```
+
+## Stage Constructor
+
+Return three copies of the same stage instance for `given`, `when`, `then`:
+
+```go
+// ✅ GOOD
+func newCreateUserStage(t *testing.T) (*createUserStage, *createUserStage, *createUserStage) {
+	host := env.GetStringOrDefault("SERVER_HOST", "localhost")
+	port := env.GetIntOrDefault("SERVER_PORT", 8000)
+	
+	stage := &createUserStage{
+		t:    t,
+		host: fmt.Sprintf("http://%s:%d", host, port),
+		http: &http.Client{},
+	}
+	
+	return stage, stage, stage
+}
+
+// ❌ BAD - Different instances or incorrect return
+func newCreateUserStage(t *testing.T) *createUserStage {
+	return &createUserStage{t: t}
+}
+```
+
+## Stage Methods
+
+### Naming Conventions
+
+**Given methods** - Setup and preparation:
+- Start with `a`, `an`, or descriptive prefix
+- Examples: `aUserIsCreatedToBeDeleted()`, `aCreateUserRequestIsPrepared()`
+
+**When methods** - Actions being tested:
+- Start with action verb or "the"
+- Examples: `createUserEndpointIsCalled()`, `theUserResetsPassword()`
+
+**Then methods** - Assertions and verification:
+- Start with assertion description
+- Examples: `responseShouldHaveValidUserAndStatusCode()`, `theUserIsUpdatedWithNewFirstName()`
+
+### Method Structure
+
+```go
+// ✅ GOOD - Returns *stage for chaining
+func (s *createUserStage) aCreateUserRequestIsPrepared(options ...func(*users.CreateUserRequest)) *createUserStage {
+	request := &users.CreateUserRequest{
+		FirstName: "test",
+		LastName:  "test",
+		Nickname:  "test",
+		Password:  "ABCabcabc123!",
+		Email:     fmt.Sprintf("test-%s@test.com", uuid.New().String()),
+		Country:   "test",
+	}
+	
+	for _, option := range options {
+		option(request)
+	}
+	
+	s.createRequestBody = request
+	s.contentType = applicationJSONContentType
+	return s
+}
+
+// ❌ BAD - Doesn't return *stage, breaks chaining
+func (s *createUserStage) aCreateUserRequestIsPrepared() {
+	s.createRequestBody = &users.CreateUserRequest{
+		FirstName: "test",
+	}
+}
+```
+
+## Functional Options Pattern
+
+Use functional options for flexible test data customization:
+
+```go
+// ✅ GOOD - In *_test_opts.go
+func WithFirstName(firstName string) func(*users.CreateUserRequest) {
+	return func(user *users.CreateUserRequest) {
+		user.FirstName = firstName
+	}
+}
+
+func WithEmail(email string) func(*users.CreateUserRequest) {
+	return func(user *users.CreateUserRequest) {
+		user.Email = email
+	}
+}
+
+// Usage in tests
+given.aCreateUserRequestIsPrepared(WithFirstName("John"), WithEmail("john@test.com"))
+given.aCreateUserRequestIsPrepared(WithFirstName(""))  // Test empty field
+
+// ❌ BAD - Creating multiple setup methods
+func (s *createUserStage) aCreateUserRequestIsPreparedWithFirstName(name string) *createUserStage
+func (s *createUserStage) aCreateUserRequestIsPreparedWithEmail(email string) *createUserStage
+func (s *createUserStage) aCreateUserRequestIsPreparedWithFirstNameAndEmail(name, email string) *createUserStage
+```
+
+## Method Chaining
+
+Enable fluent assertions by returning `*stage`:
+
+```go
+// ✅ GOOD - Chained assertions
+then.responseShouldHaveValidUserAndStatusCode(http.StatusCreated).
+	createdEventIsReceived(given.createdUserId)
+
+then.theResponseShouldBe(http.StatusNoContent).
+	and().
+	theGetByIdResponseShouldBeNotFound(given.userIDToDelete).
+	and().
+	deletedEventIsReceived(given.userIDToDelete)
+
+// ❌ BAD - Separate method calls
+then.responseShouldHaveValidUserAndStatusCode(http.StatusCreated)
+then.createdEventIsReceived(given.createdUserId)
+```
+
+### Helper Methods for Chaining
+
+```go
+// ✅ GOOD - Simple "and()" method for readability
+func (s *deleteUserStage) and() *deleteUserStage {
+	return s
+}
+
+// Usage
+then.theResponseShouldBe(http.StatusNoContent).
+	and().
+	theGetByIdResponseShouldBeNotFound(id)
+```
+
+## Testing Libraries
+
+### testify/require vs testify/assert
+
+```go
+// ✅ GOOD - Use require for critical assertions
+func (s *createUserStage) createUserEndpointIsCalled() *createUserStage {
+	payload, err := json.Marshal(s.createRequestBody)
+	require.Nil(s.t, err)  // Must succeed to continue
+	
+	r, err := s.http.Post(url, s.contentType, bytes.NewBuffer(payload))
+	require.Nil(s.t, err)  // Must succeed to continue
+	require.NotNil(s.t, r) // Must have response
+	
+	s.response = r
+	return s
+}
+
+// ✅ GOOD - Use assert for comparisons where you want to see all failures
+func (s *createUserStage) responseShouldHaveValidUserAndStatusCode(statusCode int) *createUserStage {
+	assert.Equal(s.t, statusCode, s.response.StatusCode)
+	
+	body, err := io.ReadAll(s.response.Body)
+	require.Nil(s.t, err)  // Critical - need body to continue
+	
+	user := new(users.UserResponse)
+	err = json.Unmarshal(body, user)
+	require.Nil(s.t, err)  // Critical - need valid user object
+	
+	// These can all be checked even if some fail
+	require.NotNil(s.t, user.UserID)
+	require.IsType(s.t, uuid.UUID{}, user.UserID)
+	require.NotEmpty(s.t, user.FirstName)
+	require.NotEmpty(s.t, user.Email)
+	
+	return s
+}
+
+// ❌ BAD - Using assert for critical operations
+payload, err := json.Marshal(s.createRequestBody)
+assert.Nil(s.t, err)  // Test continues even if this fails!
+```
+
+### General Rule
+- **require**: Operation must succeed to continue (network calls, parsing, critical setup)
+- **assert**: Comparison assertions where seeing multiple failures is valuable
+
+## Integration Testing Patterns
+
+### Stage Struct Fields
+
+```go
+// ✅ GOOD - Include all dependencies
+type createUserStage struct {
+	suite.Suite
+	t                 *testing.T
+	host              string
+	http              *http.Client
+	response          *http.Response
+	createRequestBody *users.CreateUserRequest
+	contentType       string
+	stream            string
+	subject           string
+	consumer          jetstream.Consumer
+	conn              *nats.Conn
+	js                jetstream.JetStream
+	createdUserId     uuid.UUID
+}
+
+// ❌ BAD - Missing dependencies, creating inline
+type createUserStage struct {
+	t *testing.T
+}
+```
+
+### Environment Configuration
+
+```go
+// ✅ GOOD - Use env utilities with defaults
+host := env.GetStringOrDefault("SERVER_HOST", "localhost")
+port := env.GetIntOrDefault("SERVER_PORT", 8000)
+natsHost := env.GetStringOrDefault("NATS_HOST", "localhost:4222")
+
+// ❌ BAD - Hardcoded values
+host := "localhost:8000"
+natsHost := "localhost:4222"
+```
+
+## Event Verification
+
+Verify published events using NATS consumers:
+
+```go
+// ✅ GOOD
+func (s *createUserStage) createdEventIsReceived(id uuid.UUID) *createUserStage {
+	msgs, err := s.consumer.Messages()
+	require.Nil(s.t, err)
+	require.NotNil(s.t, msgs)
+	
+	for {
+		msg, err := msgs.Next()
+		if err != nil {
+			if errors.Is(err, nats.ErrTimeout) {
+				continue
+			}
+			require.Nil(s.t, err)
+		}
+		
+		user := new(events.UserCreatedEvent)
+		err = json.Unmarshal(msg.Data(), user)
+		require.Nil(s.t, err)
+		
+		if user.UserID == id {
+			msg.Ack()
+			break
+		}
+	}
+	
+	msgs.Stop()
+	return s
+}
+
+// ❌ BAD - Not verifying events
+func (s *createUserStage) createdEventIsReceived(id uuid.UUID) *createUserStage {
+	return s  // Skipping verification
+}
+```
+
+## Error Testing
+
+Test error scenarios with proper HTTP error response validation:
+
+```go
+// ✅ GOOD
+func (s *createUserStage) responseBodyShouldReturnBadRequestError() *createUserStage {
+	require.Equal(s.t, http.StatusBadRequest, s.response.StatusCode)
+	
+	body, err := io.ReadAll(s.response.Body)
+	require.Nil(s.t, err)
+	require.NotEmpty(s.t, body)
+	
+	r := new(httpErrors.HttpError)
+	err = json.Unmarshal(body, r)
+	require.Nil(s.t, err)
+	require.NotNil(s.t, r)
+	require.NotNil(s.t, r.Message)
+	require.NotNil(s.t, r.Details)
+	
+	return s
+}
+
+// ❌ BAD - Only checking status code
+func (s *createUserStage) responseBodyShouldReturnBadRequestError() *createUserStage {
+	require.Equal(s.t, http.StatusBadRequest, s.response.StatusCode)
+	return s
+}
+```
+
+## Test Naming
+
+Write clear, descriptive test names as sentences:
+
+```go
+// ✅ GOOD
+t.Run("when creating a user returns user with 201 created status code", func(t *testing.T) {
+t.Run("when creating a user with empty first name returns 400 bad request status code", func(t *testing.T) {
+t.Run("when user with id exists should return the user", func(t *testing.T) {
+t.Run("when deleting an existing user returns Status Code 204 No Content", func(t *testing.T) {
+
+// ❌ BAD
+t.Run("test create user", func(t *testing.T) {
+t.Run("CreateUser_Success", func(t *testing.T) {
+t.Run("user creation", func(t *testing.T) {
+```
+
+## Common Patterns
+
+### Creating Test Data with Unique Values
+
+```go
+// ✅ GOOD - Ensure unique emails
+email := fmt.Sprintf("test-%s@test.com", uuid.New().String())
+given.aCreateUserRequestIsPrepared(WithEmail(email))
+
+// ❌ BAD - Hardcoded values cause conflicts
+given.aCreateUserRequestIsPrepared(WithEmail("test@test.com"))
+```
+
+### Reusing Stages for Setup
+
+```go
+// ✅ GOOD - Compose stage methods
+func (s *createUserStage) initialUserIsCreatedWithEmail(email string) *createUserStage {
+	s.aCreateUserRequestIsPrepared(WithEmail(email))
+	s.createUserEndpointIsCalled()
+	return s
+}
+
+// Usage in test
+given.initialUserIsCreatedWithEmail(email)
+when.aUserIsCreatedWithSameEmail(email)
+then.responseBodyShouldReturnBadRequestError()
+
+// ❌ BAD - Duplicating setup code in each test
+```
+
+## Content Type Constants
+
+Define content type constants in stage files:
+
+```go
+// ✅ GOOD
+const (
+	applicationJSONContentType      string = "application/json"
+	applicationJSONPatchContentType string = "application/merge-patch+json"
+)
+
+// ❌ BAD - Inline strings
+request.Header.Set("Content-Type", "application/json")
+```

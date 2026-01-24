@@ -1,0 +1,287 @@
+---
+description: "Database schema, migrations, and data access patterns"
+globs:
+  - "migrations/**/*.sql"
+  - "internal/repository/**/*.go"
+alwaysApply: true
+---
+
+# Database and Migration Patterns
+
+## Migration Guidelines
+
+### Migration Files
+
+- Use `golang-migrate` for schema versioning
+- Naming: `NNNNNN_description.up.sql` and `NNNNNN_description.down.sql`
+- Migrations are **immutable** (never modify existing migrations)
+- Always provide both `up` and `down` migrations
+
+```sql
+-- ✅ GOOD: Migration with up and down
+-- 000001_initial_schema.up.sql
+CREATE TABLE users (
+    id UUID PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    user_type VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- 000001_initial_schema.down.sql
+DROP TABLE IF EXISTS users;
+```
+
+### Migration Best Practices
+
+1. **One logical change per migration**
+   - Don't mix schema changes with data changes
+   - Keep migrations focused and atomic
+
+2. **Test migrations**
+   - Test both up and down migrations
+   - Verify data integrity after migration
+
+3. **Backward compatibility**
+   - Consider rolling back in production
+   - Make breaking changes in separate migrations
+
+4. **Data migrations**
+   - Use separate migrations for data changes
+   - Test with production-like data volumes
+
+## Repository Pattern
+
+### Repository Interface
+
+- Define interfaces in domain layer (conceptually)
+- Implement in `internal/repository/`
+- Use domain types, not database types
+
+```go
+// ✅ GOOD: Domain-focused repository interface
+type UserRepository interface {
+    Create(user *domain.User) error
+    GetByID(id string) (*domain.User, error)
+    GetByUsername(username string) (*domain.User, error)
+    Update(user *domain.User) error
+    Delete(id string) error
+}
+```
+
+### Repository Implementation
+
+- Map domain models to database schema
+- Handle SQL errors and map to domain errors
+- Use transactions for multi-step operations
+
+```go
+// ✅ GOOD: Repository implementation
+func (r *userRepository) GetByID(id string) (*domain.User, error) {
+    query := `SELECT id, username, email, password_hash, user_type, created_at, updated_at 
+              FROM users WHERE id = $1`
+    
+    var user domain.User
+    err := r.db.QueryRow(query, id).Scan(
+        &user.ID,
+        &user.Username,
+        &user.Email,
+        &user.PasswordHash,
+        &user.UserType,
+        &user.CreatedAt,
+        &user.UpdatedAt,
+    )
+    
+    if err == sql.ErrNoRows {
+        return nil, errors.ErrNotFound
+    }
+    if err != nil {
+        return nil, fmt.Errorf("failed to get user: %w", err)
+    }
+    
+    return &user, nil
+}
+```
+
+## SQL Best Practices
+
+### Query Patterns
+
+- Use parameterized queries (prevent SQL injection)
+- Use transactions for atomic operations
+- Handle connection errors gracefully
+- Use appropriate indexes
+
+```go
+// ✅ GOOD: Parameterized query
+query := `SELECT * FROM entities WHERE owner_id = $1`
+rows, err := r.db.Query(query, ownerID)
+
+// ❌ BAD: String concatenation (SQL injection risk)
+query := fmt.Sprintf("SELECT * FROM entities WHERE owner_id = '%s'", ownerID)
+```
+
+### Transaction Management
+
+- Use transactions for multi-step operations
+- Always rollback on error
+- Keep transactions short
+
+```go
+// ✅ GOOD: Transaction usage
+func (r *entityRepository) CreateWithRelated(entity *domain.Entity, related *domain.Related) error {
+    tx, err := r.db.Begin()
+    if err != nil {
+        return err
+    }
+    defer tx.Rollback()
+    
+    // Create entity
+    if err := r.createEntity(tx, entity); err != nil {
+        return err
+    }
+    
+    // Create related
+    if err := r.createRelated(tx, related); err != nil {
+        return err
+    }
+    
+    return tx.Commit()
+}
+```
+
+## Database Schema Guidelines
+
+### Naming Conventions
+
+- **Tables**: plural, snake_case (e.g., `users`, `entities`)
+- **Columns**: snake_case (e.g., `user_id`, `created_at`)
+- **Indexes**: descriptive names (e.g., `idx_users_email`, `idx_entities_owner_id`)
+- **Foreign Keys**: `fk_<table>_<referenced_table>` (e.g., `fk_entities_users`)
+
+### Column Types
+
+- **IDs**: UUID (use `uuid` type or `VARCHAR(36)`)
+- **Timestamps**: `TIMESTAMP` with timezone
+- **Strings**: `VARCHAR(n)` with appropriate length
+- **Booleans**: `BOOLEAN`
+- **Numbers**: `INTEGER`, `BIGINT`, `DECIMAL` as appropriate
+
+### Constraints
+
+- Always define PRIMARY KEY
+- Use UNIQUE constraints for business uniqueness
+- Use NOT NULL for required fields
+- Define FOREIGN KEY constraints
+
+```sql
+-- ✅ GOOD: Well-defined schema
+CREATE TABLE entities (
+    id UUID PRIMARY KEY,
+    owner_id UUID NOT NULL REFERENCES users(id),
+    name TEXT NOT NULL,
+    entity_type VARCHAR(50) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    
+    CONSTRAINT fk_entities_owner FOREIGN KEY (owner_id) REFERENCES users(id)
+);
+
+CREATE INDEX idx_entities_owner_id ON entities(owner_id);
+```
+
+## Error Handling
+
+### Database Errors
+
+- Map database errors to domain errors
+- Handle `sql.ErrNoRows` as `ErrNotFound`
+- Handle constraint violations appropriately
+
+```go
+// ✅ GOOD: Error mapping
+func (r *userRepository) Create(user *domain.User) error {
+    query := `INSERT INTO users (id, username, email, password_hash, user_type) 
+              VALUES ($1, $2, $3, $4, $5)`
+    
+    _, err := r.db.Exec(query, user.ID, user.Username, user.Email, user.PasswordHash, user.UserType)
+    if err != nil {
+        // Check for unique constraint violation
+        if isUniqueConstraintError(err) {
+            return errors.ErrAlreadyExists
+        }
+        return fmt.Errorf("failed to create user: %w", err)
+    }
+    return nil
+}
+```
+
+## Connection Management
+
+- Use connection pooling
+- Set appropriate pool size
+- Handle connection timeouts
+- Close connections properly
+
+```go
+// ✅ GOOD: Connection pool configuration
+db, err := sql.Open("postgres", databaseURL)
+if err != nil {
+    return nil, err
+}
+
+db.SetMaxOpenConns(25)
+db.SetMaxIdleConns(5)
+db.SetConnMaxLifetime(5 * time.Minute)
+```
+
+## Testing Database Code
+
+- Use `testcontainers-go` for integration tests
+- Use in-memory database for unit tests (if applicable)
+- Clean up test data after tests
+- Test both success and error cases
+
+```go
+// ✅ GOOD: Database test setup
+func setupTestDB(t *testing.T) *sql.DB {
+    ctx := context.Background()
+    postgresContainer, err := postgres.RunContainer(ctx,
+        testcontainers.WithImage("postgres:15-alpine"),
+        postgres.WithDatabase("testdb"),
+        postgres.WithUsername("testuser"),
+        postgres.WithPassword("testpass"),
+    )
+    require.NoError(t, err)
+    
+    connStr, err := postgresContainer.ConnectionString(ctx, "sslmode=disable")
+    require.NoError(t, err)
+    
+    db, err := sql.Open("postgres", connStr)
+    require.NoError(t, err)
+    
+    // Run migrations
+    runMigrations(t, db)
+    
+    return db
+}
+```
+
+## Migration Commands
+
+```bash
+# Create new migration
+migrate create -ext sql -dir migrations -seq description_name
+
+# Run migrations up
+migrate -path migrations -database "postgres://..." up
+
+# Rollback one migration
+migrate -path migrations -database "postgres://..." down 1
+
+# Check migration version
+migrate -path migrations -database "postgres://..." version
+```

@@ -1,0 +1,304 @@
+---
+description: "JWT authentication, security patterns, and authorization guidelines"
+globs:
+  - "pkg/auth/**/*.go"
+  - "internal/service/auth_service.go"
+  - "internal/handler/auth_handler.go"
+alwaysApply: true
+---
+
+# Authentication and Security Patterns
+
+## JWT Authentication
+
+The system uses **JWT (JSON Web Tokens)** for stateless authentication.
+
+### Token Structure
+
+- **Access Token**: Short-lived (15 minutes), contains user info and permissions
+- **Refresh Token**: Long-lived (7 days), used to obtain new access tokens
+
+### Token Flow
+
+1. User authenticates with username/password
+2. Server validates credentials (database + bcrypt)
+3. Server generates JWT tokens
+4. Client stores tokens (localStorage for web)
+5. Client sends `Authorization: Bearer <token>` header
+6. Server validates token (no database lookup needed)
+
+### Implementation Guidelines
+
+```go
+// ✅ GOOD: JWT token generation
+func GenerateAccessToken(user *domain.User) (string, error) {
+    claims := &AccessTokenClaims{
+        UserID:    user.ID,
+        Username:  user.Username,
+        Email:     user.Email,
+        UserType:  string(user.UserType),
+        ExpiresAt: time.Now().Add(15 * time.Minute),
+    }
+    return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(secret)
+}
+
+// ✅ GOOD: Token validation
+func ValidateToken(tokenString string) (*Claims, error) {
+    token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+        return secret, nil
+    })
+    if err != nil {
+        return nil, err
+    }
+    if !token.Valid {
+        return nil, ErrInvalidToken
+    }
+    return token.Claims.(*Claims), nil
+}
+```
+
+## Principal Pattern
+
+Use **Principal** from context for authorization:
+
+```go
+// ✅ GOOD: Extract Principal from context
+func (s *EntityService) CreateResource(ctx context.Context, req *CreateResourceRequest) (*domain.Entity, error) {
+    principal := auth.GetPrincipal(ctx)
+    if principal == nil {
+        return nil, errors.ErrUnauthorized
+    }
+    
+    // Use Principal for authorization
+    if principal.UserType != domain.RoleX {  // role from domain
+        return nil, errors.ErrForbidden
+    }
+    
+    // Use Principal.UserID for ownership
+    entity := &domain.Entity{
+        OwnerID: principal.UserID,
+        // ...
+    }
+    return s.repo.Create(entity)
+}
+```
+
+## Authorization Patterns
+
+### Role-Based Access Control (RBAC)
+
+- Define roles and permissions per project (see project context).
+
+```go
+// ✅ GOOD: Role-based authorization
+func (s *EntityService) GetResource(ctx context.Context, id string) (*domain.Entity, error) {
+    principal := auth.GetPrincipal(ctx)
+    if principal == nil {
+        return nil, errors.ErrUnauthorized
+    }
+    
+    entity, err := s.repo.GetByID(id)
+    if err != nil {
+        return nil, err
+    }
+    
+    // Apply project-specific role checks (e.g. tenant-like role only sees own resources)
+    if principal.UserType == domain.RoleTenantLike && entity.OwnerID != principal.UserID {
+        return nil, errors.ErrForbidden
+    }
+    
+    return entity, nil
+}
+```
+
+### Resource-Based Authorization
+
+- Users can only access their own resources
+- Check ownership in service layer
+
+```go
+// ✅ GOOD: Resource-based authorization
+func (s *ResourceService) GetResource(ctx context.Context, id string) (*domain.Resource, error) {
+    principal := auth.GetPrincipal(ctx)
+    if principal == nil {
+        return nil, errors.ErrUnauthorized
+    }
+    
+    resource, err := s.repo.GetByID(id)
+    if err != nil {
+        return nil, err
+    }
+    
+    // Verify user has access via parent resource
+    parent, err := s.parentRepo.GetByID(resource.ParentID)
+    if err != nil {
+        return nil, err
+    }
+    
+    // Owner or actor (e.g. TenantID) can view resource
+    if parent.OwnerID != principal.UserID && resource.ActorID != principal.UserID {
+        return nil, errors.ErrForbidden
+    }
+    
+    return resource, nil
+}
+```
+
+## Interceptor Pattern
+
+JWT interceptor validates tokens and adds Principal to context:
+
+```go
+// ✅ GOOD: JWT interceptor
+func JWTInterceptor(jwtSecret string) grpc.UnaryServerInterceptor {
+    return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+        // Skip public methods
+        if isPublicMethod(info.FullMethod) {
+            return handler(ctx, req)
+        }
+        
+        // Extract token from metadata
+        token, err := extractToken(ctx)
+        if err != nil {
+            return nil, status.Error(codes.Unauthenticated, "missing token")
+        }
+        
+        // Validate token
+        claims, err := ValidateToken(token)
+        if err != nil {
+            return nil, status.Error(codes.Unauthenticated, "invalid token")
+        }
+        
+        // Add Principal to context
+        principal := &auth.Principal{
+            UserID:   claims.UserID,
+            Username: claims.Username,
+            Email:    claims.Email,
+            UserType: domain.UserType(claims.UserType),
+        }
+        ctx = auth.WithPrincipal(ctx, principal)
+        
+        return handler(ctx, req)
+    }
+}
+```
+
+## Security Best Practices
+
+### Password Handling
+
+- **Never** store plain text passwords
+- Use **bcrypt** for password hashing
+- Hash cost factor: 10-12 (balance security vs performance)
+
+```go
+// ✅ GOOD: Password hashing
+func HashPassword(password string) (string, error) {
+    hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+    if err != nil {
+        return "", err
+    }
+    return string(hash), nil
+}
+
+func VerifyPassword(hashedPassword, password string) bool {
+    return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password)) == nil
+}
+```
+
+### Token Security
+
+- Store JWT secret in environment variable (never in code)
+- Use strong secrets (min 32 characters)
+- Set appropriate expiration times
+- Use HTTPS in production (never send tokens over HTTP)
+- Consider token blacklist for logout (optional)
+
+### Error Messages
+
+- Don't leak information in error messages
+- Use generic messages for authentication failures
+- Log detailed errors server-side only
+
+```go
+// ✅ GOOD: Generic error messages
+if !VerifyPassword(user.PasswordHash, password) {
+    return nil, errors.ErrInvalidCredentials  // Generic message
+}
+
+// ❌ BAD: Information leakage
+if !VerifyPassword(user.PasswordHash, password) {
+    return nil, fmt.Errorf("password incorrect for user %s", username)  // Leaks username
+}
+```
+
+## Public Endpoints
+
+Some endpoints are public (no authentication required):
+
+- `CreateUser` - User registration
+- `Authenticate` - Login
+
+Configure in interceptor (see project context for package and public methods):
+
+```go
+var publicMethods = map[string]bool{
+    "/<package>.AuthService/Authenticate": true,
+    "/<package>.UserService/CreateUser":   true,
+}
+```
+
+## Token Refresh Flow
+
+1. Client detects expired access token (401 response)
+2. Client sends refresh token to `/auth/refresh`
+3. Server validates refresh token
+4. Server generates new access token
+5. Client updates stored access token
+
+```go
+// ✅ GOOD: Token refresh
+func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (string, error) {
+    claims, err := ValidateRefreshToken(refreshToken)
+    if err != nil {
+        return "", errors.ErrInvalidToken
+    }
+    
+    // Optionally check token blacklist here
+    
+    user, err := s.userRepo.GetByID(claims.UserID)
+    if err != nil {
+        return "", err
+    }
+    
+    // Generate new access token
+    return GenerateAccessToken(user)
+}
+```
+
+## Testing Authentication
+
+- Test token generation and validation
+- Test expired tokens
+- Test invalid tokens
+- Test authorization checks
+- Test public endpoints
+
+```go
+// ✅ GOOD: Authentication test
+func TestJWTInterceptor_ValidToken(t *testing.T) {
+    token, _ := GenerateAccessToken(testUser)
+    ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("authorization", "Bearer "+token))
+    
+    handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+        principal := auth.GetPrincipal(ctx)
+        assert.NotNil(t, principal)
+        assert.Equal(t, testUser.ID, principal.UserID)
+        return nil, nil
+    }
+    
+    interceptor := JWTInterceptor(secret)
+    _, err := interceptor(ctx, nil, nil, handler)
+    assert.NoError(t, err)
+}
+```

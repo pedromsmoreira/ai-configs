@@ -1,0 +1,240 @@
+---
+description: "Go coding standards, conventions, and best practices"
+globs:
+  - "**/*.go"
+alwaysApply: true
+---
+
+# Go Style Guide
+
+## Code Style
+
+### Naming Conventions
+
+- **Packages**: lowercase, single word (e.g., `auth`, `domain`, `service`)
+- **Exported functions**: PascalCase (e.g., `GetUser`, `CreateResource`)
+- **Unexported functions**: camelCase (e.g., `validateEmail`, `parseToken`)
+- **Constants**: PascalCase for exported, camelCase for unexported
+- **Interfaces**: End with `-er` when possible (e.g., `UserRepository`, `AuthService`)
+
+### File Organization
+
+- One package per directory
+- Related types in same file
+- Keep files focused (< 500 lines when possible)
+- Test files: `*_test.go` in same package
+
+### Error Handling
+
+```go
+// ✅ GOOD: Explicit error handling
+user, err := repo.GetByID(id)
+if err != nil {
+    return nil, fmt.Errorf("failed to get user: %w", err)
+}
+
+// ❌ BAD: Ignoring errors
+user, _ := repo.GetByID(id)  // Never ignore errors
+```
+
+### Context Usage
+
+- Always pass `context.Context` as first parameter
+- Use context for cancellation, timeouts, and request-scoped values
+- Extract Principal from context using `auth.GetPrincipal(ctx)`
+
+```go
+// ✅ GOOD: Context as first parameter
+func (s *UserService) GetUser(ctx context.Context, id string) (*domain.User, error) {
+    principal := auth.GetPrincipal(ctx)
+    if principal == nil {
+        return nil, errors.ErrUnauthorized
+    }
+    // ...
+}
+```
+
+### Struct Initialization
+
+```go
+// ✅ GOOD: Use field names for clarity
+user := &domain.User{
+    ID:        uuid.New().String(),
+    Username:  username,
+    Email:     email,
+    UserType:  domain.RoleX,  // or appropriate role from domain
+    CreatedAt: time.Now(),
+}
+
+// ❌ BAD: Positional initialization (error-prone)
+user := &domain.User{uuid.New().String(), username, email, ...}
+```
+
+### Interface Design
+
+- Keep interfaces small and focused
+- Prefer interfaces in consuming packages
+- Use interfaces for testability
+
+```go
+// ✅ GOOD: Small, focused interface
+type UserRepository interface {
+    GetByID(id string) (*domain.User, error)
+    GetByUsername(username string) (*domain.User, error)
+    Create(user *domain.User) error
+}
+
+// ❌ BAD: Large, unfocused interface
+type Repository interface {
+    // 50+ methods mixing concerns
+}
+```
+
+## Domain Layer Guidelines
+
+### Entity Design
+
+- Use unexported fields with getter methods
+- Enforce invariants in methods
+- No direct field access from outside package
+
+```go
+// ✅ GOOD: Encapsulated entity
+type User struct {
+    id       string
+    email    Email
+    userType UserType
+}
+
+func (u *User) ID() string {
+    return u.id
+}
+
+func (u *User) ChangeEmail(newEmail Email) error {
+    // Validation and business logic
+    u.email = newEmail
+    return nil
+}
+```
+
+### Value Objects
+
+- Immutable (no setters after creation)
+- Validation in constructor
+- Implement `Equals()` method
+
+```go
+// ✅ GOOD: Immutable value object
+type Email struct {
+    value string
+}
+
+func NewEmail(value string) (Email, error) {
+    if !isValidEmail(value) {
+        return Email{}, ErrInvalidEmail
+    }
+    return Email{value: strings.ToLower(value)}, nil
+}
+
+func (e Email) Value() string {
+    return e.value
+}
+```
+
+## Service Layer Guidelines
+
+### Service Structure
+
+- One service per domain area (UserService, EntityService, etc.)
+- Services orchestrate, don't implement business logic
+- Use Principal from context for authorization
+
+```go
+// ✅ GOOD: Service orchestrates
+func (s *EntityService) CreateResource(ctx context.Context, req *CreateResourceRequest) (*domain.Entity, error) {
+    // 1. Authorization
+    principal := auth.GetPrincipal(ctx)
+    if principal.UserType != domain.RoleX {  // appropriate role from domain
+        return nil, errors.ErrForbidden
+    }
+    
+    // 2. Create domain entity (use factory if complex)
+    entity := domain.NewEntity(...)
+    
+    // 3. Persist
+    if err := s.repo.Create(entity); err != nil {
+        return nil, err
+    }
+    
+    return entity, nil
+}
+```
+
+## Handler Layer Guidelines
+
+### Handler Responsibilities
+
+- Transform proto ↔ domain
+- Call service
+- Map errors to gRPC status
+
+```go
+// ✅ GOOD: Thin handler
+func (h *EntityHandler) CreateResource(ctx context.Context, req *pb.CreateResourceRequest) (*pb.CreateResourceResponse, error) {
+    // Transform proto to domain
+    resourceReq := &CreateResourceRequest{
+        // ... fields from req
+    }
+    
+    // Call service
+    entity, err := h.service.CreateResource(ctx, resourceReq)
+    if err != nil {
+        return nil, h.mapError(err)  // Map to gRPC status
+    }
+    
+    // Transform domain to proto
+    return &pb.CreateResourceResponse{
+        Entity: h.toProto(entity),
+    }, nil
+}
+```
+
+## Testing Conventions
+
+- Test files: `*_test.go`
+- Always use `t.Run` with descriptive test names for each test case
+- Use `testify` for assertions
+- Mock interfaces for unit tests
+
+```go
+// ✅ GOOD: Individual test functions with descriptive names
+func TestNewEmail_WithValidEmail_ReturnsEmail(t *testing.T) {
+    t.Run("creates email successfully", func(t *testing.T) {
+        email, err := NewEmail("user@example.com")
+        assert.NoError(t, err)
+        assert.Equal(t, "user@example.com", email.Value())
+    })
+}
+
+func TestNewEmail_WithInvalidEmail_ReturnsError(t *testing.T) {
+    t.Run("returns error for invalid email format", func(t *testing.T) {
+        _, err := NewEmail("not-an-email")
+        assert.Error(t, err)
+        assert.Equal(t, ErrInvalidEmail, err)
+    })
+}
+```
+
+## Performance Guidelines
+
+- Use `context.Context` for timeouts
+- Avoid unnecessary allocations
+- Use connection pooling for database
+- Profile before optimizing
+
+## Documentation
+
+- Export public APIs with doc comments
+- Start with function name: `// GetUser retrieves a user by ID.`
+- Document parameters and return values
+- Include examples for complex functions

@@ -1,0 +1,141 @@
+---
+description: "Frontend React/TypeScript testing practices and guidelines"
+globs:
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+alwaysApply: true
+---
+
+# Frontend Testing Practices
+
+For the full TDD workflow (Red-Green-Refactor), see `09-test-driven-development.mdc`.
+
+## Component Testing
+
+- Use React Testing Library
+- Test user interactions, not implementation
+- Query by role, label, or text (not by test IDs)
+- Use custom render with providers
+
+```typescript
+// ✅ GOOD: Testing user behavior
+test('user can submit login form', async () => {
+  render(<LoginPage />);
+  
+  const emailInput = screen.getByLabelText(/email/i);
+  const passwordInput = screen.getByLabelText(/password/i);
+  const submitButton = screen.getByRole('button', { name: /login/i });
+  
+  await userEvent.type(emailInput, 'user@example.com');
+  await userEvent.type(passwordInput, 'password123');
+  await userEvent.click(submitButton);
+  
+  await waitFor(() => {
+    expect(screen.getByText(/welcome/i)).toBeInTheDocument();
+  });
+});
+```
+
+## API Testing
+
+- Mock API calls in tests
+- Test error handling
+- Test loading states
+- Use MSW (Mock Service Worker) for integration tests
+
+```typescript
+// ✅ GOOD: Mocked API test
+test('displays error when API fails', async () => {
+  jest.spyOn(api, 'getUser').mockRejectedValue(new Error('Network error'));
+  
+  render(<UserPage userId="123" />);
+  
+  await waitFor(() => {
+    expect(screen.getByText(/failed to load/i)).toBeInTheDocument();
+  });
+});
+```
+
+## Test Organization
+
+### File Structure
+
+- Test files next to source: `User.test.tsx`
+- Test utilities in `__tests__/` or `src/__tests__/setup.ts`
+
+### Test Categories
+
+1. **Unit Tests**: Fast, isolated, mock dependencies
+2. **Integration Tests**: Test multiple components together
+3. **E2E Tests**: Test complete user workflows (if applicable)
+
+## Test Coverage
+
+- Maintain >80% code coverage
+- Focus on critical paths (business logic, error handling)
+- Don't chase 100% coverage (test quality > quantity)
+- Use coverage reports to find untested code
+
+## Best Practices
+
+### DO
+
+- ✅ Write tests before implementation (TDD)
+- ✅ Test behavior, not implementation
+- ✅ Keep tests independent and isolated
+- ✅ Use descriptive test names
+- ✅ Clean up test data
+- ✅ Test error cases and edge cases
+- ✅ Use mocks for external dependencies
+
+### DON'T
+
+- ❌ Test implementation details
+- ❌ Write tests that depend on other tests
+- ❌ Ignore flaky tests (fix them)
+- ❌ Write tests that are too complex
+- ❌ Test framework code
+- ❌ Skip error case testing
+- ❌ Commit tests that don't pass
+
+## Running Tests
+
+```bash
+npm test                         # Run tests
+npm run test:watch               # Watch mode
+npm run test:coverage            # Coverage report
+```
+
+## Build Verification
+
+After developing frontend features, **always verify the build succeeds** before considering the work complete.
+
+### Build Verification Checklist
+
+1. **TypeScript Compilation**
+   - Run `npm run build` or `tsc` to check for type errors
+   - Fix all TypeScript errors before committing
+   - Ensure no unused imports or variables
+
+2. **Docker Image Build**
+   - Test Docker image build: `make docker-rebuild-frontend` or `docker-compose build frontend`
+   - Verify the build completes without errors
+   - Check that the production build is optimized
+
+3. **Common Build Issues**
+   - **Unused imports**: Remove unused imports to avoid TypeScript errors
+   - **Type errors**: Fix type mismatches (e.g., Chip color types)
+   - **Missing dependencies**: Ensure all imports are available
+   - **Syntax errors**: Check for missing semicolons, brackets, etc.
+
+### Pre-Commit Verification
+
+```bash
+# Check TypeScript compilation
+cd frontend && npm run build
+
+# Or use the Makefile
+make docker-rebuild-frontend
+```
+
+**Rule**: Never commit code that fails to build. The Docker build process will catch TypeScript errors, so always verify locally first.

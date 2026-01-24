@@ -1,0 +1,167 @@
+---
+description: "Instructions for AI agents on how to interact with this codebase"
+alwaysApply: true
+---
+
+# Agent Behavior Guidelines
+
+## General Principles
+
+When working on this codebase, agents should:
+
+1. **Follow TDD**: Write tests first, then implementation
+2. **Respect DDD**: Keep business logic in domain layer
+3. **Maintain Architecture**: Follow layered architecture patterns
+4. **Preserve Tests**: Never remove or break existing tests
+5. **Update Documentation**: Update relevant docs when making changes
+
+## Code Changes
+
+### Before Making Changes
+
+1. **Read existing code** to understand patterns
+2. **Check documentation** in `docs/` for context
+3. **Review similar implementations** for consistency
+4. **Understand the domain** before modifying business logic
+
+### Making Changes
+
+1. **Write tests first** (TDD approach)
+2. **Follow existing patterns** (don't introduce new patterns without discussion)
+3. **Keep changes focused** (one concern per change)
+4. **Update related code** (handlers, services, repositories together)
+5. **Run tests** before considering changes complete
+
+### After Making Changes
+
+1. **Verify all tests pass** — see project context for test commands (e.g. `make test`, `make test-integration`)
+2. **Check for linter errors** (`go vet`, `golangci-lint`)
+3. **Update documentation** if behavior changed
+4. **Consider backward compatibility** for API changes
+
+## Code Generation
+
+### Protocol Buffers
+
+- Proto files in `api/proto/` (or equivalent per project context)
+- Generated code in `api/proto/generated/` (or equivalent per project context)
+- Run `make generate` after proto changes
+- Never edit generated code directly
+
+### REST Gateway
+
+- Gateway code generated from proto annotations
+- Update proto files, then regenerate
+- Test both gRPC and REST endpoints
+
+## Error Handling
+
+- Use domain errors from `pkg/errors/` (or equivalent per project context)
+- Map domain errors to gRPC status codes in handlers
+- Never expose internal errors to clients
+- Log errors with context for debugging
+
+## Testing Requirements
+
+### When Adding Features
+
+- Write unit tests for domain logic
+- Write unit tests for services
+- Write integration tests for workflows
+- Maintain >80% code coverage
+
+### When Fixing Bugs
+
+- Write a test that reproduces the bug
+- Fix the bug
+- Verify the test passes
+- Add regression tests if needed
+
+**Note**: For bug handling and prioritization guidelines, see `.cursor/rules/08-testing-agent.mdc`.
+
+## Documentation Updates
+
+When making significant changes, update:
+
+- Architecture docs if changing structure
+- Authentication docs if changing auth flow
+- API docs if changing endpoints
+- README if changing setup/usage
+
+## Code Review Checklist
+
+Before considering code complete:
+
+- [ ] Tests written and passing
+- [ ] Follows existing patterns
+- [ ] No linter errors
+- [ ] Documentation updated
+- [ ] Backward compatibility considered
+- [ ] Error handling implemented
+- [ ] Security considerations addressed
+
+## Common Patterns to Follow
+
+### Adding a New Domain Entity
+
+1. Create domain model in `internal/domain/`
+2. Add repository interface
+3. Implement repository in `internal/repository/`
+4. Create service in `internal/service/`
+5. Create handler in `internal/handler/`
+6. Add proto definition
+7. Write tests for each layer
+8. Update migrations if needed
+
+### Adding a New API Endpoint
+
+1. Add proto definition
+2. Run `make generate`
+3. Implement handler
+4. Implement service method
+5. Add repository methods if needed
+6. Write integration test
+7. Test via gRPC and REST Gateway
+
+### Modifying Business Logic
+
+1. Move logic to domain layer if possible
+2. Add methods to domain entities
+3. Update services to use domain methods
+4. Write tests for business rules
+5. Update documentation
+
+## Questions to Ask
+
+Before making significant changes:
+
+1. **Does this belong in domain layer?** (Business logic should)
+2. **Is this the right layer?** (Check architecture guidelines)
+3. **Are there existing patterns?** (Follow them)
+4. **Will this break existing code?** (Consider compatibility)
+5. **Are tests needed?** (Yes, always)
+
+## Communication Style
+
+- Be clear and concise in code comments
+- Use descriptive variable and function names
+- Explain "why" not just "what" in complex logic
+- Document public APIs
+- Keep comments up to date with code
+
+## Performance Considerations
+
+- Profile before optimizing
+- Use context for timeouts
+- Avoid N+1 queries
+- Use connection pooling
+- Cache when appropriate (but validate first)
+
+## Security Considerations
+
+- Never commit secrets or API keys
+- Use environment variables for configuration
+- Validate all user input
+- Use parameterized queries (prevent SQL injection)
+- Follow authentication/authorization patterns
+- Log security events appropriately
