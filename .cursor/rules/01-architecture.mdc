@@ -152,7 +152,7 @@ type EntityRepository interface {
 ## Error Handling
 
 - Use domain errors (`pkg/errors/`)
-- Map domain errors to gRPC status codes in handlers
+- Map domain errors to gRPC or HTTP status codes in handlers
 - Never expose internal errors to clients
 
 ## Configuration Separation

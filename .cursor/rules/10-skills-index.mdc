@@ -9,6 +9,7 @@ alwaysApply: true
 | Task | Skill | Key Rules |
 |------|-------|-----------|
 | Backend API, handlers, services, domain | `go-backend` | 01, 02 |
+| REST/HTTP endpoint design, URL structure, status codes | `rest-api-design` | 01, 02, 05 |
 | Schema changes, migrations | `database-migrations` | 06 |
 | React components, frontend UI | `frontend-react` | 03 |
 | Writing/fixing tests, coverage | `testing` | 04a, 04b, 08 |

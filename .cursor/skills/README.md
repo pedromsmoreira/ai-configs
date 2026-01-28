@@ -9,6 +9,7 @@ Skills in this project **complement** the existing Cursor agents (`.cursor/agent
 | Skill | Purpose |
 |-------|---------|
 | **go-backend** | Go services, gRPC, domain logic, handlers, services, repositories, Protocol Buffers |
+| **rest-api-design** | REST and HTTP endpoints design—URL structure, HTTP methods, status codes, request/response patterns, error handling, versioning |
 | **database-migrations** | PostgreSQL schema migrations with golang-migrate (tables, columns, indexes, up/down) |
 | **testing** | TDD, unit tests, integration tests with testcontainers, mocks, regression tests |
 | **frontend-react** | React 18+, TypeScript, Material-UI, Zustand, React Query, REST API integration |
@@ -22,6 +23,7 @@ If you have the [skills-ref](https://agentskills.io/specification) tool (or run 
 
 ```bash
 skills-ref validate .cursor/skills/go-backend
+skills-ref validate .cursor/skills/rest-api-design
 skills-ref validate .cursor/skills/database-migrations
 skills-ref validate .cursor/skills/testing
 skills-ref validate .cursor/skills/frontend-react
@@ -48,6 +50,8 @@ Each skill is a directory with at least `SKILL.md`:
 .cursor/skills/
 ├── README.md           # This file
 ├── go-backend/
+│   └── SKILL.md
+├── rest-api-design/
 │   └── SKILL.md
 ├── database-migrations/
 │   └── SKILL.md
