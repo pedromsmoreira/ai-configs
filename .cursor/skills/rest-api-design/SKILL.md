@@ -9,15 +9,14 @@ version: 1.0
 ## When to use
 
 - Designing or modifying REST API endpoints, URL structures, or routing
-- Implementing HTTP handlers for REST endpoints (gorilla/mux router, REST Gateway, or direct HTTP)
 - Defining request/response formats, status codes, and error responses
 - Planning API versioning strategies or backward compatibility
 - Creating API documentation or OpenAPI/Swagger specs
-- Integrating REST endpoints with frontend clients
+- Understanding general REST principles and patterns
 
-For **backend implementation** (Go handlers, services, domain logic), use the `go-backend` skill. For **testing** REST endpoints, use the `testing` skill.
+For **project-specific implementation** (shrtner handlers, router configuration, error types), see `.cursor/rules/12-http-rest-standards.mdc`. For **backend implementation** (Go handlers, services, domain logic), use the `go-backend` skill. For **testing** REST endpoints, use the `testing` skill.
 
-**Note**: Examples in this skill are **implementation-agnostic**. They focus on HTTP/REST patterns, routing, and request/response handling. Replace placeholder functions (e.g., `createResource()`, `getResource()`) and types (e.g., `Resource`, `CreateRequest`) with your actual implementation.
+**Note**: This skill provides **general REST design principles** that apply across projects. For shrtner-specific patterns (handler structure, error types, router setup), refer to the rule file above.
 
 ## Library Usage
 
@@ -83,12 +82,15 @@ POST   /api/v1/users/{id}/delete  // Should be DELETE
 ```go
 // ✅ GOOD: Appropriate status codes
 func CreateResource() func(w http.ResponseWriter, r *http.Request) {
-    serializer := JSON
     return func(w http.ResponseWriter, r *http.Request) {
         var req CreateRequest
-        if err := serializer.Decode(w, r, &req); err != nil {
-            respond(w, r, http.StatusBadRequest, 
-                NewBadRequestError("could not decode request body", nil), serializer) // 400
+        if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+            // 400 Bad Request - malformed request
+            w.WriteHeader(http.StatusBadRequest)
+            json.NewEncoder(w).Encode(ErrorResponse{
+                Code:    "400",
+                Message: "could not decode request body",
+            })
             return
         }
         
@@ -96,24 +98,41 @@ func CreateResource() func(w http.ResponseWriter, r *http.Request) {
         resource, err := createResource(r.Context(), req)
         if err != nil {
             if isConflictError(err) {
-                respond(w, r, http.StatusConflict, 
-                    NewConflictError("resource already exists"), serializer) // 409
+                // 409 Conflict - duplicate resource
+                w.WriteHeader(http.StatusConflict)
+                json.NewEncoder(w).Encode(ErrorResponse{
+                    Code:    "409",
+                    Message: "resource already exists",
+                })
                 return
             }
             if isValidationError(err) {
-                respond(w, r, http.StatusBadRequest, 
-                    NewBadRequestErrorWithoutDetails("invalid input"), serializer) // 400
+                // 400 Bad Request - validation error
+                w.WriteHeader(http.StatusBadRequest)
+                json.NewEncoder(w).Encode(ErrorResponse{
+                    Code:    "400",
+                    Message: "invalid input",
+                })
                 return
             }
-            respond(w, r, http.StatusInternalServerError, 
-                NewInternalServerError("an error occurred"), serializer) // 500
+            // 500 Internal Server Error - unexpected error
+            w.WriteHeader(http.StatusInternalServerError)
+            json.NewEncoder(w).Encode(ErrorResponse{
+                Code:    "500",
+                Message: "an error occurred",
+            })
             return
         }
         
-        respond(w, r, http.StatusCreated, resource, serializer) // 201
+        // 201 Created - successful creation
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(http.StatusCreated)
+        json.NewEncoder(w).Encode(resource)
     }
 }
 ```
+
+**Note**: For shrtner-specific error handling patterns (`respond()` function, custom error types), see `.cursor/rules/12-http-rest-standards.mdc`.
 
 ### JSON Merge Patch (RFC 7386)
 
@@ -169,14 +188,15 @@ import (
 )
 
 func PatchResource() func(w http.ResponseWriter, r *http.Request) {
-    serializer := JSON
     return func(w http.ResponseWriter, r *http.Request) {
         // Validate Content-Type (standard library)
         contentType := r.Header.Get("Content-Type")
         if contentType != "application/merge-patch+json" {
-            respond(w, r, http.StatusBadRequest, 
-                NewBadRequestErrorWithoutDetails("Content-Type must be application/merge-patch+json"), 
-                serializer)
+            w.WriteHeader(http.StatusBadRequest)
+            json.NewEncoder(w).Encode(ErrorResponse{
+                Code:    "400",
+                Message: "Content-Type must be application/merge-patch+json",
+            })
             return
         }
         
@@ -186,21 +206,29 @@ func PatchResource() func(w http.ResponseWriter, r *http.Request) {
         
         // Decode patch (standard library)
         var patch map[string]interface{}
-        if err := serializer.Decode(w, r, &patch); err != nil {
-            respond(w, r, http.StatusBadRequest, 
-                NewBadRequestError("could not decode request body", nil), serializer)
+        if err := json.NewDecoder(r.Body).Decode(&patch); err != nil {
+            w.WriteHeader(http.StatusBadRequest)
+            json.NewEncoder(w).Encode(ErrorResponse{
+                Code:    "400",
+                Message: "could not decode request body",
+            })
             return
         }
         
         // Apply merge patch and update resource (implementation-specific)
         resource, err := updateResource(r.Context(), resourceID, patch)
         if err != nil {
-            respond(w, r, http.StatusInternalServerError, 
-                NewInternalServerError("an error occurred updating the resource"), serializer)
+            w.WriteHeader(http.StatusInternalServerError)
+            json.NewEncoder(w).Encode(ErrorResponse{
+                Code:    "500",
+                Message: "an error occurred updating the resource",
+            })
             return
         }
         
-        respond(w, r, http.StatusOK, resource, serializer)
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(http.StatusOK)
+        json.NewEncoder(w).Encode(resource)
     }
 }
 ```
@@ -222,99 +250,20 @@ func PatchResource() func(w http.ResponseWriter, r *http.Request) {
 
 - Use **higher-order functions** that return `func(w http.ResponseWriter, r *http.Request)`
 - Handlers are functions, not methods on a struct
-- Pass dependencies (repository, service, config) as function parameters if needed (implementation-specific)
+- Pass dependencies (repository, service, config) as function parameters if needed
 - Use serializer interface for encoding/decoding
+- Handle errors consistently with appropriate status codes
 
-```go
-import (
-    "context"
-    "encoding/json"
-    "net/http"
-)
+**Note**: For shrtner-specific handler patterns (error types, serializer usage, `respond()` function), see `.cursor/rules/12-http-rest-standards.mdc`.
 
-// ✅ GOOD: Handler function pattern
-func Create() func(w http.ResponseWriter, r *http.Request) {
-    serializer := JSON
-    return func(w http.ResponseWriter, r *http.Request) {
-        var body CreateRequest
-        if err := serializer.Decode(w, r, &body); err != nil {
-            respond(w, r, http.StatusBadRequest, 
-                NewBadRequestError("could not decode request body", nil), serializer)
-            return
-        }
-        
-        // Validation (implementation-specific)
-        if err := validateCreateRequest(body); err != nil {
-            respond(w, r, http.StatusBadRequest, 
-                NewBadRequestErrorWithoutDetails(err.Error()), serializer)
-            return
-        }
-        
-        // Business logic (implementation-specific)
-        resource, err := createResource(r.Context(), body)
-        if err != nil {
-            respond(w, r, http.StatusConflict, NewConflictError(err.Error()), serializer)
-            return
-        }
-        
-        // Response
-        response := &CreateResponse{
-            Resource: resource,
-        }
-        respond(w, r, http.StatusCreated, response, serializer)
-    }
-}
-```
+### Serialization
 
-### Serializer Pattern
-
-- Use interface for serialization to support multiple formats (JSON, XML, etc.)
+- Use interface pattern for serialization to support multiple formats (JSON, XML, etc.)
 - Implement JSON serializer using standard library `encoding/json`
-- Set Content-Type via serializer
+- Set Content-Type header appropriately (e.g., `application/json; charset=utf-8`)
+- Handle encoding/decoding errors gracefully
 
-```go
-type serializer interface {
-    Encode(w http.ResponseWriter, r *http.Request, v interface{}) error
-    ContentType(w http.ResponseWriter, r *http.Request) string
-    Decode(w http.ResponseWriter, r *http.Request, v interface{}) error
-}
-
-type jsonSerializer struct{}
-
-var JSON serializer = (*jsonSerializer)(nil)
-
-func (j *jsonSerializer) Encode(w http.ResponseWriter, r *http.Request, v interface{}) error {
-    return json.NewEncoder(w).Encode(v)
-}
-
-func (j *jsonSerializer) ContentType(w http.ResponseWriter, r *http.Request) string {
-    return "application/json; charset=utf-8"
-}
-
-func (j *jsonSerializer) Decode(w http.ResponseWriter, r *http.Request, v interface{}) error {
-    return json.NewDecoder(r.Body).Decode(v)
-}
-```
-
-### Response Helper
-
-- Use `respond()` helper function with serializer
-- Set Content-Type header via serializer
-- Handle nil data gracefully
-
-```go
-func respond(w http.ResponseWriter, r *http.Request, status int, data interface{}, encoder serializer) {
-    w.Header().Set("Content-Type", encoder.ContentType(w, r))
-    w.WriteHeader(status)
-    if data == nil {
-        return
-    }
-    
-    if err := encoder.Encode(w, r, data); err != nil {
-        // Log encoding error (server-side only)
-    }
-}
-```
+**Note**: For shrtner-specific serializer implementation and `respond()` helper function, see `.cursor/rules/12-http-rest-standards.mdc`.
 
 ### Request/Response Format
 
@@ -338,145 +287,34 @@ type ListResponse struct {
 
 ### Error Handling
 
-- Define custom error types with error codes
-- Provide consistent error response format
+- Define custom error types with error codes for consistent responses
+- Provide consistent error response format across all endpoints
 - Never expose internal errors to clients
 - Include error codes for programmatic handling
 - Use error types that implement `error` interface
+- Map domain errors to appropriate HTTP status codes
 
-```go
-// ✅ GOOD: Custom error types with codes
-type BadRequestError struct {
-    Code    string      `json:"code,omitempty"`
-    Message string      `json:"message,omitempty"`
-    Details interface{} `json:"details,omitempty"`
-}
-
-func NewBadRequestError(message string, details interface{}) error {
-    return &BadRequestError{
-        Code:    "100002",
-        Message: message,
-        Details: details,
-    }
-}
-
-func NewBadRequestErrorWithoutDetails(message string) error {
-    return &BadRequestError{
-        Code:    "100003",
-        Message: message,
-    }
-}
-
-func (bde *BadRequestError) Error() string {
-    return "error_code: " + bde.Code + " message: " + bde.Message
-}
-
-type ConflictError struct {
-    Code    string `json:"code,omitempty"`
-    Message string `json:"message,omitempty"`
-}
-
-func NewConflictError(message string) error {
-    return &ConflictError{
-        Code:    "100004",
-        Message: message,
-    }
-}
-
-func (ce *ConflictError) Error() string {
-    return "error_code: " + ce.Code + " message: " + ce.Message
-}
-
-type NotFoundError struct {
-    Code    string `json:"code,omitempty"`
-    Message string `json:"message,omitempty"`
-}
-
-func NewNotFoundError(id string) error {
-    return &NotFoundError{
-        Code:    "100005",
-        Message: "path: " + id + " not found",
-    }
-}
-
-func (nfe *NotFoundError) Error() string {
-    return "error_code: " + nfe.Code + " message: " + nfe.Message
-}
-
-// Usage in handler
-func GetResource() func(w http.ResponseWriter, r *http.Request) {
-    serializer := JSON
-    return func(w http.ResponseWriter, r *http.Request) {
-        vars := mux.Vars(r)
-        id := vars["id"]
-        
-        // Get resource (implementation-specific)
-        resource, err := getResource(r.Context(), id)
-        if err != nil {
-            respond(w, r, http.StatusNotFound, NewNotFoundError(id), serializer)
-            return
-        }
-        
-        respond(w, r, http.StatusOK, resource, serializer)
-    }
+**Error response format:**
+```json
+{
+  "code": "error_code",
+  "message": "human-readable error message",
+  "details": { /* optional additional context */ }
 }
 ```
 
-### Routing with gorilla/mux
+**Note**: For shrtner-specific error types (`NewBadRequestError`, `NewConflictError`, `NewNotFoundError`, etc.) and their usage, see `.cursor/rules/12-http-rest-standards.mdc`.
+
+### Routing
 
 - Use gorilla/mux for routing (only external library allowed)
 - Define routes with path variables using `{name}` syntax
 - Use `mux.Vars(r)` to extract path variables
-- Group routes by version or resource
+- Explicitly specify HTTP methods using `.Methods("GET")`, `.Methods("POST")`, etc.
+- Group routes by version or resource using subrouters
+- Apply middleware using `router.Use()`
 
-```go
-import (
-    "github.com/gorilla/mux"
-    "net/http"
-)
-
-// ✅ GOOD: Router setup with gorilla/mux
-func NewRouter() *mux.Router {
-    router := mux.NewRouter()
-    
-    // Apply middleware (implementation-specific)
-    router.Use(middleware.LoggedHandler)
-    
-    // Register routes with handler functions
-    router.HandleFunc("/resources", List()).Methods("GET")
-    router.HandleFunc("/resources", Create()).Methods("POST")
-    router.HandleFunc("/resources/{id}", GetResource()).Methods("GET")
-    router.HandleFunc("/resources/{id}", UpdateResource()).Methods("PUT")
-    router.HandleFunc("/resources/{id}", PatchResource()).Methods("PATCH")
-    router.HandleFunc("/resources/{id}", DeleteResource()).Methods("DELETE")
-    
-    return router
-}
-
-// ✅ GOOD: Extract path variables using mux.Vars
-func DeleteResource() func(w http.ResponseWriter, r *http.Request) {
-    serializer := JSON
-    return func(w http.ResponseWriter, r *http.Request) {
-        vars := mux.Vars(r)
-        id := vars["id"]
-        
-        // Check if resource exists (implementation-specific)
-        exists, err := resourceExists(r.Context(), id)
-        if err != nil || !exists {
-            respond(w, r, http.StatusNotFound, NewNotFoundError(r.URL.Path), serializer)
-            return
-        }
-        
-        // Delete resource (implementation-specific)
-        err = deleteResource(r.Context(), id)
-        if err != nil {
-            // Log error server-side
-        }
-        
-        respond(w, r, http.StatusNoContent, nil, serializer)
-    }
-}
-```
+**Note**: For shrtner-specific router configuration (route definitions in `internal/shrtner/http/router.go`, middleware usage), see `.cursor/rules/12-http-rest-standards.mdc`.
 
 ### API Versioning
 
@@ -510,96 +348,36 @@ func NewRouter() *mux.Router {
 ### Query Parameters
 
 - Use for filtering, pagination, sorting
-- Keep parameter names consistent
+- Keep parameter names consistent across endpoints
 - Document required vs optional parameters
 - Use standard library `r.URL.Query().Get()` and `r.URL.Query().Has()`
 - Validate and convert types with `strconv` (standard library)
+- Return 400 Bad Request for invalid parameter values
+- Provide sensible defaults for optional parameters
 
-```go
-import (
-    "context"
-    "fmt"
-    "net/http"
-    "strconv"
-)
+**Common patterns:**
+- Pagination: `page` and `size` (or `limit`/`offset`)
+- Filtering: `status=active`, `owner_id=123`
+- Sorting: `sort=created_at&order=desc`
 
-const (
-    defaultPageNumber = "0"
-    defaultPageSize   = "10"
-)
-
-// ✅ GOOD: Query parameters for filtering
-GET /api/v1/users?page=0&size=20
-GET /api/v1/entities?owner_id=123&status=active
-
-// Handler example
-func List() func(w http.ResponseWriter, r *http.Request) {
-    serializer := JSON
-    return func(w http.ResponseWriter, r *http.Request) {
-        qPage := defaultPageNumber
-        qSize := defaultPageSize
-        
-        if r.URL.Query().Has("page") {
-            qPage = r.URL.Query().Get("page")
-        }
-        if r.URL.Query().Has("size") {
-            qSize = r.URL.Query().Get("size")
-        }
-        
-        p, err := strconv.Atoi(qPage)
-        if err != nil {
-            respond(w, r, http.StatusBadRequest, 
-                NewBadRequestErrorWithoutDetails(fmt.Sprintf("[page] was %v. Must be an integer.", qPage)), 
-                serializer)
-            return
-        }
-        
-        s, err := strconv.Atoi(qSize)
-        if err != nil {
-            respond(w, r, http.StatusBadRequest, 
-                NewBadRequestErrorWithoutDetails(fmt.Sprintf("[size] was %v. Must be an integer.", qSize)), 
-                serializer)
-            return
-        }
-        
-        // List resources (implementation-specific)
-        resources, err := listResources(r.Context(), p, s)
-        if err != nil {
-            respond(w, r, http.StatusInternalServerError, 
-                NewInternalServerError("an error occurred in the server"), serializer)
-            return
-        }
-        
-        response := &ListResponse{
-            Data: resources,
-        }
-        
-        if len(resources) > 0 {
-            baseURL := getBaseURL(r) // Implementation-specific: extract base URL
-            response.Next = fmt.Sprintf("%s/resources?page=%d&size=%d", baseURL, p+1, s)
-        }
-        
-        respond(w, r, http.StatusOK, response, serializer)
-    }
-}
-```
+**Note**: For shrtner-specific query parameter patterns (defaults, validation, pagination format), see `.cursor/rules/12-http-rest-standards.mdc`.
 
 ### Pagination
 
-- Use `page` and `limit` or `offset` and `limit`
+- Use `page` and `size` (or `offset` and `limit`) query parameters
 - Include pagination metadata in response
 - Provide links for next/previous pages when applicable
+- Use consistent default values (e.g., `page=0`, `size=10`)
 
-```go
-// ✅ GOOD: Pagination response (generic type)
-type PaginatedResponse[T any] struct {
-    Data     []T   `json:"data"`     // Replace T with your domain type
-    Page     int   `json:"page"`
-    Limit    int   `json:"limit"`
-    Total    int   `json:"total"`
-    HasMore  bool  `json:"has_more"`
+**Response format:**
+```json
+{
+  "data": [...],
+  "next_link": "/api/v1/resources?page=1&size=10"  // optional, when more data available
 }
 ```
+
+**Note**: For shrtner-specific pagination format (`page`/`size` defaults, `next_link` structure), see `.cursor/rules/12-http-rest-standards.mdc`.
 
 ### Authentication
 
@@ -612,34 +390,47 @@ type PaginatedResponse[T any] struct {
 ```go
 // ✅ GOOD: Authentication in handler
 func CreateResource() func(w http.ResponseWriter, r *http.Request) {
-    serializer := JSON
     return func(w http.ResponseWriter, r *http.Request) {
         // Extract principal from context (implementation-specific)
         principal := getPrincipal(r.Context())
         if principal == nil {
-            respond(w, r, http.StatusUnauthorized, 
-                NewUnauthorizedError("missing or invalid token"), serializer)
+            w.WriteHeader(http.StatusUnauthorized)
+            json.NewEncoder(w).Encode(ErrorResponse{
+                Code:    "401",
+                Message: "missing or invalid token",
+            })
             return
         }
         
         var body CreateRequest
-        if err := serializer.Decode(w, r, &body); err != nil {
-            respond(w, r, http.StatusBadRequest, 
-                NewBadRequestError("could not decode request body", nil), serializer)
+        if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+            w.WriteHeader(http.StatusBadRequest)
+            json.NewEncoder(w).Encode(ErrorResponse{
+                Code:    "400",
+                Message: "could not decode request body",
+            })
             return
         }
         
         // Use principal for authorization/ownership (implementation-specific)
         resource, err := createResource(r.Context(), principal, body)
         if err != nil {
-            respond(w, r, http.StatusConflict, NewConflictError(err.Error()), serializer)
+            w.WriteHeader(http.StatusConflict)
+            json.NewEncoder(w).Encode(ErrorResponse{
+                Code:    "409",
+                Message: err.Error(),
+            })
             return
         }
         
-        respond(w, r, http.StatusCreated, resource, serializer)
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(http.StatusCreated)
+        json.NewEncoder(w).Encode(resource)
     }
 }
 ```
+
+**Note**: For shrtner-specific authentication patterns (Principal extraction, JWT handling), see `.cursor/rules/05-authentication-security.mdc` and `.cursor/rules/12-http-rest-standards.mdc`.
 
 ### Middleware
 
@@ -676,8 +467,8 @@ func NewRouter() *mux.Router {
 | File | Purpose |
 |------|---------|
 | [RFC 7386 - JSON Merge Patch](https://datatracker.ietf.org/doc/html/rfc7386) | JSON Merge Patch specification for PATCH operations |
-| [shrtner repository](https://github.com/pedromsmoreira/shrtner) | Reference implementation showing handler patterns, serializer interface, error types, and routing with gorilla/mux |
-| [.cursor/rules/00-project-context.mdc](.cursor/rules/00-project-context.mdc) | Project overview, API ports, tech stack (gorilla/mux router, REST Gateway) |
+| [.cursor/rules/12-http-rest-standards.mdc](.cursor/rules/12-http-rest-standards.mdc) | **shrtner-specific** HTTP/REST implementation standards (handler patterns, error types, router config, serializer usage) |
+| [.cursor/rules/00-project-context.mdc](.cursor/rules/00-project-context.mdc) | Project overview, API ports, tech stack |
 | [.cursor/rules/01-architecture.mdc](.cursor/rules/01-architecture.mdc) | Handler layer responsibilities, error handling, protocol transformation |
 | [.cursor/rules/02-go-style-guide.mdc](.cursor/rules/02-go-style-guide.mdc) | Handler implementation patterns, context usage, error handling |
 | [.cursor/rules/05-authentication-security.mdc](.cursor/rules/05-authentication-security.mdc) | JWT authentication, Principal pattern, authorization, public endpoints |

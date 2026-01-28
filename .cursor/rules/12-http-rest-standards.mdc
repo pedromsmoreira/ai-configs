@@ -1,0 +1,176 @@
+---
+description: HTTP and REST endpoint standards for the shrtner project
+alwaysApply: false
+globs: 
+  - internal/shrtner/handlers/**/*.go
+  - internal/shrtner/http/**/*.go
+---
+
+# HTTP and REST Endpoint Standards
+
+## Handler Pattern
+
+Handlers must return `func(w http.ResponseWriter, r *http.Request)` functions:
+
+```go
+func Create(dns string, repository data.Create) func(w http.ResponseWriter, r *http.Request) {
+    serializer := JSON
+    return func(w http.ResponseWriter, r *http.Request) {
+        // handler implementation
+    }
+}
+```
+
+## Router Configuration
+
+- Use `gorilla/mux` router
+- Define routes in `internal/shrtner/http/router.go`
+- Explicitly specify HTTP methods using `.Methods("GET")`, `.Methods("POST")`, etc.
+- Apply middleware using `router.Use(middleware.LoggedHandler)`
+
+```go
+router.HandleFunc("/urls", handlers.List(dns, repository)).Methods("GET")
+router.HandleFunc("/urls", handlers.Create(dns, repository)).Methods("POST")
+router.HandleFunc("/urls/{id}", handlers.Delete(repository)).Methods("DELETE")
+```
+
+## Response Handling
+
+Always use the centralized `respond()` function with a serializer:
+
+```go
+serializer := JSON
+respond(w, r, http.StatusOK, data, serializer)
+```
+
+- Set `Content-Type` header via serializer: `application/json; charset=utf-8`
+- Use appropriate HTTP status codes
+- Return `nil` for 204 No Content responses
+
+## HTTP Status Codes
+
+Use these status codes consistently:
+
+- `200 OK` - Successful GET requests
+- `201 Created` - Successful POST requests (include created resource in body)
+- `204 No Content` - Successful DELETE requests (no body)
+- `302 Found` - Redirects (use `http.Redirect()`)
+- `400 Bad Request` - Validation errors, malformed requests
+- `404 Not Found` - Resource not found
+- `409 Conflict` - Duplicate resources, conflicts
+- `500 Internal Server Error` - Unexpected server errors
+
+## Error Handling
+
+Use custom error types from `handlers/errors.go`:
+
+```go
+// Bad Request with details
+respond(w, r, http.StatusBadRequest, NewBadRequestError("message", details), serializer)
+
+// Bad Request without details
+respond(w, r, http.StatusBadRequest, NewBadRequestErrorWithoutDetails("message"), serializer)
+
+// Conflict
+respond(w, r, http.StatusConflict, NewConflictError(err.Error()), serializer)
+
+// Not Found
+respond(w, r, http.StatusNotFound, NewNotFoundError(r.URL.Path), serializer)
+
+// Internal Server Error
+respond(w, r, http.StatusInternalServerError, NewInternalServerError("message"), serializer)
+```
+
+Error response format:
+```json
+{
+  "code": "100002",
+  "message": "error message",
+  "details": { /* optional */ }
+}
+```
+
+## Request Body Decoding
+
+Use serializer pattern for decoding:
+
+```go
+var body UrlMetadata
+err := serializer.Decode(w, r, &body)
+if err != nil {
+    respond(w, r, http.StatusBadRequest, NewBadRequestError("could not decode the request body", details), serializer)
+    return
+}
+```
+
+## Path Parameters
+
+Extract path parameters using `mux.Vars(r)`:
+
+```go
+params := mux.Vars(r)
+id := params["id"]
+```
+
+## Query Parameters
+
+Parse query parameters with defaults:
+
+```go
+qPage := defaultPageNumber
+qSize := defaultPageSize
+if r.URL.Query().Has("page") {
+    qPage = r.URL.Query().Get("page")
+}
+```
+
+Validate and convert types, returning 400 Bad Request on invalid input.
+
+## Context Usage
+
+Always pass `context.Background()` to repository methods:
+
+```go
+dbData, err := repository.List(context.Background(), p, s)
+```
+
+## Logging
+
+- Use `logrus` for structured logging
+- Log warnings for conflicts and errors: `logrus.WithField("error", err.Error()).Warning("message")`
+- Middleware handles request/response logging automatically
+
+## Serialization
+
+- Use the `serializer` interface pattern
+- Default to `JSON` serializer: `serializer := JSON`
+- Implement `Encode()`, `Decode()`, and `ContentType()` methods
+
+## Response Headers
+
+Set custom headers when needed:
+
+```go
+w.Header().Set("via", dns)
+```
+
+## Redirects
+
+Use standard library `http.Redirect()`:
+
+```go
+http.Redirect(w, r, redirect.Original, http.StatusFound)
+```
+
+## Pagination
+
+- Use `page` and `size` query parameters
+- Default values: `page=0`, `size=10`
+- Include `next_link` in list responses when more data is available
+- Format: `{dns}/urls?page={nextPage}&size={size}`
+
+## Response Structures
+
+- Use consistent struct types (e.g., `UrlMetadata`, `ListResponse`)
+- Use JSON tags with snake_case: `json:"expiration_date,omitempty"`
+- Use `omitempty` for optional fields
