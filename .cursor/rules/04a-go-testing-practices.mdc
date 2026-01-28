@@ -12,11 +12,16 @@ For the full TDD workflow (Red-Green-Refactor), see `09-test-driven-development.
 ## Test Structure
 
 - Use `testify` for assertions
-- Always use `t.Run` with descriptive test names for each test case
-- Use individual test functions with descriptive names
+- **Main test functions MUST contain subtests using `t.Run`**
+- Each test case should be a subtest within the main test function
+- Use individual test functions with descriptive names for different behaviors/scenarios
+
+### Main Test Function Pattern
+
+**Rule**: Every main test function (`TestXxx`) should contain one or more subtests using `t.Run`. The main test function acts as a container for related test cases.
 
 ```go
-// ✅ GOOD: Individual test functions with descriptive names
+// ✅ GOOD: Main test function contains subtests
 func TestNewEmail_WithValidEmail_ReturnsEmail(t *testing.T) {
     t.Run("creates email successfully", func(t *testing.T) {
         email, err := NewEmail("user@example.com")
@@ -25,13 +30,39 @@ func TestNewEmail_WithValidEmail_ReturnsEmail(t *testing.T) {
     })
 }
 
-func TestNewEmail_WithInvalidEmail_ReturnsError(t *testing.T) {
+// ✅ GOOD: Main test function with multiple subtests for related scenarios
+func TestNewEmail_WithInvalidInput_ReturnsError(t *testing.T) {
     t.Run("returns error for invalid email format", func(t *testing.T) {
         _, err := NewEmail("not-an-email")
         assert.Error(t, err)
         assert.Equal(t, ErrInvalidEmail, err)
     })
+    
+    t.Run("returns error for empty string", func(t *testing.T) {
+        _, err := NewEmail("")
+        assert.Error(t, err)
+        assert.Equal(t, ErrInvalidEmail, err)
+    })
+    
+    t.Run("returns error for missing @ symbol", func(t *testing.T) {
+        _, err := NewEmail("userexample.com")
+        assert.Error(t, err)
+        assert.Equal(t, ErrInvalidEmail, err)
+    })
 }
+
+// ❌ BAD: Test function without subtests
+func TestNewEmail_WithValidEmail_ReturnsEmail(t *testing.T) {
+    email, err := NewEmail("user@example.com")
+    assert.NoError(t, err)
+    assert.Equal(t, "user@example.com", email.Value())
+}
+
+// ❌ BAD: Multiple separate test functions for related scenarios
+func TestNewEmail_InvalidFormat(t *testing.T) { /* ... */ }
+func TestNewEmail_EmptyString(t *testing.T) { /* ... */ }
+func TestNewEmail_MissingAtSymbol(t *testing.T) { /* ... */ }
+// Should be combined into one test function with subtests
 ```
 
 ## Unit Tests
@@ -42,21 +73,40 @@ func TestNewEmail_WithInvalidEmail_ReturnsError(t *testing.T) {
 - Keep tests fast (< 100ms each)
 
 ```go
-// ✅ GOOD: Unit test with mock
+// ✅ GOOD: Unit test with mock - main function contains subtest
 func TestUserService_GetUser(t *testing.T) {
-    ctrl := gomock.NewController(t)
-    defer ctrl.Finish()
+    t.Run("returns user when found", func(t *testing.T) {
+        ctrl := gomock.NewController(t)
+        defer ctrl.Finish()
+        
+        mockRepo := mocks.NewMockUserRepository(ctrl)
+        mockRepo.EXPECT().
+            GetByID("123").
+            Return(&domain.User{ID: "123"}, nil)
+        
+        service := NewUserService(mockRepo)
+        user, err := service.GetUser(context.Background(), "123")
+        
+        assert.NoError(t, err)
+        assert.Equal(t, "123", user.ID)
+    })
     
-    mockRepo := mocks.NewMockUserRepository(ctrl)
-    mockRepo.EXPECT().
-        GetByID("123").
-        Return(&domain.User{ID: "123"}, nil)
-    
-    service := NewUserService(mockRepo)
-    user, err := service.GetUser(context.Background(), "123")
-    
-    assert.NoError(t, err)
-    assert.Equal(t, "123", user.ID)
+    t.Run("returns error when user not found", func(t *testing.T) {
+        ctrl := gomock.NewController(t)
+        defer ctrl.Finish()
+        
+        mockRepo := mocks.NewMockUserRepository(ctrl)
+        mockRepo.EXPECT().
+            GetByID("999").
+            Return(nil, errors.ErrNotFound)
+        
+        service := NewUserService(mockRepo)
+        user, err := service.GetUser(context.Background(), "999")
+        
+        assert.Error(t, err)
+        assert.Nil(t, user)
+        assert.Equal(t, errors.ErrNotFound, err)
+    })
 }
 ```
 
@@ -114,15 +164,38 @@ func TestCreateEntity(t *testing.T) {
 
 ## Test Naming
 
-- Format: `Test<Function>_<Scenario>_<ExpectedResult>`
+- Format: `Test<Function>_<Scenario>_<ExpectedResult>` for main test functions
 - Be descriptive about what is being tested
-- Use subtests for multiple scenarios
+- Use subtests for multiple related scenarios within the same main test function
+- Use separate main test functions for different behaviors or distinct test groups
 
 ```go
-// ✅ GOOD: Descriptive test names
-func TestUser_ChangeEmail_WithValidEmail_UpdatesEmail(t *testing.T)
-func TestUser_ChangeEmail_WithSameEmail_ReturnsError(t *testing.T)
-func TestEntityService_Create_WithUnauthorizedUser_ReturnsForbidden(t *testing.T)
+// ✅ GOOD: Descriptive test names with subtests
+func TestUser_ChangeEmail_WithValidEmail_UpdatesEmail(t *testing.T) {
+    t.Run("updates email successfully", func(t *testing.T) {
+        // test implementation
+    })
+    
+    t.Run("updates updated_at timestamp", func(t *testing.T) {
+        // test implementation
+    })
+}
+
+func TestUser_ChangeEmail_WithInvalidInput_ReturnsError(t *testing.T) {
+    t.Run("returns error for same email", func(t *testing.T) {
+        // test implementation
+    })
+    
+    t.Run("returns error for invalid email format", func(t *testing.T) {
+        // test implementation
+    })
+}
+
+func TestEntityService_Create_WithUnauthorizedUser_ReturnsForbidden(t *testing.T) {
+    t.Run("returns forbidden when user lacks permission", func(t *testing.T) {
+        // test implementation
+    })
+}
 ```
 
 ## Test Organization
