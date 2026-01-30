@@ -88,14 +88,19 @@ Return three copies of the same stage instance for `given`, `when`, `then`:
 ```go
 // ✅ GOOD
 func newCreateUserStage(t *testing.T) (*createUserStage, *createUserStage, *createUserStage) {
-	host := env.GetStringOrDefault("SERVER_HOST", "localhost")
-	port := env.GetIntOrDefault("SERVER_PORT", 8000)
+	host := getEnvOrDefault("SERVER_HOST", "localhost")
+	port := getEnvOrDefault("SERVER_PORT", "8000")
 	
 	stage := &createUserStage{
 		t:    t,
 		host: fmt.Sprintf("http://%s:%d", host, port),
-		http: &http.Client{},
+		http: &http.Client{Timeout: 30 * time.Second},
 	}
+	
+	// Register cleanup
+	t.Cleanup(func() {
+		// Cleanup resources
+	})
 	
 	return stage, stage, stage
 }
@@ -104,6 +109,28 @@ func newCreateUserStage(t *testing.T) (*createUserStage, *createUserStage, *crea
 func newCreateUserStage(t *testing.T) *createUserStage {
 	return &createUserStage{t: t}
 }
+```
+
+### Environment Configuration
+
+Always use environment variables with sensible defaults:
+
+```go
+// ✅ GOOD - Configurable
+host := getEnvOrDefault("SERVER_HOST", "localhost")
+port := getEnvOrDefault("SERVER_PORT", "8080")
+dbHost := getEnvOrDefault("DB_HOST", "localhost")
+
+// Helper function
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
+// ❌ BAD - Hardcoded
+host := "localhost:8000"
 ```
 
 ## Stage Methods
@@ -130,10 +157,8 @@ func (s *createUserStage) aCreateUserRequestIsPrepared(options ...func(*users.Cr
 	request := &users.CreateUserRequest{
 		FirstName: "test",
 		LastName:  "test",
-		Nickname:  "test",
-		Password:  "ABCabcabc123!",
 		Email:     fmt.Sprintf("test-%s@test.com", uuid.New().String()),
-		Country:   "test",
+		Password:  "ABCabcabc123!",
 	}
 	
 	for _, option := range options {
@@ -147,9 +172,7 @@ func (s *createUserStage) aCreateUserRequestIsPrepared(options ...func(*users.Cr
 
 // ❌ BAD - Doesn't return *stage, breaks chaining
 func (s *createUserStage) aCreateUserRequestIsPrepared() {
-	s.createRequestBody = &users.CreateUserRequest{
-		FirstName: "test",
-	}
+	s.createRequestBody = &users.CreateUserRequest{FirstName: "test"}
 }
 ```
 
@@ -178,7 +201,6 @@ given.aCreateUserRequestIsPrepared(WithFirstName(""))  // Test empty field
 // ❌ BAD - Creating multiple setup methods
 func (s *createUserStage) aCreateUserRequestIsPreparedWithFirstName(name string) *createUserStage
 func (s *createUserStage) aCreateUserRequestIsPreparedWithEmail(email string) *createUserStage
-func (s *createUserStage) aCreateUserRequestIsPreparedWithFirstNameAndEmail(name, email string) *createUserStage
 ```
 
 ## Method Chaining
@@ -192,75 +214,42 @@ then.responseShouldHaveValidUserAndStatusCode(http.StatusCreated).
 
 then.theResponseShouldBe(http.StatusNoContent).
 	and().
-	theGetByIdResponseShouldBeNotFound(given.userIDToDelete).
-	and().
-	deletedEventIsReceived(given.userIDToDelete)
+	theGetByIdResponseShouldBeNotFound(given.userIDToDelete)
 
-// ❌ BAD - Separate method calls
-then.responseShouldHaveValidUserAndStatusCode(http.StatusCreated)
-then.createdEventIsReceived(given.createdUserId)
-```
-
-### Helper Methods for Chaining
-
-```go
-// ✅ GOOD - Simple "and()" method for readability
+// Helper method for readability
 func (s *deleteUserStage) and() *deleteUserStage {
 	return s
 }
-
-// Usage
-then.theResponseShouldBe(http.StatusNoContent).
-	and().
-	theGetByIdResponseShouldBeNotFound(id)
 ```
 
-## Testing Libraries
+## testify/require vs assert
 
-### testify/require vs testify/assert
+### Use `require` for:
+- Network operations (HTTP requests)
+- JSON marshaling/unmarshaling
+- Reading response bodies
+- Critical setup that must succeed
+- Operations where continuing makes no sense if they fail
 
 ```go
-// ✅ GOOD - Use require for critical assertions
-func (s *createUserStage) createUserEndpointIsCalled() *createUserStage {
-	payload, err := json.Marshal(s.createRequestBody)
-	require.Nil(s.t, err)  // Must succeed to continue
-	
-	r, err := s.http.Post(url, s.contentType, bytes.NewBuffer(payload))
-	require.Nil(s.t, err)  // Must succeed to continue
-	require.NotNil(s.t, r) // Must have response
-	
-	s.response = r
-	return s
-}
-
-// ✅ GOOD - Use assert for comparisons where you want to see all failures
-func (s *createUserStage) responseShouldHaveValidUserAndStatusCode(statusCode int) *createUserStage {
-	assert.Equal(s.t, statusCode, s.response.StatusCode)
-	
-	body, err := io.ReadAll(s.response.Body)
-	require.Nil(s.t, err)  // Critical - need body to continue
-	
-	user := new(users.UserResponse)
-	err = json.Unmarshal(body, user)
-	require.Nil(s.t, err)  // Critical - need valid user object
-	
-	// These can all be checked even if some fail
-	require.NotNil(s.t, user.UserID)
-	require.IsType(s.t, uuid.UUID{}, user.UserID)
-	require.NotEmpty(s.t, user.FirstName)
-	require.NotEmpty(s.t, user.Email)
-	
-	return s
-}
-
-// ❌ BAD - Using assert for critical operations
 payload, err := json.Marshal(s.createRequestBody)
-assert.Nil(s.t, err)  // Test continues even if this fails!
+require.Nil(s.t, err)  // Must succeed to continue
+
+response, err := s.http.Post(url, contentType, bytes.NewBuffer(payload))
+require.Nil(s.t, err)  // Must succeed to continue
+require.NotNil(s.t, response)  // Need response object
 ```
 
-### General Rule
-- **require**: Operation must succeed to continue (network calls, parsing, critical setup)
-- **assert**: Comparison assertions where seeing multiple failures is valuable
+### Use `assert` for:
+- Status code comparisons
+- Value comparisons where seeing all failures helps
+
+```go
+assert.Equal(s.t, http.StatusOK, s.response.StatusCode)
+assert.Equal(s.t, expectedPage, searchResults.Page)
+```
+
+**Rule of Thumb**: If the test cannot meaningfully continue when an assertion fails, use `require`. If you want to see multiple assertion failures in one test run, use `assert`.
 
 ## Integration Testing Patterns
 
@@ -283,29 +272,11 @@ type createUserStage struct {
 	js                jetstream.JetStream
 	createdUserId     uuid.UUID
 }
-
-// ❌ BAD - Missing dependencies, creating inline
-type createUserStage struct {
-	t *testing.T
-}
-```
-
-### Environment Configuration
-
-```go
-// ✅ GOOD - Use env utilities with defaults
-host := env.GetStringOrDefault("SERVER_HOST", "localhost")
-port := env.GetIntOrDefault("SERVER_PORT", 8000)
-natsHost := env.GetStringOrDefault("NATS_HOST", "localhost:4222")
-
-// ❌ BAD - Hardcoded values
-host := "localhost:8000"
-natsHost := "localhost:4222"
 ```
 
 ## Event Verification
 
-Verify published events using NATS consumers:
+Verify published events using message broker consumers:
 
 ```go
 // ✅ GOOD
@@ -314,32 +285,36 @@ func (s *createUserStage) createdEventIsReceived(id uuid.UUID) *createUserStage 
 	require.Nil(s.t, err)
 	require.NotNil(s.t, msgs)
 	
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	
 	for {
-		msg, err := msgs.Next()
-		if err != nil {
-			if errors.Is(err, nats.ErrTimeout) {
-				continue
+		select {
+		case <-ctx.Done():
+			require.Fail(s.t, "Timeout waiting for event")
+			return s
+		default:
+			msg, err := msgs.Next()
+			if err != nil {
+				if errors.Is(err, nats.ErrTimeout) {
+					continue
+				}
+				require.Nil(s.t, err)
 			}
+			
+			event := new(events.UserCreatedEvent)
+			err = json.Unmarshal(msg.Data(), event)
 			require.Nil(s.t, err)
-		}
-		
-		user := new(events.UserCreatedEvent)
-		err = json.Unmarshal(msg.Data(), user)
-		require.Nil(s.t, err)
-		
-		if user.UserID == id {
+			
+			if event.UserID == id {
+				msg.Ack()
+				msgs.Stop()
+				return s
+			}
+			
 			msg.Ack()
-			break
 		}
 	}
-	
-	msgs.Stop()
-	return s
-}
-
-// ❌ BAD - Not verifying events
-func (s *createUserStage) createdEventIsReceived(id uuid.UUID) *createUserStage {
-	return s  // Skipping verification
 }
 ```
 
@@ -365,12 +340,6 @@ func (s *createUserStage) responseBodyShouldReturnBadRequestError() *createUserS
 	
 	return s
 }
-
-// ❌ BAD - Only checking status code
-func (s *createUserStage) responseBodyShouldReturnBadRequestError() *createUserStage {
-	require.Equal(s.t, http.StatusBadRequest, s.response.StatusCode)
-	return s
-}
 ```
 
 ## Test Naming
@@ -381,13 +350,11 @@ Write clear, descriptive test names as sentences:
 // ✅ GOOD
 t.Run("when creating a user returns user with 201 created status code", func(t *testing.T) {
 t.Run("when creating a user with empty first name returns 400 bad request status code", func(t *testing.T) {
-t.Run("when user with id exists should return the user", func(t *testing.T) {
 t.Run("when deleting an existing user returns Status Code 204 No Content", func(t *testing.T) {
 
 // ❌ BAD
 t.Run("test create user", func(t *testing.T) {
 t.Run("CreateUser_Success", func(t *testing.T) {
-t.Run("user creation", func(t *testing.T) {
 ```
 
 ## Common Patterns
@@ -410,15 +377,9 @@ given.aCreateUserRequestIsPrepared(WithEmail("test@test.com"))
 func (s *createUserStage) initialUserIsCreatedWithEmail(email string) *createUserStage {
 	s.aCreateUserRequestIsPrepared(WithEmail(email))
 	s.createUserEndpointIsCalled()
+	require.Equal(s.t, http.StatusCreated, s.response.StatusCode)
 	return s
 }
-
-// Usage in test
-given.initialUserIsCreatedWithEmail(email)
-when.aUserIsCreatedWithSameEmail(email)
-then.responseBodyShouldReturnBadRequestError()
-
-// ❌ BAD - Duplicating setup code in each test
 ```
 
 ## Content Type Constants
@@ -431,7 +392,158 @@ const (
 	applicationJSONContentType      string = "application/json"
 	applicationJSONPatchContentType string = "application/merge-patch+json"
 )
-
-// ❌ BAD - Inline strings
-request.Header.Set("Content-Type", "application/json")
 ```
+
+## HTTP Status Code Reference
+
+| Status Code | Constant | Common Use Cases |
+|------------|----------|------------------|
+| 200 | `http.StatusOK` | Successful GET, PATCH, PUT |
+| 201 | `http.StatusCreated` | Successful POST (created) |
+| 204 | `http.StatusNoContent` | Successful DELETE |
+| 400 | `http.StatusBadRequest` | Validation errors |
+| 401 | `http.StatusUnauthorized` | Missing/invalid authentication |
+| 403 | `http.StatusForbidden` | Insufficient permissions |
+| 404 | `http.StatusNotFound` | Resource doesn't exist |
+| 409 | `http.StatusConflict` | Duplicate resource |
+| 500 | `http.StatusInternalServerError` | Server errors |
+
+## Common Pitfalls to Avoid
+
+### Pitfall 1: Not Returning `*stage` from Stage Methods
+
+```go
+// ❌ BAD - Breaks chaining
+func (s *createResourceStage) aCreateResourceRequestIsPrepared() {
+	s.createRequestBody = &CreateResourceRequest{Name: "test"}
+}
+
+// ✅ GOOD - Enables chaining
+func (s *createResourceStage) aCreateResourceRequestIsPrepared() *createResourceStage {
+	s.createRequestBody = &CreateResourceRequest{Name: "test"}
+	return s
+}
+```
+
+### Pitfall 2: Hardcoded Configuration Values
+
+```go
+// ❌ BAD - Not configurable
+host := "localhost:8000"
+
+// ✅ GOOD - Uses environment with defaults
+host := getEnvOrDefault("SERVER_HOST", "localhost")
+port := getEnvOrDefault("SERVER_PORT", "8080")
+```
+
+### Pitfall 3: Using `assert` for Critical Operations
+
+```go
+// ❌ BAD - Test continues even if this fails
+payload, err := json.Marshal(s.createRequestBody)
+assert.Nil(s.t, err)  // Test continues!
+
+// ✅ GOOD - Test stops if critical operation fails
+payload, err := json.Marshal(s.createRequestBody)
+require.Nil(s.t, err)  // Test stops here if it fails
+```
+
+### Pitfall 4: Not Closing Resources
+
+```go
+// ❌ BAD - Resource leak
+msgs, err := s.consumer.Messages()
+for {
+	msg, _ := msgs.Next()
+	break
+}
+// msgs.Stop() is missing!
+
+// ✅ GOOD - Clean up resources
+msgs, err := s.consumer.Messages()
+defer msgs.Stop()
+```
+
+### Pitfall 5: Wrong Content Type for PATCH
+
+```go
+// ❌ BAD - Wrong content type for PATCH
+request.Header.Set("Content-Type", "application/json")
+
+// ✅ GOOD - Use merge-patch for PATCH requests
+request.Header.Set("Content-Type", "application/merge-patch+json")
+```
+
+### Pitfall 6: Creating Different Stage Instances
+
+```go
+// ❌ BAD - Three different instances (breaks state sharing)
+func newCreateResourceStage(t *testing.T) (*createResourceStage, *createResourceStage, *createResourceStage) {
+	return &createResourceStage{t: t}, &createResourceStage{t: t}, &createResourceStage{t: t}
+}
+
+// ✅ GOOD - Same instance three times
+func newCreateResourceStage(t *testing.T) (*createResourceStage, *createResourceStage, *createResourceStage) {
+	stage := &createResourceStage{t: t, host: "...", http: &http.Client{}}
+	return stage, stage, stage
+}
+```
+
+### Pitfall 7: Not Using t.Cleanup()
+
+```go
+// ❌ BAD - Manual cleanup can be missed if test fails early
+func newStage(t *testing.T) (*stage, *stage, *stage) {
+	conn, _ := nats.Connect("localhost:4222")
+	stage := &stage{conn: conn}
+	return stage, stage, stage
+}
+
+// ✅ GOOD - Cleanup always runs
+func newStage(t *testing.T) (*stage, *stage, *stage) {
+	conn, _ := nats.Connect("localhost:4222")
+	stage := &stage{conn: conn}
+	
+	t.Cleanup(func() {
+		if conn != nil {
+			conn.Close()
+		}
+	})
+	
+	return stage, stage, stage
+}
+```
+
+## Debugging Tips
+
+### Test Failing Unexpectedly
+
+1. **Check environment variables**: Verify all services are running and accessible
+2. **Print response body**: Add temporary debug logging
+   ```go
+   body, _ := io.ReadAll(s.response.Body)
+   t.Logf("Response: %s", string(body))
+   ```
+3. **Verify service health**: Ensure API, database, message broker are ready
+4. **Check test isolation**: Tests might be interfering with each other
+
+### Event Not Received
+
+1. **Check consumer configuration**: Verify stream, subject, durable name
+2. **Increase timeout**: Event might take longer than expected
+3. **Check event publishing**: Verify API actually publishes events
+4. **Add logging**: Log all received events to debug matching logic
+
+### Database Issues
+
+1. **Connection refused**: Verify database is running and accessible
+2. **Record not found**: Check if setup methods actually created the record
+3. **Unique constraint violations**: Ensure unique value generation works
+
+## Related Resources
+
+For detailed implementation patterns and examples, see:
+
+- **e2e-test-stage-methods.mdc** - Detailed Given/When/Then method patterns with code examples
+- **e2e-test-setup-patterns.mdc** - Complete setup examples for various architectures (HTTP, DB, NATS, Kafka, Redis, etc.)
+- **e2e-test-examples.mdc** - 7 practical complete examples including POST, GET, PATCH, DELETE, auth, and event-driven tests

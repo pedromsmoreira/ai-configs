@@ -1,6 +1,6 @@
 ---
 name: fe-engineer
-model: fast
+model: default
 ---
 
 # Frontend Engineer Agent

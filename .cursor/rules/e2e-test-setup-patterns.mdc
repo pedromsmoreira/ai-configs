@@ -8,6 +8,8 @@ alwaysApply: false
 
 This guide provides practical examples of different test setup configurations for various architectures.
 
+> For complete testing standards and rules, see **e2e-testing-standards.mdc**. For stage method patterns, see **e2e-test-stage-methods.mdc**.
+
 ## Test Setup Examples
 
 ### Setup Example 1: Simple REST API (No External Dependencies)
@@ -652,17 +654,7 @@ t.Cleanup(func() {
 
 ### Environment Helper Function
 
-Add this to your test package:
-
-```go
-// getEnvOrDefault retrieves an environment variable or returns a default value
-func getEnvOrDefault(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
-}
-```
+For the `getEnvOrDefault` helper function, see **e2e-testing-standards.mdc**.
 
 ## Constructor Function Patterns
 

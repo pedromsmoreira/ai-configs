@@ -1,24 +1,20 @@
 ---
-description: Overview of BDD stage-based e2e testing - core concepts and workflow
+description: Overview of BDD stage-based e2e testing - core concepts and navigation hub
 globs: tests/**/*_test.go
 alwaysApply: true
 ---
 
 # E2E Test Overview
 
-This guide provides an overview of the **Given-When-Then** BDD pattern with stage-based architecture for e2e testing. This approach is framework-agnostic and can be adapted to any Go project.
+This guide provides an overview of the **Given-When-Then** BDD pattern with stage-based architecture for e2e testing.
 
 ## Core Concepts
 
-### Architecture Overview
-
-The stage-based BDD pattern separates concerns into three clear phases:
+The stage-based BDD pattern separates test concerns into three clear phases:
 
 1. **Given** (Setup): Prepare test data and initial state
 2. **When** (Action): Execute the operation being tested
 3. **Then** (Assertion): Verify the outcome
-
-### File Structure
 
 Each feature test is composed of 2-3 files:
 
@@ -34,69 +30,12 @@ tests/
 Before creating a new e2e test, answer these questions:
 
 - [ ] What endpoint/feature am I testing? (e.g., `POST /api/v1/resource`)
-- [ ] What is the primary action? (e.g., `create_resource`, `update_resource`, `search_resource`)
-- [ ] Do I need to verify published events/messages? (determines message broker setup)
+- [ ] What is the primary action? (e.g., `create_resource`, `update_resource`)
+- [ ] Do I need to verify published events/messages?
 - [ ] Will I test multiple variations? (determines if opts file is needed)
-- [ ] What external dependencies do I need? (database, message broker, cache, etc.)
+- [ ] What external dependencies do I need? (database, message broker, cache)
 
-### Files You'll Create
-
-For a feature named `create_resource`:
-- `tests/create_resource_test.go` - Test cases (always required)
-- `tests/create_resource_test_stage.go` - Stage struct and methods (always required)
-- `tests/create_resource_test_opts.go` - Functional options (optional, for variations)
-
-## Step-by-Step Workflow
-
-### Step 1: Create the Test File (`*_test.go`)
-
-**File naming**: Use snake_case matching the feature: `<feature>_test.go`
-
-**Example: `create_resource_test.go`**
-
-```go
-package tests
-
-import (
-	"net/http"
-	"testing"
-)
-
-func TestCreateResource(t *testing.T) {
-	t.Run("when creating a resource returns resource with 201 created status code", func(t *testing.T) {
-		given, when, then := newCreateResourceStage(t)
-
-		given.aCreateResourceRequestIsPrepared()
-		when.createResourceEndpointIsCalled()
-		then.responseShouldHaveValidResourceAndStatusCode(http.StatusCreated)
-	})
-
-	t.Run("when creating a resource with invalid data returns 400 bad request status code", func(t *testing.T) {
-		given, when, then := newCreateResourceStage(t)
-
-		given.aCreateResourceRequestIsPrepared(WithName("")) // Empty required field
-		when.createResourceEndpointIsCalled()
-		then.responseBodyShouldReturnBadRequestError()
-	})
-}
-```
-
-**Key Points**:
-- Function name: `TestXxx` where `Xxx` is the feature in PascalCase
-- Test names: Use complete sentences starting with "when" describing the scenario
-- No logic in test functions - delegate everything to stage methods
-- Use Given-When-Then pattern consistently for readability
-- Each test creates a fresh stage instance to ensure isolation
-
-### Step 2: Create the Stage File (`*_test_stage.go`)
-
-See **e2e-test-stage-methods.mdc** for detailed implementation patterns.
-
-### Step 3: Create the Opts File (Optional)
-
-See **e2e-test-stage-methods.mdc** for functional options pattern.
-
-## Quick Reference: Method Naming
+## Method Naming Quick Reference
 
 | Phase | Prefix Examples | Purpose |
 |-------|----------------|---------|
@@ -104,68 +43,7 @@ See **e2e-test-stage-methods.mdc** for functional options pattern.
 | When | `create...`, `update...`, `the...IsCalled()` | Execute action |
 | Then | `...Should...`, `...IsReceived()` | Verify outcome |
 
-## Summary
-
-### Key Principles
-
-1. **File Structure**: Create 2-3 files per feature
-   - `*_test.go` - Test cases (required)
-   - `*_test_stage.go` - Stage struct and methods (required)
-   - `*_test_opts.go` - Functional options (optional)
-
-2. **Given-When-Then Pattern**: Maintain clear separation
-   - **Given**: Setup state and prepare data
-   - **When**: Execute the action being tested
-   - **Then**: Verify outcomes and side effects
-
-3. **Method Chaining**: Return `*stage` from all stage methods
-   ```go
-   given.setupA().setupB()
-   when.executeAction()
-   then.verifyA().and().verifyB()
-   ```
-
-4. **Configuration**: Use environment variables with sensible defaults
-   ```go
-   host := getEnvOrDefault("SERVER_HOST", "localhost")
-   ```
-
-5. **Unique Test Data**: Always generate unique values for unique fields
-   ```go
-   email := fmt.Sprintf("test-%s@example.com", uuid.New().String())
-   ```
-
-6. **Assertions**: Choose the right tool
-   - `require` - Critical operations (parsing, network calls)
-   - `assert` - Value comparisons where seeing all failures helps
-
-7. **Resource Cleanup**: Use `t.Cleanup()` for automatic cleanup
-   ```go
-   t.Cleanup(func() {
-       if conn != nil {
-           conn.Close()
-       }
-   })
-   ```
-
-8. **Test Isolation**: Each test should be independent
-   - Create fresh stage instance per test
-   - Don't rely on test execution order
-   - Clean up after yourself
-
-9. **Readability**: Tests should read like documentation
-   ```go
-   given.aResourceExistsWithEmail(email)
-   when.aResourceIsCreatedWithSameEmail(email)
-   then.responseShouldReturnConflictError()
-   ```
-
-10. **Async Testing**: Handle eventual consistency properly
-    - Use timeouts for event verification
-    - Implement retry logic with exponential backoff
-    - Poll databases for async operations
-
-### When to Use This Pattern
+## When to Use This Pattern
 
 **Best for:**
 - API/HTTP endpoint testing
@@ -178,48 +56,60 @@ See **e2e-test-stage-methods.mdc** for functional options pattern.
 - Simple unit tests (overkill)
 - Tests with minimal setup (unnecessary overhead)
 
-### Adapting to Your Project
+## Navigation Guide
 
-This guide uses generic examples. Adapt them to your project by:
+For detailed information, see:
 
-1. Replacing `Resource` with your domain entity (User, Order, Product, etc.)
-2. Adjusting import paths to match your project structure
-3. Modifying request/response structures to match your API
-4. Adding/removing dependencies based on your architecture
-5. Customizing error responses to match your error handling
+- **e2e-testing-standards.mdc** - Complete reference for all BDD testing rules and patterns
+- **e2e-test-stage-methods.mdc** - Detailed Given/When/Then method implementation patterns
+- **e2e-test-setup-patterns.mdc** - Setup configurations for various architectures (DB, NATS, Kafka, etc.)
+- **e2e-test-examples.mdc** - Complete practical examples and code templates
 
-### Next Steps
-
-1. **Start Small**: Begin with a simple create or get endpoint
-2. **Build Incrementally**: Add validation, authentication, and event tests
-3. **Extract Patterns**: Create reusable stage methods and options
-4. **Document**: Add comments for complex setup or verification logic
-5. **Refactor**: Continuously improve stage methods for better readability
-
-### Additional Resources
-
-- **e2e-test-setup-patterns.mdc** - Detailed test setup configurations
-- **e2e-test-stage-methods.mdc** - Given/When/Then implementation patterns
-- **e2e-test-examples.mdc** - Complete practical examples
-- **e2e-test-quick-ref.mdc** - Common patterns and pitfalls reference
-
-### Common Questions
+## Common Questions
 
 **Q: Should I create a new stage file for each endpoint?**
-A: Generally yes, but related endpoints can share stages (e.g., CRUD operations on same resource).
+A: Generally yes, but related endpoints can share stages (e.g., CRUD operations on same resource). See **e2e-testing-standards.mdc** for file organization rules.
 
 **Q: How do I handle test data that needs to persist across multiple tests?**
-A: Use `TestMain` for global setup, or use `t.Run` subtests with shared setup.
+A: Use `TestMain` for global setup, or use `t.Run` subtests with shared setup. See **e2e-test-examples.mdc** for examples.
 
 **Q: Can I use this pattern for unit tests?**
 A: It's overkill for most unit tests. This pattern shines for integration/e2e tests.
 
 **Q: How do I test error scenarios?**
-A: Use functional options to create invalid requests and verify error responses.
+A: Use functional options to create invalid requests and verify error responses. See **e2e-test-stage-methods.mdc** for functional options pattern.
 
-**Q: Should I test events in the same test as HTTP responses?**
-A: Yes, it ensures end-to-end functionality, but you can also separate them for focused testing.
+**Q: How do I set up NATS/Kafka/RabbitMQ for event testing?**
+A: See **e2e-test-setup-patterns.mdc** for complete setup examples for all major message brokers.
+
+**Q: Where can I find complete test examples?**
+A: See **e2e-test-examples.mdc** for 7 practical examples including POST, GET, PATCH, DELETE, auth, and event-driven tests.
+
+## Best Practices Checklist
+
+### Test Structure
+- [ ] Test function names start with `Test` (e.g., `TestCreateResource`)
+- [ ] Test case names start with "when" and describe the scenario
+- [ ] Each test creates fresh stage instance (`given, when, then := newStage(t)`)
+- [ ] No logic in test functions - delegate to stage methods
+- [ ] Tests are independent and can run in any order
+
+### Stage Methods
+- [ ] All stage methods return `*stage` for chaining
+- [ ] Given methods use functional options for flexibility
+- [ ] When methods only execute actions (no validation)
+- [ ] Then methods perform assertions and validation
+
+### Configuration & Data
+- [ ] All connection strings use environment variables with defaults
+- [ ] Unique values generated for unique fields (emails, IDs, etc.)
+- [ ] `t.Cleanup()` is used for all resource cleanup
+
+### Assertions
+- [ ] `require` used for critical operations (parsing, network calls)
+- [ ] `assert` used for value comparisons
+- [ ] Both success and error scenarios tested
 
 ---
 
-**Remember**: Good tests are readable, maintainable, and reliable. Invest time in creating clear stage methods, and your tests will serve as living documentation for your API.
+**Remember**: Good tests are readable, maintainable, and reliable. For detailed implementation patterns, consult **e2e-testing-standards.mdc**.

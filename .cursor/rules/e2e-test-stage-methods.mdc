@@ -8,6 +8,8 @@ alwaysApply: false
 
 This guide provides detailed implementation patterns for Given, When, and Then methods in stage-based BDD tests.
 
+> For complete testing standards and rules, see **e2e-testing-standards.mdc**. For setup examples, see **e2e-test-setup-patterns.mdc**.
+
 ## Stage Struct Definition
 
 The stage struct holds all dependencies and state needed for your tests.
@@ -712,32 +714,8 @@ given.aCreateResourceRequestIsPrepared(
 given.aCreateResourceRequestIsPrepared(WithInvalidEmail())
 ```
 
-## testify/require vs assert Guidelines
+## Assertion Guidelines
 
-### Use `require` for:
-- Network operations (HTTP requests)
-- JSON marshaling/unmarshaling
-- Reading response bodies
-- Critical setup that must succeed
-- Operations where continuing makes no sense if they fail
+For detailed `require` vs `assert` usage guidelines, see **e2e-testing-standards.mdc**.
 
-```go
-payload, err := json.Marshal(s.createRequestBody)
-require.Nil(s.t, err)  // Must succeed to continue
-
-response, err := s.http.Post(url, contentType, bytes.NewBuffer(payload))
-require.Nil(s.t, err)  // Must succeed to continue
-require.NotNil(s.t, response)  // Need response object
-```
-
-### Use `assert` for:
-- Status code comparisons
-- Value comparisons where seeing all failures helps
-
-```go
-assert.Equal(s.t, http.StatusOK, s.response.StatusCode)
-assert.Equal(s.t, expectedPage, searchResults.Page)
-```
-
-### Rule of Thumb
-If the test cannot meaningfully continue when an assertion fails, use `require`. If you want to see multiple assertion failures in one test run, use `assert`.
+**Quick rule**: Use `require` for critical operations (network, parsing), `assert` for value comparisons.

@@ -8,6 +8,8 @@ alwaysApply: false
 
 This guide provides complete, practical examples of e2e tests for common scenarios.
 
+> **Navigation**: For rules and standards, see **e2e-testing-standards.mdc**. For method patterns, see **e2e-test-stage-methods.mdc**. For setup configurations, see **e2e-test-setup-patterns.mdc**.
+
 ## Practical Complete Examples
 
 ### Example 1: Simple POST Request Test (Create Resource)

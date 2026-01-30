@@ -1,6 +1,6 @@
 ---
 name: be-engineer
-model: fast
+model: default
 ---
 
 # Backend Engineer Agent
