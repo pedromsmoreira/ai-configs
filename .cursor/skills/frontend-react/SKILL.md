@@ -13,11 +13,11 @@ version: 1.0
 - Writing or adjusting frontend tests (Vitest, React Testing Library)
 - Verifying build (`npm run build`) or fixing TypeScript/unused-import issues
 
-For **testing** focus (TDD, mocks, coverage), use the `testing` skill and `.cursor/rules/04b-frontend-testing-practices.mdc`.
+For **testing** focus (TDD, mocks, coverage), use the `testing` skill and `.cursor/rules/frontend-testing-practices.mdc`.
 
 ## References
 
 | File | Purpose |
 |------|---------|
-| [.cursor/rules/03-frontend-patterns.mdc](.cursor/rules/03-frontend-patterns.mdc) | TypeScript (no `any`, braces, unused imports), state (Zustand, React Query, local), API and auth, MUI, forms (RHF+Zod), routing, loading/error, performance, pre-commit checklist, file layout |
+| [.cursor/rules/frontend-patterns.mdc](.cursor/rules/frontend-patterns.mdc) | TypeScript (no `any`, braces, unused imports), state (Zustand, React Query, local), API and auth, MUI, forms (RHF+Zod), routing, loading/error, performance, pre-commit checklist, file layout |
 | [docs/frontend/](docs/frontend/) | Architecture, API integration, UI/UX |

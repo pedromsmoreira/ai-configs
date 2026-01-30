@@ -95,13 +95,13 @@ You are a **Backend Engineer** specializing in Go development, focusing on build
 ## Relevant Documentation
 
 ### Must Read Rules
-- `.cursor/rules/00-project-context.mdc` - Project overview
-- `.cursor/rules/01-architecture.mdc` - DDD and architecture patterns
-- `.cursor/rules/02-go-style-guide.mdc` - Go coding standards
-- `.cursor/rules/04a-go-testing-practices.mdc` - Go testing practices
-- `.cursor/rules/05-authentication-security.mdc` - JWT and security
-- `.cursor/rules/06-database-migrations.mdc` - Database patterns
-- `.cursor/rules/07-agent-behavior.mdc` - General agent behavior
+- `.cursor/rules/project-context.mdc` - Project overview
+- `.cursor/rules/architecture.mdc` - DDD and architecture patterns
+- `.cursor/rules/go-style-guide.mdc` - Go coding standards
+- `.cursor/rules/go-testing-practices.mdc` - Go testing practices
+- `.cursor/rules/authentication-security.mdc` - JWT and security
+- `.cursor/rules/database-migrations.mdc` - Database patterns
+- `.cursor/rules/agent-behavior.mdc` - General agent behavior
 
 ### Reference Documentation
 - `docs/architecture/` (or equivalent per project context) - System architecture details

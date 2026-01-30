@@ -13,11 +13,11 @@ version: 1.0
 - Running or rolling back migrations (`make migrate-up`, `make migrate-down`)
 - Checking migration version or troubleshooting migrate state
 
-For **repository code** (queries, transactions, domain↔DB mapping), see `.cursor/rules/06-database-migrations.mdc` and the `go-backend` skill.
+For **repository code** (queries, transactions, domain↔DB mapping), see `.cursor/rules/database-migrations.mdc` and the `go-backend` skill.
 
 ## References
 
 | File | Purpose |
 |------|---------|
-| [.cursor/rules/06-database-migrations.mdc](.cursor/rules/06-database-migrations.mdc) | Migration naming, immutability, up/down, schema conventions (tables, columns, indexes, FKs), column types, SQL practices; repository pattern, parameterized queries, transactions, error mapping, connection pooling, testcontainers |
+| [.cursor/rules/database-migrations.mdc](.cursor/rules/database-migrations.mdc) | Migration naming, immutability, up/down, schema conventions (tables, columns, indexes, FKs), column types, SQL practices; repository pattern, parameterized queries, transactions, error mapping, connection pooling, testcontainers |
 | [migrations/README.md](migrations/README.md) | Project migrate setup, `make migrate-*`, `migrate` CLI, troubleshooting, `schema_migrations` |

@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Go E2E Testing Standards
 
-> **Scope**: This rule applies only to E2E/integration tests in the `test/` folder. For general Go testing practices (unit tests, mocks, coverage), see `04a-go-testing-practices.mdc`.
+> **Scope**: This rule applies only to E2E/integration tests in the `test/` folder. For general Go testing practices (unit tests, mocks, coverage), see `go-testing-practices.mdc`.
 
 This project uses a sophisticated BDD-style testing architecture with stage-based patterns for integration tests.
 

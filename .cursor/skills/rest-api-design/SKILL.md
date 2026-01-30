@@ -14,7 +14,7 @@ version: 1.0
 - Creating API documentation or OpenAPI/Swagger specs
 - Understanding general REST principles and patterns
 
-For **project-specific implementation** (shrtner handlers, router configuration, error types), see `.cursor/rules/12-http-rest-standards.mdc`. For **backend implementation** (Go handlers, services, domain logic), use the `go-backend` skill. For **testing** REST endpoints, use the `testing` skill.
+For **project-specific implementation** (shrtner handlers, router configuration, error types), see `.cursor/rules/http-rest-standards.mdc`. For **backend implementation** (Go handlers, services, domain logic), use the `go-backend` skill. For **testing** REST endpoints, use the `testing` skill.
 
 **Note**: This skill provides **general REST design principles** that apply across projects. For shrtner-specific patterns (handler structure, error types, router setup), refer to the rule file above.
 
@@ -132,7 +132,7 @@ func CreateResource() func(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-**Note**: For shrtner-specific error handling patterns (`respond()` function, custom error types), see `.cursor/rules/12-http-rest-standards.mdc`.
+**Note**: For shrtner-specific error handling patterns (`respond()` function, custom error types), see `.cursor/rules/http-rest-standards.mdc`.
 
 ### JSON Merge Patch (RFC 7386)
 
@@ -254,7 +254,7 @@ func PatchResource() func(w http.ResponseWriter, r *http.Request) {
 - Use serializer interface for encoding/decoding
 - Handle errors consistently with appropriate status codes
 
-**Note**: For shrtner-specific handler patterns (error types, serializer usage, `respond()` function), see `.cursor/rules/12-http-rest-standards.mdc`.
+**Note**: For shrtner-specific handler patterns (error types, serializer usage, `respond()` function), see `.cursor/rules/http-rest-standards.mdc`.
 
 ### Serialization
 
@@ -263,7 +263,7 @@ func PatchResource() func(w http.ResponseWriter, r *http.Request) {
 - Set Content-Type header appropriately (e.g., `application/json; charset=utf-8`)
 - Handle encoding/decoding errors gracefully
 
-**Note**: For shrtner-specific serializer implementation and `respond()` helper function, see `.cursor/rules/12-http-rest-standards.mdc`.
+**Note**: For shrtner-specific serializer implementation and `respond()` helper function, see `.cursor/rules/http-rest-standards.mdc`.
 
 ### Request/Response Format
 
@@ -303,7 +303,7 @@ type ListResponse struct {
 }
 ```
 
-**Note**: For shrtner-specific error types (`NewBadRequestError`, `NewConflictError`, `NewNotFoundError`, etc.) and their usage, see `.cursor/rules/12-http-rest-standards.mdc`.
+**Note**: For shrtner-specific error types (`NewBadRequestError`, `NewConflictError`, `NewNotFoundError`, etc.) and their usage, see `.cursor/rules/http-rest-standards.mdc`.
 
 ### Routing
 
@@ -314,7 +314,7 @@ type ListResponse struct {
 - Group routes by version or resource using subrouters
 - Apply middleware using `router.Use()`
 
-**Note**: For shrtner-specific router configuration (route definitions in `internal/shrtner/http/router.go`, middleware usage), see `.cursor/rules/12-http-rest-standards.mdc`.
+**Note**: For shrtner-specific router configuration (route definitions in `internal/shrtner/http/router.go`, middleware usage), see `.cursor/rules/http-rest-standards.mdc`.
 
 ### API Versioning
 
@@ -360,7 +360,7 @@ func NewRouter() *mux.Router {
 - Filtering: `status=active`, `owner_id=123`
 - Sorting: `sort=created_at&order=desc`
 
-**Note**: For shrtner-specific query parameter patterns (defaults, validation, pagination format), see `.cursor/rules/12-http-rest-standards.mdc`.
+**Note**: For shrtner-specific query parameter patterns (defaults, validation, pagination format), see `.cursor/rules/http-rest-standards.mdc`.
 
 ### Pagination
 
@@ -377,7 +377,7 @@ func NewRouter() *mux.Router {
 }
 ```
 
-**Note**: For shrtner-specific pagination format (`page`/`size` defaults, `next_link` structure), see `.cursor/rules/12-http-rest-standards.mdc`.
+**Note**: For shrtner-specific pagination format (`page`/`size` defaults, `next_link` structure), see `.cursor/rules/http-rest-standards.mdc`.
 
 ### Authentication
 
@@ -430,7 +430,7 @@ func CreateResource() func(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-**Note**: For shrtner-specific authentication patterns (Principal extraction, JWT handling), see `.cursor/rules/05-authentication-security.mdc` and `.cursor/rules/12-http-rest-standards.mdc`.
+**Note**: For shrtner-specific authentication patterns (Principal extraction, JWT handling), see `.cursor/rules/authentication-security.mdc` and `.cursor/rules/http-rest-standards.mdc`.
 
 ### Middleware
 
@@ -467,9 +467,9 @@ func NewRouter() *mux.Router {
 | File | Purpose |
 |------|---------|
 | [RFC 7386 - JSON Merge Patch](https://datatracker.ietf.org/doc/html/rfc7386) | JSON Merge Patch specification for PATCH operations |
-| [.cursor/rules/12-http-rest-standards.mdc](.cursor/rules/12-http-rest-standards.mdc) | **shrtner-specific** HTTP/REST implementation standards (handler patterns, error types, router config, serializer usage) |
-| [.cursor/rules/00-project-context.mdc](.cursor/rules/00-project-context.mdc) | Project overview, API ports, tech stack |
-| [.cursor/rules/01-architecture.mdc](.cursor/rules/01-architecture.mdc) | Handler layer responsibilities, error handling, protocol transformation |
-| [.cursor/rules/02-go-style-guide.mdc](.cursor/rules/02-go-style-guide.mdc) | Handler implementation patterns, context usage, error handling |
-| [.cursor/rules/05-authentication-security.mdc](.cursor/rules/05-authentication-security.mdc) | JWT authentication, Principal pattern, authorization, public endpoints |
-| [.cursor/rules/07-agent-behavior.mdc](.cursor/rules/07-agent-behavior.mdc) | Adding new API endpoints workflow, error handling, backward compatibility |
+| [.cursor/rules/http-rest-standards.mdc](.cursor/rules/http-rest-standards.mdc) | **shrtner-specific** HTTP/REST implementation standards (handler patterns, error types, router config, serializer usage) |
+| [.cursor/rules/project-context.mdc](.cursor/rules/project-context.mdc) | Project overview, API ports, tech stack |
+| [.cursor/rules/architecture.mdc](.cursor/rules/architecture.mdc) | Handler layer responsibilities, error handling, protocol transformation |
+| [.cursor/rules/go-style-guide.mdc](.cursor/rules/go-style-guide.mdc) | Handler implementation patterns, context usage, error handling |
+| [.cursor/rules/authentication-security.mdc](.cursor/rules/authentication-security.mdc) | JWT authentication, Principal pattern, authorization, public endpoints |
+| [.cursor/rules/agent-behavior.mdc](.cursor/rules/agent-behavior.mdc) | Adding new API endpoints workflow, error handling, backward compatibility |

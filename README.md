@@ -16,19 +16,20 @@ Project conventions and coding standards in `.mdc` format:
 
 | Rule | Description |
 |------|-------------|
-| `00-project-context.mdc` | Project overview, tech stack, structure (customize per project) |
-| `01-architecture.mdc` | DDD and layered architecture patterns |
-| `02-go-style-guide.mdc` | Go coding conventions |
-| `03-frontend-patterns.mdc` | React/TypeScript guidelines |
-| `04a-go-testing-practices.mdc` | Go testing standards |
-| `04b-frontend-testing-practices.mdc` | Frontend testing standards |
-| `05-authentication-security.mdc` | JWT and security patterns |
-| `06-database-migrations.mdc` | Database and migration patterns |
-| `07-agent-behavior.mdc` | General agent guidelines |
-| `08-testing-agent.mdc` | Bug handling instructions |
-| `09-test-driven-development.mdc` | TDD principles |
-| `10-skills-index.mdc` | Quick reference for skills |
-| `11-go-e2e-testing-standards.mdc` | E2E testing with BDD patterns |
+| `project-context.mdc` | Project overview, tech stack, structure (customize per project) |
+| `architecture.mdc` | DDD and layered architecture patterns |
+| `go-style-guide.mdc` | Go coding conventions |
+| `frontend-patterns.mdc` | React/TypeScript guidelines |
+| `go-testing-practices.mdc` | Go testing standards |
+| `frontend-testing-practices.mdc` | Frontend testing standards |
+| `authentication-security.mdc` | JWT and security patterns |
+| `database-migrations.mdc` | Database and migration patterns |
+| `agent-behavior.mdc` | General agent guidelines |
+| `testing-agent.mdc` | Bug handling instructions |
+| `test-driven-development.mdc` | TDD principles |
+| `skills-index.mdc` | Quick reference for skills |
+| `go-e2e-testing-standards.mdc` | E2E testing with BDD patterns |
+| `http-rest-standards.mdc` | HTTP/REST standards |
 
 ### Agents (`.cursor/agents/`)
 
@@ -61,7 +62,7 @@ ai-configs/
 │   │   ├── product-owner.md
 │   │   └── README.md
 │   ├── rules/            # Project rules (.mdc)
-│   │   ├── 00-project-context.mdc
+│   │   ├── project-context.mdc
 │   │   └── ...
 │   └── skills/           # Reusable skills
 │       ├── go-backend/SKILL.md
@@ -84,7 +85,7 @@ cp -r .cursor/ /path/to/your/project/
 
 ### 2. Customize Project Context
 
-Edit `.cursor/rules/00-project-context.mdc` for your specific project:
+Edit `.cursor/rules/project-context.mdc` for your specific project:
 
 - Project name and overview
 - Tech stack details
@@ -104,120 +105,164 @@ Use agents in your prompts:
 
 ## Reusing Across Projects
 
-Instead of copying files to each project, use **symlinks** to share configurations from a central location. This keeps your configs in sync and makes updates easy.
-
-### One-Time Setup
-
-Clone this repo to a central location:
-
-```bash
-# Linux/macOS
-git clone https://github.com/your-org/ai-configs.git ~/ai-configs
-
-# Windows (PowerShell)
-git clone https://github.com/your-org/ai-configs.git C:\ai-configs
-```
+Instead of copying files to each project, use **git submodules** to include this repository in your projects. This keeps your configs version-controlled, makes updates easy, and works consistently across all platforms.
 
 ### Per-Project Setup
 
-#### Linux/macOS
+Add this repository as a git submodule in your project:
+
+#### Linux/macOS/Windows (Git Bash)
 
 ```bash
 cd /path/to/your-project
 
+# Initialize git repository if not already initialized
+git init
+
+# Add ai-configs as a submodule
+git submodule add https://github.com/your-org/ai-configs.git .cursor/ai-configs
+
 # Create .cursor/rules directory
 mkdir -p .cursor/rules
 
-# Symlink shared rules (01-11), skills, and agents
-for rule in ~/ai-configs/.cursor/rules/0[1-9]*.mdc ~/ai-configs/.cursor/rules/1*.mdc; do
-  ln -s "$rule" .cursor/rules/
+# Symlink shared rules (all except project-context), skills, and agents from submodule
+cd .cursor/rules
+for rule in ../ai-configs/.cursor/rules/*.mdc; do
+  filename=$(basename "$rule")
+  if [ "$filename" != "project-context.mdc" ]; then
+    ln -s "$rule" .
+  fi
 done
-ln -s ~/ai-configs/.cursor/skills .cursor/skills
-ln -s ~/ai-configs/.cursor/agents .cursor/agents
+cd ../..
+
+# Symlink skills and agents directories
+ln -s .cursor/ai-configs/.cursor/skills .cursor/skills
+ln -s .cursor/ai-configs/.cursor/agents .cursor/agents
 
 # Copy project-specific context (customize this file)
-cp ~/ai-configs/.cursor/rules/00-project-context.mdc .cursor/rules/
+cp .cursor/ai-configs/.cursor/rules/project-context.mdc .cursor/rules/
 ```
 
-#### Windows (PowerShell as Administrator)
+#### Windows (PowerShell)
 
 ```powershell
 cd C:\path\to\your-project
 
+# Initialize git repository if not already initialized
+git init
+
+# Add ai-configs as a submodule
+git submodule add https://github.com/your-org/ai-configs.git .cursor\ai-configs
+
 # Create .cursor\rules directory
 New-Item -ItemType Directory -Path ".cursor\rules" -Force
 
-# Symlink shared rules (01-11)
-Get-ChildItem "C:\ai-configs\.cursor\rules\*.mdc" | Where-Object { $_.Name -notmatch "^00-" } | ForEach-Object {
+# Symlink shared rules (all except project-context)
+Get-ChildItem ".cursor\ai-configs\.cursor\rules\*.mdc" | Where-Object { $_.Name -ne "project-context.mdc" } | ForEach-Object {
     New-Item -ItemType SymbolicLink -Path ".cursor\rules\$($_.Name)" -Target $_.FullName
 }
 
 # Symlink skills and agents
-New-Item -ItemType SymbolicLink -Path ".cursor\skills" -Target "C:\ai-configs\.cursor\skills"
-New-Item -ItemType SymbolicLink -Path ".cursor\agents" -Target "C:\ai-configs\.cursor\agents"
+New-Item -ItemType SymbolicLink -Path ".cursor\skills" -Target ".cursor\ai-configs\.cursor\skills"
+New-Item -ItemType SymbolicLink -Path ".cursor\agents" -Target ".cursor\ai-configs\.cursor\agents"
 
 # Copy project-specific context (customize this file)
-Copy-Item "C:\ai-configs\.cursor\rules\00-project-context.mdc" ".cursor\rules\"
+Copy-Item ".cursor\ai-configs\.cursor\rules\project-context.mdc" ".cursor\rules\"
 ```
 
 > **Note**: Windows symlinks require either Administrator privileges or [Developer Mode](https://docs.microsoft.com/en-us/windows/apps/get-started/enable-your-device-for-development) enabled.
+
+### Cloning Projects with Submodules
+
+When cloning a project that uses this submodule:
+
+```bash
+# Clone with submodules
+git clone --recurse-submodules https://github.com/your-org/your-project.git
+
+# Or if already cloned, initialize submodules
+git submodule update --init --recursive
+```
 
 ### What Gets Linked vs. Copied
 
 | Type | Files | Reason |
 |------|-------|--------|
-| **Symlinked** (shared) | `rules/01-11*.mdc`, `skills/`, `agents/` | Generic, reusable across all projects |
-| **Copied** (per-project) | `rules/00-project-context.mdc` | Must be customized for each project |
+| **Symlinked** (shared) | `rules/*.mdc` (except project-context), `skills/`, `agents/` | Generic, reusable across all projects |
+| **Copied** (per-project) | `rules/project-context.mdc` | Must be customized for each project |
+| **Submodule** | `.cursor/ai-configs/` | Version-controlled reference to this repository |
 
 ### Updating Shared Configs
 
-When you want to update all linked projects with the latest configs:
+When you want to update the submodule to the latest version:
 
 ```bash
-cd ~/ai-configs  # or C:\ai-configs on Windows
-git pull
+cd /path/to/your-project
+
+# Update submodule to latest commit
+cd .cursor/ai-configs
+git pull origin main
+cd ../..
+
+# Commit the submodule update
+git add .cursor/ai-configs
+git commit -m "Update ai-configs submodule"
 ```
 
-All symlinked projects automatically get the updates.
+Or update all submodules in your project:
+
+```bash
+git submodule update --remote --merge
+```
 
 ### Setup Scripts
 
-Use the included setup scripts for quick project configuration:
+Use the included setup scripts for quick project configuration with git submodules:
 
 #### Linux/macOS
 
 ```bash
 cd /path/to/your-project
-~/ai-configs/setup-cursor.sh
+
+# Clone this repo first (if not already cloned)
+git clone https://github.com/your-org/ai-configs.git /tmp/ai-configs
+
+# Run setup script
+/tmp/ai-configs/setup-cursor.sh
 ```
 
 Or specify a project path:
 ```bash
-~/ai-configs/setup-cursor.sh /path/to/your-project
+/tmp/ai-configs/setup-cursor.sh /path/to/your-project
 ```
 
 #### Windows (PowerShell as Administrator)
 
 ```powershell
 cd C:\path\to\your-project
-C:\ai-configs\setup-cursor.ps1
+
+# Clone this repo first (if not already cloned)
+git clone https://github.com/your-org/ai-configs.git C:\temp\ai-configs
+
+# Run setup script
+C:\temp\ai-configs\setup-cursor.ps1
 ```
 
 Or specify a project path:
 ```powershell
-C:\ai-configs\setup-cursor.ps1 -ProjectPath "C:\path\to\your-project"
+C:\temp\ai-configs\setup-cursor.ps1 -ProjectPath "C:\path\to\your-project"
 ```
 
-#### Environment Variable
+#### Using Submodule URL
 
-Override the default source location:
+The setup scripts will automatically add this repository as a submodule. You can override the submodule URL:
 
 ```bash
 # Linux/macOS
-AI_CONFIGS_PATH=/opt/ai-configs ./setup-cursor.sh
+AI_CONFIGS_REPO=https://github.com/your-org/ai-configs.git ./setup-cursor.sh
 
 # Windows
-$env:AI_CONFIGS_PATH = "D:\ai-configs"
+$env:AI_CONFIGS_REPO = "https://github.com/your-org/ai-configs.git"
 .\setup-cursor.ps1
 ```
 
@@ -241,16 +286,16 @@ Compatible patterns:
 
 ### Files to Customize (Per Project)
 
-- `00-project-context.mdc` - Always customize for your project
+- `project-context.mdc` - Always customize for your project
 - Agent files - Add project-specific context if needed
 
 ### Files That Are Generic (Reusable As-Is)
 
-- Architecture patterns (`01-architecture.mdc`)
-- Style guides (`02-go-style-guide.mdc`, `03-frontend-patterns.mdc`)
-- Testing practices (`04a-*`, `04b-*`, `09-*`)
-- Security patterns (`05-authentication-security.mdc`)
-- TDD workflow (`09-test-driven-development.mdc`)
+- Architecture patterns (`architecture.mdc`)
+- Style guides (`go-style-guide.mdc`, `frontend-patterns.mdc`)
+- Testing practices (`go-testing-practices.mdc`, `frontend-testing-practices.mdc`, `test-driven-development.mdc`)
+- Security patterns (`authentication-security.mdc`)
+- TDD workflow (`test-driven-development.mdc`)
 - Skills (all `SKILL.md` files)
 
 ## License

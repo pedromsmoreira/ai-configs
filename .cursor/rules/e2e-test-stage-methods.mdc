@@ -1,0 +1,743 @@
+---
+description: Given-When-Then stage method implementation patterns
+globs: tests/**/*_test_stage.go, tests/**/*_test_opts.go
+alwaysApply: false
+---
+
+# E2E Test Stage Methods
+
+This guide provides detailed implementation patterns for Given, When, and Then methods in stage-based BDD tests.
+
+## Stage Struct Definition
+
+The stage struct holds all dependencies and state needed for your tests.
+
+### Basic Structure (HTTP-only testing)
+
+```go
+package tests
+
+import (
+	"net/http"
+	"testing"
+
+	"github.com/stretchr/testify/suite"
+)
+
+const (
+	applicationJSONContentType      string = "application/json"
+	applicationJSONPatchContentType string = "application/merge-patch+json"
+)
+
+type createResourceStage struct {
+	suite.Suite
+	t                 *testing.T
+	host              string
+	http              *http.Client
+	response          *http.Response
+	createRequestBody *CreateResourceRequest  // Replace with your request type
+	contentType       string
+	createdResourceID string
+}
+```
+
+### Extended Structure (with message broker for event verification)
+
+```go
+package tests
+
+import (
+	"context"
+	"net/http"
+	"testing"
+
+	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
+	"github.com/stretchr/testify/suite"
+)
+
+type createResourceStage struct {
+	suite.Suite
+	t                 *testing.T
+	host              string
+	http              *http.Client
+	response          *http.Response
+	createRequestBody *CreateResourceRequest
+	contentType       string
+	
+	// Message broker fields (NATS example - adapt for Kafka, RabbitMQ, etc.)
+	stream   string
+	subject  string
+	consumer jetstream.Consumer
+	conn     *nats.Conn
+	js       jetstream.JetStream
+	
+	// Test data tracking
+	createdResourceID string
+}
+```
+
+**What to include in your stage struct**:
+- `t *testing.T` - Always required for assertions
+- `suite.Suite` - Required for testify suite pattern
+- `host string`, `http *http.Client` - HTTP testing dependencies
+- `response *http.Response` - Store last response for assertions
+- Request/response bodies - Data structures you'll send/receive
+- `contentType string` - For different content types (JSON, JSON Patch, etc.)
+- Message broker fields - Only if testing event publishing/consuming
+- Test data tracking fields - IDs, tokens, or other data needed across steps
+
+## Given Methods (Setup)
+
+Given methods prepare the test state. Name them starting with `a`, `an`, or `the` to read naturally.
+
+### Pattern 1: Preparing a Request with Functional Options
+
+```go
+func (s *createResourceStage) aCreateResourceRequestIsPrepared(options ...func(*CreateResourceRequest)) *createResourceStage {
+	// Create a valid default request
+	request := &CreateResourceRequest{
+		Name:        "test-resource",
+		Description: "test description",
+		Email:       fmt.Sprintf("test-%s@example.com", uuid.New().String()),
+		Status:      "active",
+		Tags:        []string{"test", "e2e"},
+	}
+	
+	// Apply functional options to modify defaults
+	for _, option := range options {
+		option(request)
+	}
+	
+	s.createRequestBody = request
+	s.contentType = applicationJSONContentType
+	return s
+}
+```
+
+### Pattern 2: Setting Up Pre-existing Data (via API)
+
+```go
+func (s *updateResourceStage) aResourceExistsWithID(id string) *updateResourceStage {
+	// Create a resource via API to ensure it exists
+	request := &CreateResourceRequest{
+		ID:          id,
+		Name:        "existing-resource",
+		Description: "resource for testing",
+		Email:       fmt.Sprintf("test-%s@example.com", uuid.New().String()),
+	}
+	
+	payload, err := json.Marshal(request)
+	require.Nil(s.t, err)
+	
+	response, err := s.http.Post(
+		fmt.Sprintf("%s/api/v1/resources", s.host),
+		applicationJSONContentType,
+		bytes.NewBuffer(payload),
+	)
+	require.Nil(s.t, err)
+	require.NotNil(s.t, response)
+	require.Equal(s.t, http.StatusCreated, response.StatusCode)
+	
+	// Parse and store the created resource
+	body, err := io.ReadAll(response.Body)
+	require.Nil(s.t, err)
+	
+	resource := new(ResourceResponse)
+	err = json.Unmarshal(body, resource)
+	require.Nil(s.t, err)
+	
+	s.existingResourceID = resource.ID
+	return s
+}
+```
+
+### Pattern 3: Setting Up Data Directly in Database
+
+```go
+func (s *deleteResourceStage) aResourceExistsInDatabase() *deleteResourceStage {
+	// Insert directly into database (faster than API calls)
+	query := `
+		INSERT INTO resources (id, name, description, status, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6)
+	`
+	
+	id := uuid.New().String()
+	now := time.Now()
+	
+	_, err := s.db.Exec(query, id, "test-resource", "test description", "active", now, now)
+	require.Nil(s.t, err)
+	
+	s.resourceIDToDelete = id
+	return s
+}
+```
+
+### Pattern 4: Setting Up Multiple Related Resources
+
+```go
+func (s *searchResourceStage) multipleResourcesExistWithTag(count int, tag string) *searchResourceStage {
+	for i := 0; i < count; i++ {
+		request := &CreateResourceRequest{
+			Name:        fmt.Sprintf("resource-%d", i),
+			Description: fmt.Sprintf("resource %d for testing", i),
+			Email:       fmt.Sprintf("test-%s@example.com", uuid.New().String()),
+			Tags:        []string{tag, "test"},
+		}
+		
+		payload, err := json.Marshal(request)
+		require.Nil(s.t, err)
+		
+		response, err := s.http.Post(
+			fmt.Sprintf("%s/api/v1/resources", s.host),
+			applicationJSONContentType,
+			bytes.NewBuffer(payload),
+		)
+		require.Nil(s.t, err)
+		require.Equal(s.t, http.StatusCreated, response.StatusCode)
+	}
+	
+	return s
+}
+```
+
+### Pattern 5: Setting Up Authentication/Authorization
+
+```go
+func (s *createResourceStage) anAuthenticatedUserWithRole(role string) *createResourceStage {
+	// Create authentication token or session
+	loginRequest := &LoginRequest{
+		Username: fmt.Sprintf("test-user-%s", uuid.New().String()),
+		Password: "test-password",
+		Role:     role,
+	}
+	
+	payload, err := json.Marshal(loginRequest)
+	require.Nil(s.t, err)
+	
+	response, err := s.http.Post(
+		fmt.Sprintf("%s/api/v1/auth/login", s.host),
+		applicationJSONContentType,
+		bytes.NewBuffer(payload),
+	)
+	require.Nil(s.t, err)
+	require.Equal(s.t, http.StatusOK, response.StatusCode)
+	
+	body, err := io.ReadAll(response.Body)
+	require.Nil(s.t, err)
+	
+	authResponse := new(AuthResponse)
+	err = json.Unmarshal(body, authResponse)
+	require.Nil(s.t, err)
+	
+	s.authToken = authResponse.Token
+	return s
+}
+```
+
+**Given method patterns**:
+- Use `options ...func(*RequestType)` for flexible, reusable test data modification
+- Generate unique values with `uuid.New().String()` to avoid conflicts
+- Always return `*stage` for method chaining
+- Use `require` for critical operations that must succeed
+- Prefer database setup over API calls for speed when possible
+- Name methods naturally: `aResourceExists()`, `anAuthenticatedUser()`, `theSystemIsConfiguredWith()`
+
+## When Methods (Actions)
+
+When methods execute the action being tested. Name them with action verbs or "the...IsCalled" pattern.
+
+### Pattern 1: POST Request (Create)
+
+```go
+func (s *createResourceStage) createResourceEndpointIsCalled() *createResourceStage {
+	payload, err := json.Marshal(s.createRequestBody)
+	require.Nil(s.t, err)
+	
+	response, err := s.http.Post(
+		fmt.Sprintf("%s/api/v1/resources", s.host),
+		s.contentType,
+		bytes.NewBuffer(payload),
+	)
+	require.Nil(s.t, err)
+	require.NotNil(s.t, response)
+	
+	s.response = response
+	return s
+}
+```
+
+### Pattern 2: GET Request (Retrieve Single Resource)
+
+```go
+func (s *getResourceStage) getResourceEndpointIsCalledWithID(id string) *getResourceStage {
+	request, err := http.NewRequest(
+		http.MethodGet,
+		fmt.Sprintf("%s/api/v1/resources/%s", s.host, id),
+		nil,
+	)
+	require.Nil(s.t, err)
+	
+	request.Header.Set("Content-Type", applicationJSONContentType)
+	
+	// Add authentication if needed
+	if s.authToken != "" {
+		request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.authToken))
+	}
+	
+	response, err := s.http.Do(request)
+	require.Nil(s.t, err)
+	require.NotNil(s.t, response)
+	
+	s.response = response
+	return s
+}
+```
+
+### Pattern 3: GET Request with Query Parameters (List/Search)
+
+```go
+func (s *searchResourceStage) searchEndpointIsQueriedWithFilters(filters map[string]string) *searchResourceStage {
+	request, err := http.NewRequest(
+		http.MethodGet,
+		fmt.Sprintf("%s/api/v1/resources", s.host),
+		nil,
+	)
+	require.Nil(s.t, err)
+	
+	// Build query parameters
+	query := request.URL.Query()
+	for key, value := range filters {
+		query.Add(key, value)
+	}
+	request.URL.RawQuery = query.Encode()
+	
+	request.Header.Set("Content-Type", applicationJSONContentType)
+	
+	response, err := s.http.Do(request)
+	require.Nil(s.t, err)
+	require.NotNil(s.t, response)
+	
+	s.response = response
+	return s
+}
+```
+
+### Pattern 4: PATCH Request (Partial Update)
+
+```go
+func (s *updateResourceStage) resourceIsUpdatedWithNewName(newName string) *updateResourceStage {
+	requestBody := &UpdateResourceRequest{
+		Name: newName,
+	}
+	
+	payload, err := json.Marshal(requestBody)
+	require.Nil(s.t, err)
+	
+	request, err := http.NewRequest(
+		http.MethodPatch,
+		fmt.Sprintf("%s/api/v1/resources/%s", s.host, s.resourceIDToUpdate),
+		bytes.NewBuffer(payload),
+	)
+	require.Nil(s.t, err)
+	
+	// Important: Use JSON Merge Patch content type for PATCH
+	request.Header.Set("Content-Type", applicationJSONPatchContentType)
+	
+	if s.authToken != "" {
+		request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.authToken))
+	}
+	
+	response, err := s.http.Do(request)
+	require.Nil(s.t, err)
+	
+	s.response = response
+	return s
+}
+```
+
+### Pattern 5: DELETE Request
+
+```go
+func (s *deleteResourceStage) deleteResourceEndpointIsCalled() *deleteResourceStage {
+	request, err := http.NewRequest(
+		http.MethodDelete,
+		fmt.Sprintf("%s/api/v1/resources/%s", s.host, s.resourceIDToDelete),
+		nil,
+	)
+	require.Nil(s.t, err)
+	
+	request.Header.Set("Content-Type", applicationJSONContentType)
+	
+	if s.authToken != "" {
+		request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.authToken))
+	}
+	
+	response, err := s.http.Do(request)
+	require.Nil(s.t, err)
+	
+	s.response = response
+	return s
+}
+```
+
+**When method patterns**:
+- Execute HTTP requests (POST, GET, PATCH, PUT, DELETE)
+- Always store response in `s.response` for later assertions
+- Use correct HTTP methods and content types
+- Add authentication headers when needed
+- Use `require` for network operations - test should stop if request fails
+- Keep business logic out - when methods should only execute actions, not validate
+
+## Then Methods (Assertions)
+
+Then methods verify outcomes. Name them describing what should be true using "should" or "is" patterns.
+
+### Pattern 1: Simple Status Code Assertion
+
+```go
+func (s *deleteResourceStage) responseShouldHaveStatusCode(statusCode int) *deleteResourceStage {
+	require.NotNil(s.t, s.response)
+	assert.Equal(s.t, statusCode, s.response.StatusCode)
+	return s
+}
+```
+
+### Pattern 2: Success Response with Body Validation
+
+```go
+func (s *createResourceStage) responseShouldHaveValidResourceAndStatusCode(statusCode int) *createResourceStage {
+	// Verify status code
+	assert.Equal(s.t, statusCode, s.response.StatusCode)
+	
+	// Read response body
+	body, err := io.ReadAll(s.response.Body)
+	require.Nil(s.t, err)
+	require.NotEmpty(s.t, body)
+	
+	// Parse response
+	resource := new(ResourceResponse)
+	err = json.Unmarshal(body, resource)
+	require.Nil(s.t, err)
+	require.NotNil(s.t, resource)
+	
+	// Validate required fields
+	require.NotEmpty(s.t, resource.ID)
+	require.NotEmpty(s.t, resource.Name)
+	require.NotEmpty(s.t, resource.Email)
+	require.NotNil(s.t, resource.CreatedAt)
+	require.NotNil(s.t, resource.UpdatedAt)
+	
+	// Store for later assertions
+	s.createdResourceID = resource.ID
+	
+	return s
+}
+```
+
+### Pattern 3: Error Response Validation
+
+```go
+func (s *createResourceStage) responseShouldReturnBadRequestError() *createResourceStage {
+	require.Equal(s.t, http.StatusBadRequest, s.response.StatusCode)
+	
+	body, err := io.ReadAll(s.response.Body)
+	require.Nil(s.t, err)
+	require.NotEmpty(s.t, body)
+	
+	errorResponse := new(ErrorResponse)
+	err = json.Unmarshal(body, errorResponse)
+	require.Nil(s.t, err)
+	require.NotNil(s.t, errorResponse)
+	require.NotEmpty(s.t, errorResponse.Message)
+	
+	return s
+}
+
+func (s *createResourceStage) responseShouldReturnValidationError(expectedField string) *createResourceStage {
+	require.Equal(s.t, http.StatusBadRequest, s.response.StatusCode)
+	
+	body, err := io.ReadAll(s.response.Body)
+	require.Nil(s.t, err)
+	
+	errorResponse := new(ValidationErrorResponse)
+	err = json.Unmarshal(body, errorResponse)
+	require.Nil(s.t, err)
+	require.NotEmpty(s.t, errorResponse.Errors)
+	
+	// Verify specific field error exists
+	found := false
+	for _, fieldError := range errorResponse.Errors {
+		if fieldError.Field == expectedField {
+			found = true
+			break
+		}
+	}
+	require.True(s.t, found, fmt.Sprintf("Expected validation error for field '%s'", expectedField))
+	
+	return s
+}
+```
+
+### Pattern 4: Database State Verification
+
+```go
+func (s *deleteResourceStage) resourceShouldNotExistInDatabase() *deleteResourceStage {
+	var count int
+	query := "SELECT COUNT(*) FROM resources WHERE id = $1"
+	err := s.db.QueryRow(query, s.resourceIDToDelete).Scan(&count)
+	require.Nil(s.t, err)
+	
+	assert.Equal(s.t, 0, count, "Resource should not exist in database")
+	
+	return s
+}
+
+func (s *createResourceStage) resourceShouldExistInDatabaseWithCorrectData() *createResourceStage {
+	query := "SELECT name, email, status FROM resources WHERE id = $1"
+	
+	var name, email, status string
+	err := s.db.QueryRow(query, s.createdResourceID).Scan(&name, &email, &status)
+	require.Nil(s.t, err)
+	
+	// Verify database values match request
+	assert.Equal(s.t, s.createRequestBody.Name, name)
+	assert.Equal(s.t, s.createRequestBody.Email, email)
+	assert.Equal(s.t, "active", status)
+	
+	return s
+}
+```
+
+### Pattern 5: Chaining Helper
+
+```go
+func (s *deleteResourceStage) and() *deleteResourceStage {
+	return s
+}
+
+// Usage in tests:
+// then.responseShouldHaveStatusCode(204).
+//      and().
+//      resourceShouldNotExistInDatabase().
+//      and().
+//      deletedEventIsReceived(given.resourceIDToDelete)
+```
+
+**Then method patterns**:
+- Read and parse response body first
+- Use `require` for critical parsing operations (prevents nil pointer panics)
+- Use `assert` for value comparisons (allows seeing multiple failures)
+- Use `require` when test can't continue if assertion fails
+- Store data for later assertions (like IDs, tokens)
+- Validate both success and error responses
+- Add `and()` helper for readable chaining
+- Keep assertions focused - one aspect per method when possible
+- Use descriptive assertion messages for clarity
+
+## Event/Message Verification Methods (Optional)
+
+### Pattern 1: NATS JetStream Event Verification
+
+```go
+func (s *createResourceStage) createdEventIsReceived(expectedResourceID string) *createResourceStage {
+	msgs, err := s.consumer.Messages()
+	require.Nil(s.t, err)
+	require.NotNil(s.t, msgs)
+	
+	// Set a timeout context to avoid infinite waits
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	
+	for {
+		select {
+		case <-ctx.Done():
+			require.Fail(s.t, "Timeout waiting for event", 
+				"Expected ResourceCreated event for ID %s", expectedResourceID)
+			return s
+		default:
+			msg, err := msgs.Next()
+			if err != nil {
+				if errors.Is(err, nats.ErrTimeout) {
+					continue
+				}
+				require.Nil(s.t, err)
+			}
+			
+			// Parse event
+			event := new(ResourceCreatedEvent)
+			err = json.Unmarshal(msg.Data(), event)
+			require.Nil(s.t, err)
+			
+			// Check if this is the event we're looking for
+			if event.ResourceID == expectedResourceID {
+				// Validate event structure
+				require.NotEmpty(s.t, event.EventID)
+				require.NotEmpty(s.t, event.EventType)
+				require.NotNil(s.t, event.Timestamp)
+				
+				msg.Ack()
+				msgs.Stop()
+				return s
+			}
+			
+			// Not our event, acknowledge and continue
+			msg.Ack()
+		}
+	}
+}
+```
+
+### Pattern 2: Database Outbox Pattern Verification
+
+```go
+func (s *createResourceStage) eventIsStoredInOutbox(expectedResourceID string) *createResourceStage {
+	// Query the outbox table
+	query := `
+		SELECT event_id, event_type, payload, created_at 
+		FROM outbox_events 
+		WHERE event_type = $1 
+		AND payload->>'resource_id' = $2
+		ORDER BY created_at DESC 
+		LIMIT 1
+	`
+	
+	var eventID, eventType, payload string
+	var createdAt time.Time
+	
+	// Poll with retry (event might not be immediately written)
+	var err error
+	maxRetries := 10
+	for i := 0; i < maxRetries; i++ {
+		err = s.db.QueryRow(query, "resource.created", expectedResourceID).
+			Scan(&eventID, &eventType, &payload, &createdAt)
+		
+		if err == nil {
+			break
+		}
+		
+		if err == sql.ErrNoRows && i < maxRetries-1 {
+			time.Sleep(200 * time.Millisecond)
+			continue
+		}
+	}
+	
+	require.Nil(s.t, err, "Event should exist in outbox")
+	require.NotEmpty(s.t, eventID)
+	require.Equal(s.t, "resource.created", eventType)
+	
+	// Optionally validate payload structure
+	event := new(ResourceCreatedEvent)
+	err = json.Unmarshal([]byte(payload), event)
+	require.Nil(s.t, err)
+	require.Equal(s.t, expectedResourceID, event.ResourceID)
+	
+	return s
+}
+```
+
+**Event verification patterns**:
+- Always use timeouts to prevent infinite waits
+- Handle timeout errors gracefully (retry or fail with clear message)
+- Unmarshal and validate event structure
+- Match events by unique identifiers (ID, correlation ID, etc.)
+- Acknowledge/commit messages after verification
+- Clean up consumers/channels after verification
+- Consider using `t.Cleanup()` for resource cleanup
+- For async systems, poll with retries rather than single check
+
+## Functional Options Pattern (Opts File)
+
+Create `*_test_opts.go` file if you need to test variations of request data.
+
+### Basic Options
+
+```go
+package tests
+
+func WithName(name string) func(*CreateResourceRequest) {
+	return func(req *CreateResourceRequest) {
+		req.Name = name
+	}
+}
+
+func WithEmail(email string) func(*CreateResourceRequest) {
+	return func(req *CreateResourceRequest) {
+		req.Email = email
+	}
+}
+
+func WithStatus(status string) func(*CreateResourceRequest) {
+	return func(req *CreateResourceRequest) {
+		req.Status = status
+	}
+}
+
+// Composite options for common scenarios
+func WithInvalidEmail() func(*CreateResourceRequest) {
+	return func(req *CreateResourceRequest) {
+		req.Email = "not-an-email"
+	}
+}
+
+func WithEmptyRequiredFields() func(*CreateResourceRequest) {
+	return func(req *CreateResourceRequest) {
+		req.Name = ""
+		req.Email = ""
+	}
+}
+```
+
+**When to create opts file**:
+- Testing validation rules (empty fields, invalid formats)
+- Testing different field combinations
+- Testing boundary conditions (min/max values)
+- Testing duplicate data scenarios
+- Reusing request variations across multiple tests
+
+**Usage in tests**:
+
+```go
+// Single option
+given.aCreateResourceRequestIsPrepared(WithName(""))
+
+// Multiple options
+given.aCreateResourceRequestIsPrepared(
+	WithName("Test Resource"),
+	WithEmail("test@example.com"),
+	WithStatus("active"),
+)
+
+// Using predefined invalid data
+given.aCreateResourceRequestIsPrepared(WithInvalidEmail())
+```
+
+## testify/require vs assert Guidelines
+
+### Use `require` for:
+- Network operations (HTTP requests)
+- JSON marshaling/unmarshaling
+- Reading response bodies
+- Critical setup that must succeed
+- Operations where continuing makes no sense if they fail
+
+```go
+payload, err := json.Marshal(s.createRequestBody)
+require.Nil(s.t, err)  // Must succeed to continue
+
+response, err := s.http.Post(url, contentType, bytes.NewBuffer(payload))
+require.Nil(s.t, err)  // Must succeed to continue
+require.NotNil(s.t, response)  // Need response object
+```
+
+### Use `assert` for:
+- Status code comparisons
+- Value comparisons where seeing all failures helps
+
+```go
+assert.Equal(s.t, http.StatusOK, s.response.StatusCode)
+assert.Equal(s.t, expectedPage, searchResults.Page)
+```
+
+### Rule of Thumb
+If the test cannot meaningfully continue when an assertion fails, use `require`. If you want to see multiple assertion failures in one test run, use `assert`.

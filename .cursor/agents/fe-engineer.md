@@ -94,10 +94,10 @@ You are a **Frontend Engineer** specializing in React and TypeScript, focusing o
 ## Relevant Documentation
 
 ### Must Read Rules
-- `.cursor/rules/00-project-context.mdc` - Project overview
-- `.cursor/rules/03-frontend-patterns.mdc` - React/TypeScript guidelines
-- `.cursor/rules/04b-frontend-testing-practices.mdc` - Frontend testing practices
-- `.cursor/rules/07-agent-behavior.mdc` - General agent behavior
+- `.cursor/rules/project-context.mdc` - Project overview
+- `.cursor/rules/frontend-patterns.mdc` - React/TypeScript guidelines
+- `.cursor/rules/frontend-testing-practices.mdc` - Frontend testing practices
+- `.cursor/rules/agent-behavior.mdc` - General agent behavior
 
 ### Reference Documentation
 - `docs/frontend/` (or equivalent per project context) - Frontend architecture and guides

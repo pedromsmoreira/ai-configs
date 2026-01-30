@@ -1,0 +1,624 @@
+---
+description: Quick reference for common patterns, pitfalls, and best practices
+globs: tests/**/*.go
+alwaysApply: false
+---
+
+# E2E Test Quick Reference
+
+Quick reference guide for common patterns, pitfalls, and best practices in stage-based BDD tests.
+
+## Common Patterns Reference
+
+### Pattern: Unique Value Generation
+
+Always generate unique values for fields that must be unique (emails, usernames, IDs):
+
+```go
+// Unique email
+email := fmt.Sprintf("test-%s@example.com", uuid.New().String())
+
+// Unique username
+username := fmt.Sprintf("user-%s", uuid.New().String())
+
+// Unique ID
+id := uuid.New().String()
+
+// Unique timestamp-based identifier
+identifier := fmt.Sprintf("resource-%d", time.Now().UnixNano())
+```
+
+### Pattern: Composing Setup Methods
+
+Create helper methods that combine multiple operations for common scenarios:
+
+```go
+func (s *createResourceStage) aResourceExistsWithEmail(email string) *createResourceStage {
+	s.aCreateResourceRequestIsPrepared(WithEmail(email))
+	s.createResourceEndpointIsCalled()
+	
+	// Verify creation succeeded
+	require.Equal(s.t, http.StatusCreated, s.response.StatusCode)
+	
+	return s
+}
+
+// Usage: Test duplicate email
+given.aResourceExistsWithEmail(email)
+when.aResourceIsCreatedWithSameEmail(email)
+then.responseShouldReturnConflictError()
+```
+
+### Pattern: Random/Non-Existent ID Generation
+
+For testing 404 Not Found scenarios:
+
+```go
+func (s *getResourceStage) aNonExistentIDIsUsed() *getResourceStage {
+	// Generate a valid-format but non-existent ID
+	s.resourceIDToGet = uuid.New().String()
+	return s
+}
+
+func (s *deleteResourceStage) anInvalidIDFormatIsUsed() *deleteResourceStage {
+	// Use invalid ID format for testing validation
+	s.resourceIDToDelete = "not-a-valid-uuid"
+	return s
+}
+```
+
+### Pattern: Building Query Parameters
+
+For GET requests with filters and pagination:
+
+```go
+// Simple filters
+request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/resources", s.host), nil)
+query := request.URL.Query()
+query.Add("status", "active")
+query.Add("page", "1")
+query.Add("size", "10")
+request.URL.RawQuery = query.Encode()
+```
+
+```go
+// Dynamic filters from map
+func (s *searchResourceStage) buildQueryParams(filters map[string]string) url.Values {
+	query := url.Values{}
+	for key, value := range filters {
+		query.Add(key, value)
+	}
+	return query
+}
+
+// Usage
+filters := map[string]string{
+	"status":  "active",
+	"tag":     "production",
+	"country": "US",
+	"page":    "1",
+	"size":    "20",
+}
+query := s.buildQueryParams(filters)
+request.URL.RawQuery = query.Encode()
+```
+
+### Pattern: Retry Logic for Eventually Consistent Systems
+
+```go
+func (s *searchResourceStage) waitForResourceToAppearInSearch(resourceID string, maxWait time.Duration) *searchResourceStage {
+	deadline := time.Now().Add(maxWait)
+	
+	for time.Now().Before(deadline) {
+		// Query search endpoint
+		request, _ := http.NewRequest(
+			http.MethodGet,
+			fmt.Sprintf("%s/api/v1/resources/%s", s.host, resourceID),
+			nil,
+		)
+		
+		response, err := s.http.Do(request)
+		require.Nil(s.t, err)
+		
+		// Check if resource is found
+		if response.StatusCode == http.StatusOK {
+			s.response = response
+			return s
+		}
+		
+		// Wait before retrying
+		time.Sleep(200 * time.Millisecond)
+	}
+	
+	require.Fail(s.t, "Resource did not appear in search within timeout")
+	return s
+}
+```
+
+### Pattern: Polling Database for Async Operations
+
+```go
+func (s *createResourceStage) waitForDatabaseRecord(resourceID string) *createResourceStage {
+	query := "SELECT status FROM resources WHERE id = $1"
+	
+	maxRetries := 10
+	for i := 0; i < maxRetries; i++ {
+		var status string
+		err := s.db.QueryRow(query, resourceID).Scan(&status)
+		
+		if err == nil {
+			// Record found
+			return s
+		}
+		
+		if err == sql.ErrNoRows && i < maxRetries-1 {
+			time.Sleep(200 * time.Millisecond)
+			continue
+		}
+		
+		require.Nil(s.t, err, "Failed to find resource in database")
+	}
+	
+	return s
+}
+```
+
+### Pattern: Test Data Cleanup
+
+```go
+// Cleanup using t.Cleanup (recommended)
+func newCreateResourceStage(t *testing.T) (*createResourceStage, *createResourceStage, *createResourceStage) {
+	// ... setup code ...
+	
+	stage := &createResourceStage{
+		t:                t,
+		createdResources: make([]string, 0),
+	}
+	
+	// Register cleanup to run after test
+	t.Cleanup(func() {
+		for _, resourceID := range stage.createdResources {
+			stage.cleanupResource(resourceID)
+		}
+	})
+	
+	return stage, stage, stage
+}
+
+func (s *createResourceStage) cleanupResource(resourceID string) {
+	request, _ := http.NewRequest(
+		http.MethodDelete,
+		fmt.Sprintf("%s/api/v1/resources/%s", s.host, resourceID),
+		nil,
+	)
+	s.http.Do(request)
+	// Ignore errors during cleanup
+}
+```
+
+### Pattern: Testing Concurrent Requests
+
+```go
+func (s *createResourceStage) multipleResourcesAreCreatedConcurrently(count int) *createResourceStage {
+	errors := make(chan error, count)
+	done := make(chan bool)
+	
+	for i := 0; i < count; i++ {
+		go func(index int) {
+			request := &CreateResourceRequest{
+				Name:  fmt.Sprintf("concurrent-resource-%d", index),
+				Email: fmt.Sprintf("test-%d-%s@example.com", index, uuid.New().String()),
+			}
+			
+			payload, err := json.Marshal(request)
+			if err != nil {
+				errors <- err
+				return
+			}
+			
+			response, err := s.http.Post(
+				fmt.Sprintf("%s/api/v1/resources", s.host),
+				applicationJSONContentType,
+				bytes.NewBuffer(payload),
+			)
+			
+			if err != nil {
+				errors <- err
+				return
+			}
+			
+			if response.StatusCode != http.StatusCreated {
+				errors <- fmt.Errorf("unexpected status: %d", response.StatusCode)
+				return
+			}
+			
+			done <- true
+		}(i)
+	}
+	
+	// Wait for all requests to complete
+	successCount := 0
+	for i := 0; i < count; i++ {
+		select {
+		case <-done:
+			successCount++
+		case err := <-errors:
+			require.Nil(s.t, err)
+		}
+	}
+	
+	require.Equal(s.t, count, successCount)
+	return s
+}
+```
+
+## Common Pitfalls to Avoid
+
+### Pitfall 1: Not Returning `*stage` from Stage Methods
+
+```go
+// ❌ BAD - Breaks chaining
+func (s *createResourceStage) aCreateResourceRequestIsPrepared() {
+	s.createRequestBody = &CreateResourceRequest{Name: "test"}
+}
+
+// ✅ GOOD - Enables chaining
+func (s *createResourceStage) aCreateResourceRequestIsPrepared() *createResourceStage {
+	s.createRequestBody = &CreateResourceRequest{Name: "test"}
+	return s
+}
+```
+
+### Pitfall 2: Hardcoded Configuration Values
+
+```go
+// ❌ BAD - Not configurable
+host := "localhost:8000"
+natsHost := "localhost:4222"
+
+// ✅ GOOD - Uses environment with defaults
+host := getEnvOrDefault("SERVER_HOST", "localhost")
+port := getEnvOrDefault("SERVER_PORT", "8080")
+natsHost := getEnvOrDefault("NATS_HOST", "localhost:4222")
+```
+
+### Pitfall 3: Reusing Non-Unique Values
+
+```go
+// ❌ BAD - Causes conflicts in tests
+given.aCreateResourceRequestIsPrepared(WithEmail("test@test.com"))
+
+// ✅ GOOD - Generates unique values
+email := fmt.Sprintf("test-%s@example.com", uuid.New().String())
+given.aCreateResourceRequestIsPrepared(WithEmail(email))
+```
+
+### Pitfall 4: Using `assert` for Critical Operations
+
+```go
+// ❌ BAD - Test continues even if this fails
+payload, err := json.Marshal(s.createRequestBody)
+assert.Nil(s.t, err)  // Test continues!
+response, _ := s.http.Post(url, contentType, bytes.NewBuffer(payload))
+
+// ✅ GOOD - Test stops if critical operation fails
+payload, err := json.Marshal(s.createRequestBody)
+require.Nil(s.t, err)  // Test stops here if it fails
+```
+
+### Pitfall 5: Not Closing Resources
+
+```go
+// ❌ BAD - Resource leak
+msgs, err := s.consumer.Messages()
+for {
+	msg, _ := msgs.Next()
+	// ... process message
+	break
+}
+// msgs.Stop() is missing!
+
+// ✅ GOOD - Clean up resources
+msgs, err := s.consumer.Messages()
+for {
+	msg, _ := msgs.Next()
+	// ... process message
+	break
+}
+msgs.Stop()
+```
+
+### Pitfall 6: Wrong Content Type
+
+```go
+// ❌ BAD - Wrong content type for PATCH
+request.Header.Set("Content-Type", "application/json")
+
+// ✅ GOOD - Use merge-patch for PATCH requests
+request.Header.Set("Content-Type", "application/merge-patch+json")
+```
+
+### Pitfall 7: Creating Different Stage Instances
+
+```go
+// ❌ BAD - Three different instances (breaks state sharing)
+func newCreateResourceStage(t *testing.T) (*createResourceStage, *createResourceStage, *createResourceStage) {
+	return &createResourceStage{t: t}, &createResourceStage{t: t}, &createResourceStage{t: t}
+}
+
+// ✅ GOOD - Same instance three times
+func newCreateResourceStage(t *testing.T) (*createResourceStage, *createResourceStage, *createResourceStage) {
+	stage := &createResourceStage{t: t, host: "...", http: &http.Client{}}
+	return stage, stage, stage
+}
+```
+
+### Pitfall 8: Test Logic in Test Functions
+
+```go
+// ❌ BAD - Logic in test function
+func TestCreateResource(t *testing.T) {
+	t.Run("test", func(t *testing.T) {
+		request := &CreateResourceRequest{Name: "test"}
+		payload, _ := json.Marshal(request)
+		resp, _ := http.Post(url, "application/json", bytes.NewBuffer(payload))
+		assert.Equal(t, 201, resp.StatusCode)
+	})
+}
+
+// ✅ GOOD - All logic in stage methods
+func TestCreateResource(t *testing.T) {
+	t.Run("when creating a resource returns resource with 201 created status code", func(t *testing.T) {
+		given, when, then := newCreateResourceStage(t)
+		
+		given.aCreateResourceRequestIsPrepared()
+		when.createResourceEndpointIsCalled()
+		then.responseShouldHaveValidResourceAndStatusCode(http.StatusCreated)
+	})
+}
+```
+
+### Pitfall 9: Not Using t.Cleanup()
+
+```go
+// ❌ BAD - Manual cleanup can be missed if test fails early
+func newStage(t *testing.T) (*stage, *stage, *stage) {
+	conn, _ := nats.Connect("localhost:4222")
+	stage := &stage{conn: conn}
+	return stage, stage, stage
+}
+// If test fails, connection never closes
+
+// ✅ GOOD - Cleanup always runs
+func newStage(t *testing.T) (*stage, *stage, *stage) {
+	conn, _ := nats.Connect("localhost:4222")
+	stage := &stage{conn: conn}
+	
+	t.Cleanup(func() {
+		if conn != nil {
+			conn.Close()
+		}
+	})
+	
+	return stage, stage, stage
+}
+```
+
+### Pitfall 10: Ignoring HTTP Status Codes in Setup
+
+```go
+// ❌ BAD - Doesn't verify setup succeeded
+given.aResourceIsCreated()
+// If this returns 500, test continues with wrong assumptions
+
+// ✅ GOOD - Verify setup operations
+func (s *stage) aResourceIsCreated() *stage {
+	response, err := s.http.Post(...)
+	require.Nil(s.t, err)
+	require.Equal(s.t, http.StatusCreated, response.StatusCode)
+	return s
+}
+```
+
+## Best Practices Checklist
+
+### Test Structure
+- [ ] Test function names start with `Test` (e.g., `TestCreateResource`)
+- [ ] Test case names start with "when" and describe the scenario
+- [ ] Each test creates fresh stage instance (`given, when, then := newStage(t)`)
+- [ ] No logic in test functions - delegate to stage methods
+- [ ] Tests are independent and can run in any order
+
+### Stage Methods
+- [ ] All stage methods return `*stage` for chaining
+- [ ] Given methods use functional options for flexibility
+- [ ] When methods only execute actions (no validation)
+- [ ] Then methods perform assertions and validation
+- [ ] Stage struct holds all dependencies needed
+
+### Configuration
+- [ ] All connection strings use environment variables with defaults
+- [ ] HTTP client has reasonable timeout (e.g., 30 seconds)
+- [ ] All connections are verified immediately after setup
+- [ ] `t.Cleanup()` is used for all resource cleanup
+
+### Data Management
+- [ ] Unique values generated for unique fields (emails, IDs, etc.)
+- [ ] Test data doesn't leak between tests
+- [ ] Database setup preferred over API calls for speed
+- [ ] Cleanup handlers registered for created resources
+
+### Assertions
+- [ ] `require` used for critical operations (parsing, network calls)
+- [ ] `assert` used for value comparisons
+- [ ] Descriptive messages provided for assertions
+- [ ] Both success and error scenarios tested
+
+### Event Testing
+- [ ] Timeouts used to prevent infinite waits
+- [ ] Messages acknowledged after verification
+- [ ] Consumers properly cleaned up (`msgs.Stop()`)
+- [ ] Retry logic for eventually consistent systems
+
+## Quick Method Naming Reference
+
+| Phase | Good Names | Bad Names |
+|-------|-----------|-----------|
+| Given | `aResourceExists()`, `anAuthenticatedUser()`, `multipleResourcesExist(5)` | `setupResource()`, `init()`, `prepare()` |
+| When | `createResourceEndpointIsCalled()`, `resourceIsUpdated()`, `searchEndpointIsQueried()` | `create()`, `doUpdate()`, `call()` |
+| Then | `responseShouldHaveStatusCode(200)`, `resourceShouldExist()`, `eventIsReceived()` | `checkStatus()`, `verify()`, `test()` |
+
+## Content-Type Quick Reference
+
+| HTTP Method | Content-Type | Use Case |
+|-------------|-------------|----------|
+| POST | `application/json` | Creating resources |
+| GET | `application/json` (header only) | Retrieving resources |
+| PATCH | `application/merge-patch+json` | Partial updates |
+| PUT | `application/json` | Full replacement |
+| DELETE | `application/json` (header only) | Deleting resources |
+
+## HTTP Status Code Quick Reference
+
+| Status Code | Constant | Common Use Cases |
+|------------|----------|------------------|
+| 200 | `http.StatusOK` | Successful GET, PATCH, PUT |
+| 201 | `http.StatusCreated` | Successful POST (created) |
+| 204 | `http.StatusNoContent` | Successful DELETE |
+| 400 | `http.StatusBadRequest` | Validation errors |
+| 401 | `http.StatusUnauthorized` | Missing/invalid authentication |
+| 403 | `http.StatusForbidden` | Insufficient permissions |
+| 404 | `http.StatusNotFound` | Resource doesn't exist |
+| 409 | `http.StatusConflict` | Duplicate resource |
+| 500 | `http.StatusInternalServerError` | Server errors |
+
+## Environment Variables Quick Reference
+
+### Common Environment Variables
+
+```go
+// HTTP Server
+SERVER_HOST     = "localhost"
+SERVER_PORT     = "8080"
+
+// Database
+DB_HOST         = "localhost"
+DB_PORT         = "5432"
+DB_NAME         = "testdb"
+DB_USER         = "postgres"
+DB_PASSWORD     = "postgres"
+
+// Redis
+REDIS_HOST      = "localhost"
+REDIS_PORT      = "6379"
+REDIS_PASSWORD  = ""
+
+// NATS
+NATS_HOST       = "localhost:4222"
+NATS_STREAM     = "resources"
+NATS_SUBJECT    = "resources.created"
+
+// Kafka
+KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
+KAFKA_TOPIC             = "resource-events"
+
+// RabbitMQ
+RABBITMQ_HOST     = "localhost"
+RABBITMQ_PORT     = "5672"
+RABBITMQ_USER     = "guest"
+RABBITMQ_PASSWORD = "guest"
+
+// MongoDB
+MONGO_HOST      = "localhost"
+MONGO_PORT      = "27017"
+MONGO_DATABASE  = "testdb"
+```
+
+## Testing Checklist by HTTP Method
+
+### Testing POST (Create)
+- [ ] Success case (201 Created)
+- [ ] Validation errors (400 Bad Request)
+- [ ] Duplicate resource (409 Conflict)
+- [ ] Unauthorized (401)
+- [ ] Forbidden (403)
+- [ ] Event published (if applicable)
+- [ ] Database record created
+- [ ] Response contains all required fields
+
+### Testing GET (Retrieve)
+- [ ] Success case (200 OK)
+- [ ] Not found (404)
+- [ ] Unauthorized (401)
+- [ ] Response structure validated
+- [ ] Correct data returned
+
+### Testing GET (List/Search)
+- [ ] Success with filters (200 OK)
+- [ ] Pagination works correctly
+- [ ] Empty results handled
+- [ ] Sorting works correctly
+- [ ] Filter combinations work
+
+### Testing PATCH (Update)
+- [ ] Success case (200 OK)
+- [ ] Not found (404)
+- [ ] Validation errors (400)
+- [ ] Unauthorized/Forbidden (401/403)
+- [ ] UpdatedAt timestamp updated
+- [ ] Only specified fields updated
+- [ ] Event published (if applicable)
+
+### Testing DELETE
+- [ ] Success case (204 No Content)
+- [ ] Not found (404)
+- [ ] Unauthorized/Forbidden (401/403)
+- [ ] Resource no longer accessible
+- [ ] Database record removed
+- [ ] Event published (if applicable)
+- [ ] Idempotency (deleting twice)
+
+## Debugging Tips
+
+### Test Failing Unexpectedly
+
+1. **Check environment variables**: Verify all services are running and accessible
+2. **Print response body**: Add temporary debug logging
+   ```go
+   body, _ := io.ReadAll(s.response.Body)
+   t.Logf("Response: %s", string(body))
+   ```
+3. **Verify service health**: Ensure API, database, message broker are ready
+4. **Check test isolation**: Tests might be interfering with each other
+5. **Look for resource leaks**: Unclosed connections can cause issues
+
+### Event Not Received
+
+1. **Check consumer configuration**: Verify stream, subject, durable name
+2. **Increase timeout**: Event might take longer than expected
+3. **Check event publishing**: Verify API actually publishes events
+4. **Inspect NATS**: Use `nats` CLI to inspect streams and consumers
+5. **Add logging**: Log all received events to debug matching logic
+
+### Database Issues
+
+1. **Connection refused**: Verify database is running and accessible
+2. **Record not found**: Check if setup methods actually created the record
+3. **Unique constraint violations**: Ensure unique value generation works
+4. **Transaction isolation**: Be aware of transaction boundaries
+
+## Performance Tips
+
+1. **Use database setup over API calls** when creating test data (faster)
+2. **Run independent tests in parallel** with `t.Parallel()`
+3. **Reuse connections** in stage constructor (don't create per-method)
+4. **Clean up test data** to prevent database bloat
+5. **Use appropriate timeouts** - not too short, not too long
+6. **Consider test containers** for consistent, fast test environments
+
+## Related Resources
+
+- **e2e-test-overview.mdc** - Core concepts and workflow overview
+- **e2e-test-setup-patterns.mdc** - Test setup configurations
+- **e2e-test-stage-methods.mdc** - Given/When/Then implementation details
+- **e2e-test-examples.mdc** - Complete practical examples

@@ -7,7 +7,7 @@ alwaysApply: true
 
 # Go Testing Practices
 
-For the full TDD workflow (Red-Green-Refactor), see `09-test-driven-development.mdc`.
+For the full TDD workflow (Red-Green-Refactor), see `test-driven-development.mdc`.
 
 ## Test Structure
 

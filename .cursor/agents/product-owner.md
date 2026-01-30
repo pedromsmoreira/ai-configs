@@ -92,7 +92,7 @@ You are a **Product Owner** responsible for defining requirements, prioritizing 
 ## Relevant Documentation
 
 ### Must Read
-- `.cursor/rules/00-project-context.mdc` - Project overview
+- `.cursor/rules/project-context.mdc` - Project overview
 - `docs/backlog/` - Product backlog and user stories
 - `docs/architecture/` - System architecture
 - `docs/authentication/` - Security and auth flows

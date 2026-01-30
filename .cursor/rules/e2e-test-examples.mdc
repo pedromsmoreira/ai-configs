@@ -1,0 +1,834 @@
+---
+description: Complete practical examples of e2e tests and import templates
+globs: tests/**/*_test.go
+alwaysApply: false
+---
+
+# E2E Test Practical Examples
+
+This guide provides complete, practical examples of e2e tests for common scenarios.
+
+## Practical Complete Examples
+
+### Example 1: Simple POST Request Test (Create Resource)
+
+**File: `create_resource_test.go`**
+
+```go
+package tests
+
+import (
+	"net/http"
+	"testing"
+)
+
+func TestCreateResource(t *testing.T) {
+	t.Run("when creating a resource returns resource with 201 created status code", func(t *testing.T) {
+		given, when, then := newCreateResourceStage(t)
+
+		given.aCreateResourceRequestIsPrepared()
+		when.createResourceEndpointIsCalled()
+		then.responseShouldHaveValidResourceAndStatusCode(http.StatusCreated)
+	})
+}
+```
+
+**Key takeaway**: Simple, readable test flow with clear Given-When-Then structure.
+
+---
+
+### Example 2: Validation Error Tests with Functional Options
+
+**File: `create_resource_test.go`**
+
+```go
+func TestCreateResource(t *testing.T) {
+	t.Run("when creating a resource with empty name returns 400 bad request", func(t *testing.T) {
+		given, when, then := newCreateResourceStage(t)
+
+		given.aCreateResourceRequestIsPrepared(WithName(""))
+		when.createResourceEndpointIsCalled()
+		then.responseShouldReturnValidationError("name")
+	})
+	
+	t.Run("when creating a resource with invalid email returns 400 bad request", func(t *testing.T) {
+		given, when, then := newCreateResourceStage(t)
+
+		given.aCreateResourceRequestIsPrepared(WithInvalidEmail())
+		when.createResourceEndpointIsCalled()
+		then.responseShouldReturnValidationError("email")
+	})
+	
+	t.Run("when creating a resource with duplicate email returns 409 conflict", func(t *testing.T) {
+		given, when, then := newCreateResourceStage(t)
+		
+		duplicateEmail := "duplicate@example.com"
+		given.aResourceExistsWithEmail(duplicateEmail)
+		given.aCreateResourceRequestIsPrepared(WithEmail(duplicateEmail))
+		when.createResourceEndpointIsCalled()
+		then.responseShouldHaveStatusCode(http.StatusConflict)
+	})
+}
+```
+
+**Key takeaway**: Use functional options to test different validation scenarios cleanly.
+
+---
+
+### Example 3: GET Request with Query Parameters (Search/List)
+
+**File: `search_resources_test.go`**
+
+```go
+package tests
+
+import (
+	"net/http"
+	"testing"
+)
+
+func TestSearchResources(t *testing.T) {
+	t.Run("when searching with status filter returns only matching resources", func(t *testing.T) {
+		given, when, then := newSearchResourceStage(t)
+
+		minimumExpected := 5
+		given.multipleResourcesExistWithStatus(minimumExpected, "active")
+		given.multipleResourcesExistWithStatus(3, "inactive")
+
+		when.searchEndpointIsQueriedWithFilter("status", "active", 10)
+
+		then.responseShouldHaveStatusCode(http.StatusOK).
+			and().
+			responseShouldContainResourcesWithMinimumCount(minimumExpected).
+			and().
+			allResourcesShouldHaveStatus("active")
+	})
+	
+	t.Run("when searching with pagination returns correct page", func(t *testing.T) {
+		given, when, then := newSearchResourceStage(t)
+
+		given.multipleResourcesExist(20)
+
+		when.searchEndpointIsQueriedWithPagination(2, 5) // page 2, size 5
+
+		then.responseShouldHaveStatusCode(http.StatusOK).
+			and().
+			responseShouldHavePaginationInfo(2, 5, 20)
+	})
+}
+```
+
+**Supporting stage method:**
+
+```go
+func (s *searchResourceStage) searchEndpointIsQueriedWithFilter(filter string, value string, pageSize int) *searchResourceStage {
+	request, err := http.NewRequest(
+		http.MethodGet,
+		fmt.Sprintf("%s/api/v1/resources", s.host),
+		nil,
+	)
+	require.Nil(s.t, err)
+	
+	query := request.URL.Query()
+	query.Add(filter, value)
+	query.Add("size", fmt.Sprintf("%d", pageSize))
+	request.URL.RawQuery = query.Encode()
+	
+	request.Header.Set("Content-Type", applicationJSONContentType)
+	
+	response, err := s.http.Do(request)
+	require.Nil(s.t, err)
+	
+	s.response = response
+	return s
+}
+```
+
+**Key takeaway**: Test both filtering and pagination for search/list endpoints.
+
+---
+
+### Example 4: PATCH Request Test (Partial Update)
+
+**File: `update_resource_test.go`**
+
+```go
+package tests
+
+import (
+	"net/http"
+	"testing"
+)
+
+func TestUpdateResource(t *testing.T) {
+	t.Run("when updating resource name returns resource with updated name", func(t *testing.T) {
+		given, when, then := newUpdateResourceStage(t)
+
+		given.aResourceExistsAndIsReadyForUpdate()
+		when.resourceIsUpdatedWithNewName("Updated Resource Name")
+		then.responseShouldHaveStatusCode(http.StatusOK).
+			and().
+			resourceShouldHaveUpdatedName("Updated Resource Name").
+			and().
+			updatedAtShouldBeAfterCreatedAt()
+	})
+	
+	t.Run("when updating non-existent resource returns 404 not found", func(t *testing.T) {
+		given, when, then := newUpdateResourceStage(t)
+
+		given.aNonExistentResourceIDIsUsed()
+		when.resourceIsUpdatedWithNewName("New Name")
+		then.responseShouldHaveStatusCode(http.StatusNotFound)
+	})
+}
+```
+
+**Supporting stage method:**
+
+```go
+func (s *updateResourceStage) resourceIsUpdatedWithNewName(newName string) *updateResourceStage {
+	requestBody := &UpdateResourceRequest{
+		Name: newName,
+	}
+	
+	payload, err := json.Marshal(requestBody)
+	require.Nil(s.t, err)
+	
+	request, err := http.NewRequest(
+		http.MethodPatch,
+		fmt.Sprintf("%s/api/v1/resources/%s", s.host, s.resourceIDToUpdate),
+		bytes.NewBuffer(payload),
+	)
+	require.Nil(s.t, err)
+	
+	request.Header.Set("Content-Type", applicationJSONPatchContentType)
+	
+	s.response, err = s.http.Do(request)
+	require.Nil(s.t, err)
+	
+	return s
+}
+```
+
+**Key takeaway**: Use JSON Merge Patch content type for PATCH requests.
+
+---
+
+### Example 5: DELETE Request Test with Verification Chain
+
+**File: `delete_resource_test.go`**
+
+```go
+package tests
+
+import (
+	"net/http"
+	"testing"
+)
+
+func TestDeleteResource(t *testing.T) {
+	t.Run("when deleting existing resource returns 204 and resource is removed", func(t *testing.T) {
+		given, when, then := newDeleteResourceStage(t)
+
+		given.aResourceExistsToBeDeleted()
+		when.deleteResourceEndpointIsCalled()
+		then.responseShouldHaveStatusCode(http.StatusNoContent).
+			and().
+			resourceShouldNotExistAnymore(given.resourceIDToDelete).
+			and().
+			resourceShouldNotExistInDatabase(given.resourceIDToDelete)
+	})
+	
+	t.Run("when deleting non-existent resource returns 404 not found", func(t *testing.T) {
+		given, when, then := newDeleteResourceStage(t)
+
+		given.aNonExistentResourceIDIsUsed()
+		when.deleteResourceEndpointIsCalled()
+		then.responseShouldHaveStatusCode(http.StatusNotFound)
+	})
+	
+	t.Run("when deleting already deleted resource returns 404 not found", func(t *testing.T) {
+		given, when, then := newDeleteResourceStage(t)
+
+		given.aResourceExistsToBeDeleted()
+		given.resourceIsDeleted(given.resourceIDToDelete)
+		when.deleteResourceEndpointIsCalled()
+		then.responseShouldHaveStatusCode(http.StatusNotFound)
+	})
+}
+```
+
+**Supporting stage methods:**
+
+```go
+func (s *deleteResourceStage) and() *deleteResourceStage {
+	return s
+}
+
+func (s *deleteResourceStage) resourceShouldNotExistAnymore(id string) *deleteResourceStage {
+	request, err := http.NewRequest(
+		http.MethodGet,
+		fmt.Sprintf("%s/api/v1/resources/%s", s.host, id),
+		nil,
+	)
+	require.Nil(s.t, err)
+	
+	response, err := s.http.Do(request)
+	require.Nil(s.t, err)
+	require.Equal(s.t, http.StatusNotFound, response.StatusCode)
+	
+	return s
+}
+```
+
+**Key takeaway**: Chain multiple verifications using `and()` for comprehensive testing.
+
+---
+
+### Example 6: Authentication/Authorization Test
+
+**File: `create_resource_auth_test.go`**
+
+```go
+package tests
+
+import (
+	"net/http"
+	"testing"
+)
+
+func TestCreateResourceAuthentication(t *testing.T) {
+	t.Run("when creating resource without authentication returns 401 unauthorized", func(t *testing.T) {
+		given, when, then := newCreateResourceStage(t)
+
+		given.aCreateResourceRequestIsPrepared()
+		given.noAuthenticationTokenIsProvided()
+		when.createResourceEndpointIsCalled()
+		then.responseShouldHaveStatusCode(http.StatusUnauthorized)
+	})
+	
+	t.Run("when creating resource with invalid token returns 401 unauthorized", func(t *testing.T) {
+		given, when, then := newCreateResourceStage(t)
+
+		given.aCreateResourceRequestIsPrepared()
+		given.anInvalidAuthenticationTokenIsProvided()
+		when.createResourceEndpointIsCalled()
+		then.responseShouldHaveStatusCode(http.StatusUnauthorized)
+	})
+	
+	t.Run("when creating resource with insufficient permissions returns 403 forbidden", func(t *testing.T) {
+		given, when, then := newCreateResourceStage(t)
+
+		given.aCreateResourceRequestIsPrepared()
+		given.anAuthenticatedUserWithRole("reader") // Needs "writer" role
+		when.createResourceEndpointIsCalled()
+		then.responseShouldHaveStatusCode(http.StatusForbidden)
+	})
+	
+	t.Run("when creating resource with valid token succeeds", func(t *testing.T) {
+		given, when, then := newCreateResourceStage(t)
+
+		given.aCreateResourceRequestIsPrepared()
+		given.anAuthenticatedUserWithRole("writer")
+		when.createResourceEndpointIsCalled()
+		then.responseShouldHaveStatusCode(http.StatusCreated)
+	})
+}
+```
+
+**Key takeaway**: Test all authentication and authorization scenarios comprehensively.
+
+---
+
+### Example 7: Event-Driven Architecture Test
+
+**File: `create_resource_events_test.go`**
+
+```go
+package tests
+
+import (
+	"net/http"
+	"testing"
+)
+
+func TestCreateResourceEvents(t *testing.T) {
+	t.Run("when resource is created then ResourceCreated event is published", func(t *testing.T) {
+		given, when, then := newCreateResourceStage(t)
+
+		given.aCreateResourceRequestIsPrepared()
+		when.createResourceEndpointIsCalled()
+		then.responseShouldHaveStatusCode(http.StatusCreated).
+			and().
+			createdEventIsReceived(given.createdResourceID).
+			and().
+			eventHasCorrectPayload(given.createdResourceID)
+	})
+}
+```
+
+**Key takeaway**: Verify both HTTP response AND asynchronous events for event-driven systems.
+
+## Import Statements Templates
+
+### For Test File (`*_test.go`)
+
+Basic imports for test files:
+
+```go
+package tests
+
+import (
+	"net/http"
+	"testing"
+)
+```
+
+### For Stage File (`*_test_stage.go`) - Basic HTTP Only
+
+```go
+package tests
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"testing"
+	"time"
+	
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	
+	// Import your project's request/response types
+	// "your_project/internal/handlers/resources"
+	// "your_project/internal/models"
+)
+```
+
+### For Stage File (`*_test_stage.go`) - With Database
+
+```go
+package tests
+
+import (
+	"bytes"
+	"context"
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"testing"
+	"time"
+	
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	
+	// Database driver - choose one based on your database
+	_ "github.com/lib/pq"                // PostgreSQL
+	// _ "github.com/go-sql-driver/mysql" // MySQL
+	// _ "github.com/mattn/go-sqlite3"    // SQLite
+	
+	// Your project imports
+	// "your_project/internal/handlers/resources"
+	// "your_project/internal/models"
+)
+```
+
+### For Stage File (`*_test_stage.go`) - With NATS JetStream
+
+```go
+package tests
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"testing"
+	"time"
+	
+	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	
+	// Your project imports
+	// "your_project/internal/handlers/resources"
+	// "your_project/pkg/events"
+)
+```
+
+### For Stage File (`*_test_stage.go`) - With Kafka
+
+```go
+package tests
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"testing"
+	"time"
+	
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	
+	// Your project imports
+	// "your_project/internal/handlers/resources"
+	// "your_project/pkg/events"
+)
+```
+
+### For Stage File (`*_test_stage.go`) - With RabbitMQ
+
+```go
+package tests
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"testing"
+	"time"
+	
+	"github.com/rabbitmq/amqp091-go"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	
+	// Your project imports
+	// "your_project/internal/handlers/resources"
+	// "your_project/pkg/events"
+)
+```
+
+### For Stage File (`*_test_stage.go`) - With Redis
+
+```go
+package tests
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"testing"
+	"time"
+	
+	"github.com/redis/go-redis/v9"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	
+	// Your project imports
+	// "your_project/internal/handlers/resources"
+	// "your_project/internal/cache"
+)
+```
+
+### For Stage File (`*_test_stage.go`) - Comprehensive (All Dependencies)
+
+```go
+package tests
+
+import (
+	"bytes"
+	"context"
+	"database/sql"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"strings"
+	"testing"
+	"time"
+	
+	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
+	"github.com/redis/go-redis/v9"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	
+	_ "github.com/lib/pq"  // Database driver
+	
+	// Your project imports
+	// "your_project/internal/handlers/resources"
+	// "your_project/internal/models"
+	// "your_project/pkg/events"
+)
+```
+
+### For Opts File (`*_test_opts.go`)
+
+```go
+package tests
+
+import (
+	"time"
+	
+	// Import your project's request types
+	// "your_project/internal/handlers/resources"
+)
+```
+
+**Note**: Replace `your_project` with your actual module path and adjust import paths based on your project structure.
+
+## Advanced Example: Multi-Step Workflow Test
+
+**File: `order_workflow_test.go`**
+
+```go
+package tests
+
+import (
+	"net/http"
+	"testing"
+)
+
+func TestOrderWorkflow(t *testing.T) {
+	t.Run("when creating order and processing payment should complete workflow", func(t *testing.T) {
+		given, when, then := newOrderWorkflowStage(t)
+
+		// Setup phase
+		given.aUserExists()
+		given.aProductExistsInCatalog()
+		given.anOrderRequestIsPrepared()
+		
+		// Create order
+		when.createOrderEndpointIsCalled()
+		then.responseShouldHaveStatusCode(http.StatusCreated).
+			and().
+			orderShouldHaveStatus("pending")
+		
+		// Process payment
+		when.paymentIsProcessedForOrder(given.createdOrderID)
+		then.responseShouldHaveStatusCode(http.StatusOK).
+			and().
+			orderShouldHaveStatus("paid").
+			and().
+			paymentProcessedEventIsReceived(given.createdOrderID)
+		
+		// Verify inventory updated
+		then.productInventoryShouldBeDecremented()
+	})
+}
+```
+
+**Key takeaway**: Stage pattern works well for complex multi-step workflows.
+
+## Full Stage File Example
+
+**File: `create_resource_test_stage.go`**
+
+```go
+package tests
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"testing"
+	"time"
+	
+	"github.com/google/uuid"
+	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+)
+
+const (
+	applicationJSONContentType      string = "application/json"
+	applicationJSONPatchContentType string = "application/merge-patch+json"
+)
+
+type createResourceStage struct {
+	suite.Suite
+	t                 *testing.T
+	host              string
+	http              *http.Client
+	response          *http.Response
+	createRequestBody *CreateResourceRequest
+	contentType       string
+	createdResourceID string
+	
+	// NATS fields
+	stream   string
+	subject  string
+	consumer jetstream.Consumer
+	conn     *nats.Conn
+	js       jetstream.JetStream
+}
+
+// Constructor
+func newCreateResourceStage(t *testing.T) (*createResourceStage, *createResourceStage, *createResourceStage) {
+	host := getEnvOrDefault("SERVER_HOST", "localhost")
+	port := getEnvOrDefault("SERVER_PORT", "8080")
+	
+	natsHost := getEnvOrDefault("NATS_HOST", "localhost:4222")
+	stream := getEnvOrDefault("NATS_STREAM", "resources")
+	subject := getEnvOrDefault("NATS_SUBJECT", "resources.created")
+	
+	conn, err := nats.Connect(natsHost)
+	require.Nil(t, err)
+	
+	js, err := jetstream.New(conn)
+	require.Nil(t, err)
+	
+	consumer, err := js.CreateConsumer(context.TODO(), stream, jetstream.ConsumerConfig{
+		Durable:       "test_resource_created",
+		AckPolicy:     jetstream.AckExplicitPolicy,
+		FilterSubject: subject,
+	})
+	require.Nil(t, err)
+	
+	stage := &createResourceStage{
+		t:        t,
+		host:     fmt.Sprintf("http://%s:%s", host, port),
+		http:     &http.Client{Timeout: 30 * time.Second},
+		stream:   stream,
+		subject:  subject,
+		conn:     conn,
+		js:       js,
+		consumer: consumer,
+	}
+	
+	t.Cleanup(func() {
+		if conn != nil {
+			conn.Close()
+		}
+	})
+	
+	return stage, stage, stage
+}
+
+// Given method
+func (s *createResourceStage) aCreateResourceRequestIsPrepared(options ...func(*CreateResourceRequest)) *createResourceStage {
+	request := &CreateResourceRequest{
+		Name:        "test-resource",
+		Description: "test description",
+		Email:       fmt.Sprintf("test-%s@example.com", uuid.New().String()),
+		Status:      "active",
+	}
+	
+	for _, option := range options {
+		option(request)
+	}
+	
+	s.createRequestBody = request
+	s.contentType = applicationJSONContentType
+	return s
+}
+
+// When method
+func (s *createResourceStage) createResourceEndpointIsCalled() *createResourceStage {
+	payload, err := json.Marshal(s.createRequestBody)
+	require.Nil(s.t, err)
+	
+	response, err := s.http.Post(
+		fmt.Sprintf("%s/api/v1/resources", s.host),
+		s.contentType,
+		bytes.NewBuffer(payload),
+	)
+	require.Nil(s.t, err)
+	require.NotNil(s.t, response)
+	
+	s.response = response
+	return s
+}
+
+// Then method
+func (s *createResourceStage) responseShouldHaveValidResourceAndStatusCode(statusCode int) *createResourceStage {
+	assert.Equal(s.t, statusCode, s.response.StatusCode)
+	
+	body, err := io.ReadAll(s.response.Body)
+	require.Nil(s.t, err)
+	require.NotEmpty(s.t, body)
+	
+	resource := new(ResourceResponse)
+	err = json.Unmarshal(body, resource)
+	require.Nil(s.t, err)
+	require.NotNil(s.t, resource)
+	require.NotEmpty(s.t, resource.ID)
+	require.NotEmpty(s.t, resource.Name)
+	
+	s.createdResourceID = resource.ID
+	return s
+}
+
+// Event verification method
+func (s *createResourceStage) createdEventIsReceived(expectedResourceID string) *createResourceStage {
+	msgs, err := s.consumer.Messages()
+	require.Nil(s.t, err)
+	require.NotNil(s.t, msgs)
+	
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	
+	for {
+		select {
+		case <-ctx.Done():
+			require.Fail(s.t, "Timeout waiting for event")
+			return s
+		default:
+			msg, err := msgs.Next()
+			if err != nil {
+				if errors.Is(err, nats.ErrTimeout) {
+					continue
+				}
+				require.Nil(s.t, err)
+			}
+			
+			event := new(ResourceCreatedEvent)
+			err = json.Unmarshal(msg.Data(), event)
+			require.Nil(s.t, err)
+			
+			if event.ResourceID == expectedResourceID {
+				msg.Ack()
+				msgs.Stop()
+				return s
+			}
+			
+			msg.Ack()
+		}
+	}
+}
+
+func (s *createResourceStage) and() *createResourceStage {
+	return s
+}
+```

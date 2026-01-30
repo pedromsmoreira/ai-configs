@@ -77,7 +77,7 @@ When working on this codebase, agents should:
 - Verify the test passes
 - Add regression tests if needed
 
-**Note**: For bug handling and prioritization guidelines, see `.cursor/rules/08-testing-agent.mdc`.
+**Note**: For bug handling and prioritization guidelines, see `.cursor/rules/testing-agent.mdc`.
 
 ## Documentation Updates
 

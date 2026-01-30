@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 
 # TDD Workflow
 
-Detailed workflow for Test-Driven Development. For core principles, see `.cursor/rules/09-test-driven-development.mdc`.
+Detailed workflow for Test-Driven Development. For core principles, see `.cursor/rules/test-driven-development.mdc`.
 
 ---
 

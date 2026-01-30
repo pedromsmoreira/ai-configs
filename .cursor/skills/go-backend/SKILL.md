@@ -20,9 +20,9 @@ For **migrations** (schema, up/down), use the `database-migrations` skill. For *
 
 | File | Purpose |
 |------|---------|
-| [.cursor/rules/00-project-context.mdc](.cursor/rules/00-project-context.mdc) | Project overview, ports, layout, tech stack |
-| [.cursor/rules/01-architecture.mdc](.cursor/rules/01-architecture.mdc) | Layered architecture (Handler→Service→Domain→Repository), DDD, aggregates, repository pattern, error handling |
-| [.cursor/rules/02-go-style-guide.mdc](.cursor/rules/02-go-style-guide.mdc) | Naming, context, structs, interfaces, domain/service/handler guidelines |
-| [.cursor/rules/05-authentication-security.mdc](.cursor/rules/05-authentication-security.mdc) | JWT, Principal, `auth.GetPrincipal(ctx)`, password hashing, authorization patterns |
-| [.cursor/rules/06-database-migrations.mdc](.cursor/rules/06-database-migrations.mdc) | Repository and SQL patterns, connection pooling; for migration files see `database-migrations` skill |
-| [.cursor/rules/07-agent-behavior.mdc](.cursor/rules/07-agent-behavior.mdc) | TDD, docs, code review, common patterns (new entity, new endpoint) |
+| [.cursor/rules/project-context.mdc](.cursor/rules/project-context.mdc) | Project overview, ports, layout, tech stack |
+| [.cursor/rules/architecture.mdc](.cursor/rules/architecture.mdc) | Layered architecture (Handler→Service→Domain→Repository), DDD, aggregates, repository pattern, error handling |
+| [.cursor/rules/go-style-guide.mdc](.cursor/rules/go-style-guide.mdc) | Naming, context, structs, interfaces, domain/service/handler guidelines |
+| [.cursor/rules/authentication-security.mdc](.cursor/rules/authentication-security.mdc) | JWT, Principal, `auth.GetPrincipal(ctx)`, password hashing, authorization patterns |
+| [.cursor/rules/database-migrations.mdc](.cursor/rules/database-migrations.mdc) | Repository and SQL patterns, connection pooling; for migration files see `database-migrations` skill |
+| [.cursor/rules/agent-behavior.mdc](.cursor/rules/agent-behavior.mdc) | TDD, docs, code review, common patterns (new entity, new endpoint) |

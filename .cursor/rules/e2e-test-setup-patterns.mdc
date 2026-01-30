@@ -1,0 +1,793 @@
+---
+description: Test setup patterns and configurations for various architectures
+globs: tests/**/*_test_stage.go
+alwaysApply: false
+---
+
+# E2E Test Setup Patterns
+
+This guide provides practical examples of different test setup configurations for various architectures.
+
+## Test Setup Examples
+
+### Setup Example 1: Simple REST API (No External Dependencies)
+
+**Scenario**: Testing a simple stateless API with no database or messaging.
+
+```go
+package tests
+
+import (
+	"net/http"
+	"testing"
+	"time"
+)
+
+type simpleAPIStage struct {
+	t        *testing.T
+	host     string
+	http     *http.Client
+	response *http.Response
+}
+
+func newSimpleAPIStage(t *testing.T) (*simpleAPIStage, *simpleAPIStage, *simpleAPIStage) {
+	host := getEnvOrDefault("API_HOST", "localhost")
+	port := getEnvOrDefault("API_PORT", "8080")
+	
+	stage := &simpleAPIStage{
+		t:    t,
+		host: fmt.Sprintf("http://%s:%s", host, port),
+		http: &http.Client{
+			Timeout: 30 * time.Second,
+		},
+	}
+	
+	return stage, stage, stage
+}
+```
+
+**Use when**: Testing calculation APIs, proxy services, or read-only endpoints without persistence.
+
+---
+
+### Setup Example 2: API with Database (No Events)
+
+**Scenario**: CRUD API with database persistence but no event publishing.
+
+```go
+package tests
+
+import (
+	"database/sql"
+	"net/http"
+	"testing"
+	"time"
+	
+	_ "github.com/lib/pq"
+)
+
+type dbAPIStage struct {
+	t        *testing.T
+	host     string
+	http     *http.Client
+	db       *sql.DB
+	response *http.Response
+}
+
+func newDBAPIStage(t *testing.T) (*dbAPIStage, *dbAPIStage, *dbAPIStage) {
+	// HTTP setup
+	host := getEnvOrDefault("API_HOST", "localhost")
+	port := getEnvOrDefault("API_PORT", "8080")
+	
+	// Database setup
+	dbHost := getEnvOrDefault("DB_HOST", "localhost")
+	dbPort := getEnvOrDefault("DB_PORT", "5432")
+	dbName := getEnvOrDefault("DB_NAME", "testdb")
+	dbUser := getEnvOrDefault("DB_USER", "postgres")
+	dbPass := getEnvOrDefault("DB_PASSWORD", "postgres")
+	
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		dbHost, dbPort, dbUser, dbPass, dbName)
+	
+	db, err := sql.Open("postgres", dsn)
+	require.Nil(t, err)
+	require.Nil(t, db.Ping())
+	
+	stage := &dbAPIStage{
+		t:    t,
+		host: fmt.Sprintf("http://%s:%s", host, port),
+		http: &http.Client{Timeout: 30 * time.Second},
+		db:   db,
+	}
+	
+	// Cleanup
+	t.Cleanup(func() {
+		if db != nil {
+			db.Close()
+		}
+	})
+	
+	return stage, stage, stage
+}
+```
+
+**Use when**: Testing traditional CRUD applications, admin panels, or internal tools.
+
+---
+
+### Setup Example 3: Event-Driven API (HTTP + Message Broker)
+
+**Scenario**: API that publishes events to NATS/Kafka/RabbitMQ after operations.
+
+```go
+package tests
+
+import (
+	"context"
+	"net/http"
+	"testing"
+	"time"
+	
+	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
+)
+
+type eventDrivenAPIStage struct {
+	t        *testing.T
+	host     string
+	http     *http.Client
+	response *http.Response
+	
+	// Message broker fields
+	natsConn *nats.Conn
+	js       jetstream.JetStream
+	consumer jetstream.Consumer
+	stream   string
+	subject  string
+}
+
+func newEventDrivenAPIStage(t *testing.T) (*eventDrivenAPIStage, *eventDrivenAPIStage, *eventDrivenAPIStage) {
+	// HTTP setup
+	host := getEnvOrDefault("API_HOST", "localhost")
+	port := getEnvOrDefault("API_PORT", "8080")
+	
+	// NATS setup
+	natsURL := getEnvOrDefault("NATS_URL", "localhost:4222")
+	stream := getEnvOrDefault("NATS_STREAM", "events")
+	subject := getEnvOrDefault("NATS_SUBJECT", "resource.created")
+	
+	conn, err := nats.Connect(natsURL)
+	require.Nil(t, err)
+	
+	js, err := jetstream.New(conn)
+	require.Nil(t, err)
+	
+	consumer, err := js.CreateConsumer(context.TODO(), stream, jetstream.ConsumerConfig{
+		Durable:       "test_consumer",
+		AckPolicy:     jetstream.AckExplicitPolicy,
+		FilterSubject: subject,
+	})
+	require.Nil(t, err)
+	
+	stage := &eventDrivenAPIStage{
+		t:        t,
+		host:     fmt.Sprintf("http://%s:%s", host, port),
+		http:     &http.Client{Timeout: 30 * time.Second},
+		natsConn: conn,
+		js:       js,
+		consumer: consumer,
+		stream:   stream,
+		subject:  subject,
+	}
+	
+	t.Cleanup(func() {
+		if conn != nil {
+			conn.Close()
+		}
+	})
+	
+	return stage, stage, stage
+}
+```
+
+**Use when**: Testing microservices, event sourcing systems, or CQRS architectures.
+
+---
+
+### Setup Example 4: Full Stack Integration (HTTP + DB + Cache + Events)
+
+**Scenario**: Complete microservice with database, cache, and event publishing.
+
+```go
+package tests
+
+import (
+	"context"
+	"database/sql"
+	"net/http"
+	"testing"
+	"time"
+	
+	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
+	"github.com/redis/go-redis/v9"
+	
+	_ "github.com/lib/pq"
+)
+
+type fullStackStage struct {
+	t        *testing.T
+	host     string
+	http     *http.Client
+	db       *sql.DB
+	redis    *redis.Client
+	response *http.Response
+	
+	natsConn *nats.Conn
+	js       jetstream.JetStream
+	consumer jetstream.Consumer
+}
+
+func newFullStackStage(t *testing.T) (*fullStackStage, *fullStackStage, *fullStackStage) {
+	// HTTP setup
+	host := getEnvOrDefault("API_HOST", "localhost")
+	port := getEnvOrDefault("API_PORT", "8080")
+	
+	// Database setup
+	dbDSN := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		getEnvOrDefault("DB_HOST", "localhost"),
+		getEnvOrDefault("DB_PORT", "5432"),
+		getEnvOrDefault("DB_USER", "postgres"),
+		getEnvOrDefault("DB_PASSWORD", "postgres"),
+		getEnvOrDefault("DB_NAME", "testdb"),
+	)
+	db, err := sql.Open("postgres", dbDSN)
+	require.Nil(t, err)
+	require.Nil(t, db.Ping())
+	
+	// Redis setup
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     fmt.Sprintf("%s:%s", 
+			getEnvOrDefault("REDIS_HOST", "localhost"),
+			getEnvOrDefault("REDIS_PORT", "6379")),
+		Password: getEnvOrDefault("REDIS_PASSWORD", ""),
+		DB:       0,
+	})
+	_, err = redisClient.Ping(context.Background()).Result()
+	require.Nil(t, err)
+	
+	// NATS setup
+	natsURL := getEnvOrDefault("NATS_URL", "localhost:4222")
+	conn, err := nats.Connect(natsURL)
+	require.Nil(t, err)
+	
+	js, err := jetstream.New(conn)
+	require.Nil(t, err)
+	
+	consumer, err := js.CreateConsumer(context.TODO(), "events", jetstream.ConsumerConfig{
+		Durable:   "test_consumer",
+		AckPolicy: jetstream.AckExplicitPolicy,
+	})
+	require.Nil(t, err)
+	
+	stage := &fullStackStage{
+		t:        t,
+		host:     fmt.Sprintf("http://%s:%s", host, port),
+		http:     &http.Client{Timeout: 30 * time.Second},
+		db:       db,
+		redis:    redisClient,
+		natsConn: conn,
+		js:       js,
+		consumer: consumer,
+	}
+	
+	// Cleanup all resources
+	t.Cleanup(func() {
+		if conn != nil {
+			conn.Close()
+		}
+		if redisClient != nil {
+			redisClient.Close()
+		}
+		if db != nil {
+			db.Close()
+		}
+	})
+	
+	return stage, stage, stage
+}
+```
+
+**Use when**: Testing production-like environments with multiple dependencies.
+
+---
+
+### Setup Example 5: Authenticated API Tests
+
+**Scenario**: API requiring authentication tokens or session cookies.
+
+```go
+package tests
+
+import (
+	"net/http"
+	"testing"
+	"time"
+)
+
+type authenticatedAPIStage struct {
+	t         *testing.T
+	host      string
+	http      *http.Client
+	response  *http.Response
+	authToken string
+}
+
+func newAuthenticatedAPIStage(t *testing.T) (*authenticatedAPIStage, *authenticatedAPIStage, *authenticatedAPIStage) {
+	host := getEnvOrDefault("API_HOST", "localhost")
+	port := getEnvOrDefault("API_PORT", "8080")
+	
+	stage := &authenticatedAPIStage{
+		t:    t,
+		host: fmt.Sprintf("http://%s:%s", host, port),
+		http: &http.Client{Timeout: 30 * time.Second},
+	}
+	
+	// Optionally obtain auth token during setup
+	// stage.authToken = stage.loginAndGetToken()
+	
+	return stage, stage, stage
+}
+
+// Helper to obtain authentication
+func (s *authenticatedAPIStage) loginAndGetToken() string {
+	loginPayload := map[string]string{
+		"username": getEnvOrDefault("TEST_USER", "testuser"),
+		"password": getEnvOrDefault("TEST_PASSWORD", "testpass"),
+	}
+	
+	payload, _ := json.Marshal(loginPayload)
+	resp, _ := s.http.Post(
+		fmt.Sprintf("%s/auth/login", s.host),
+		"application/json",
+		bytes.NewBuffer(payload),
+	)
+	
+	var authResponse struct {
+		Token string `json:"token"`
+	}
+	body, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(body, &authResponse)
+	
+	return authResponse.Token
+}
+```
+
+**Use when**: Testing protected endpoints or user-specific operations.
+
+---
+
+### Setup Example 6: Docker Compose Environment
+
+**Scenario**: Tests run against services started via Docker Compose.
+
+```go
+package tests
+
+import (
+	"context"
+	"database/sql"
+	"net/http"
+	"testing"
+	"time"
+	
+	_ "github.com/lib/pq"
+)
+
+type dockerEnvStage struct {
+	t        *testing.T
+	host     string
+	http     *http.Client
+	db       *sql.DB
+	response *http.Response
+}
+
+func newDockerEnvStage(t *testing.T) (*dockerEnvStage, *dockerEnvStage, *dockerEnvStage) {
+	// Wait for services to be ready
+	waitForServiceReady(t, "http://localhost:8080/health", 30*time.Second)
+	
+	// HTTP setup
+	stage := &dockerEnvStage{
+		t:    t,
+		host: "http://localhost:8080",
+		http: &http.Client{Timeout: 30 * time.Second},
+	}
+	
+	// Database setup (using default Docker Compose ports)
+	db, err := sql.Open("postgres", 
+		"host=localhost port=5432 user=postgres password=postgres dbname=testdb sslmode=disable")
+	require.Nil(t, err)
+	
+	// Verify connection
+	require.Nil(t, db.Ping())
+	stage.db = db
+	
+	t.Cleanup(func() {
+		if db != nil {
+			db.Close()
+		}
+	})
+	
+	return stage, stage, stage
+}
+
+// Helper to wait for service readiness
+func waitForServiceReady(t *testing.T, url string, timeout time.Duration) {
+	client := &http.Client{Timeout: 1 * time.Second}
+	deadline := time.Now().Add(timeout)
+	
+	for time.Now().Before(deadline) {
+		resp, err := client.Get(url)
+		if err == nil && resp.StatusCode == http.StatusOK {
+			return
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	
+	require.Fail(t, "Service did not become ready within timeout")
+}
+```
+
+**Use when**: Running tests in CI/CD or local development with Docker Compose.
+
+---
+
+### Key Setup Principles
+
+1. **Environment-Based Configuration**: Use environment variables for all connection strings
+2. **Health Checks**: Verify all connections immediately after setup
+3. **Resource Cleanup**: Always use `t.Cleanup()` for proper teardown
+4. **Fail Fast**: Use `require` for setup operations
+5. **Timeouts**: Set reasonable timeouts for all clients
+6. **Isolation**: Each test gets a fresh stage instance
+7. **Documentation**: Comment complex setup logic
+
+## Dependencies Setup Quick Reference
+
+This section provides quick snippets for setting up common test dependencies.
+
+### HTTP Client (Always Required)
+
+```go
+host := getEnvOrDefault("SERVER_HOST", "localhost")
+port := getEnvOrDefault("SERVER_PORT", "8080")
+
+stage := &testStage{
+	t:    t,
+	host: fmt.Sprintf("http://%s:%s", host, port),
+	http: &http.Client{
+		Timeout: 30 * time.Second,
+	},
+}
+```
+
+### PostgreSQL Database
+
+```go
+dbHost := getEnvOrDefault("DB_HOST", "localhost")
+dbPort := getEnvOrDefault("DB_PORT", "5432")
+dbName := getEnvOrDefault("DB_NAME", "testdb")
+dbUser := getEnvOrDefault("DB_USER", "postgres")
+dbPass := getEnvOrDefault("DB_PASSWORD", "postgres")
+
+dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+	dbHost, dbPort, dbUser, dbPass, dbName)
+
+db, err := sql.Open("postgres", dsn)
+require.Nil(t, err)
+
+err = db.Ping()
+require.Nil(t, err)
+
+t.Cleanup(func() {
+	if db != nil {
+		db.Close()
+	}
+})
+```
+
+### MySQL Database
+
+```go
+dbHost := getEnvOrDefault("DB_HOST", "localhost")
+dbPort := getEnvOrDefault("DB_PORT", "3306")
+dbName := getEnvOrDefault("DB_NAME", "testdb")
+dbUser := getEnvOrDefault("DB_USER", "root")
+dbPass := getEnvOrDefault("DB_PASSWORD", "password")
+
+dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
+	dbUser, dbPass, dbHost, dbPort, dbName)
+
+db, err := sql.Open("mysql", dsn)
+require.Nil(t, err)
+
+err = db.Ping()
+require.Nil(t, err)
+
+t.Cleanup(func() {
+	if db != nil {
+		db.Close()
+	}
+})
+```
+
+### MongoDB
+
+```go
+mongoHost := getEnvOrDefault("MONGO_HOST", "localhost")
+mongoPort := getEnvOrDefault("MONGO_PORT", "27017")
+mongoDatabase := getEnvOrDefault("MONGO_DATABASE", "testdb")
+
+uri := fmt.Sprintf("mongodb://%s:%s", mongoHost, mongoPort)
+client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
+require.Nil(t, err)
+
+err = client.Ping(context.TODO(), nil)
+require.Nil(t, err)
+
+db := client.Database(mongoDatabase)
+
+t.Cleanup(func() {
+	if client != nil {
+		client.Disconnect(context.TODO())
+	}
+})
+```
+
+### Redis
+
+```go
+redisHost := getEnvOrDefault("REDIS_HOST", "localhost")
+redisPort := getEnvOrDefault("REDIS_PORT", "6379")
+redisPassword := getEnvOrDefault("REDIS_PASSWORD", "")
+
+redisClient := redis.NewClient(&redis.Options{
+	Addr:     fmt.Sprintf("%s:%s", redisHost, redisPort),
+	Password: redisPassword,
+	DB:       0,
+})
+
+ctx := context.Background()
+_, err := redisClient.Ping(ctx).Result()
+require.Nil(t, err)
+
+t.Cleanup(func() {
+	if redisClient != nil {
+		redisClient.Close()
+	}
+})
+```
+
+### NATS JetStream (Event Verification)
+
+```go
+natsHost := getEnvOrDefault("NATS_HOST", "localhost:4222")
+stream := getEnvOrDefault("NATS_STREAM", "resources")
+subject := getEnvOrDefault("NATS_SUBJECT", "resources.created")
+
+conn, err := nats.Connect(natsHost)
+require.Nil(t, err)
+
+js, err := jetstream.New(conn)
+require.Nil(t, err)
+
+consumer, err := js.CreateConsumer(context.TODO(), stream, jetstream.ConsumerConfig{
+	Durable:       "test_resource_created",
+	AckPolicy:     jetstream.AckExplicitPolicy,
+	FilterSubject: subject,
+})
+require.Nil(t, err)
+
+t.Cleanup(func() {
+	if conn != nil {
+		conn.Close()
+	}
+})
+```
+
+### Kafka (Event Verification)
+
+```go
+kafkaBootstrapServers := getEnvOrDefault("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+kafkaTopic := getEnvOrDefault("KAFKA_TOPIC", "resource-events")
+
+producer, err := kafka.NewProducer(&kafka.ConfigMap{
+	"bootstrap.servers": kafkaBootstrapServers,
+})
+require.Nil(t, err)
+
+consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
+	"bootstrap.servers": kafkaBootstrapServers,
+	"group.id":          fmt.Sprintf("test-group-%s", uuid.New().String()),
+	"auto.offset.reset": "earliest",
+})
+require.Nil(t, err)
+
+t.Cleanup(func() {
+	if producer != nil {
+		producer.Close()
+	}
+	if consumer != nil {
+		consumer.Close()
+	}
+})
+```
+
+### RabbitMQ (Event Verification)
+
+```go
+rabbitHost := getEnvOrDefault("RABBITMQ_HOST", "localhost")
+rabbitPort := getEnvOrDefault("RABBITMQ_PORT", "5672")
+rabbitUser := getEnvOrDefault("RABBITMQ_USER", "guest")
+rabbitPass := getEnvOrDefault("RABBITMQ_PASSWORD", "guest")
+
+amqpURL := fmt.Sprintf("amqp://%s:%s@%s:%s/",
+	rabbitUser, rabbitPass, rabbitHost, rabbitPort)
+
+conn, err := amqp091.Dial(amqpURL)
+require.Nil(t, err)
+
+channel, err := conn.Channel()
+require.Nil(t, err)
+
+t.Cleanup(func() {
+	if channel != nil {
+		channel.Close()
+	}
+	if conn != nil {
+		conn.Close()
+	}
+})
+```
+
+### Environment Helper Function
+
+Add this to your test package:
+
+```go
+// getEnvOrDefault retrieves an environment variable or returns a default value
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+```
+
+## Constructor Function Patterns
+
+### Basic HTTP-Only Setup
+
+```go
+func newCreateResourceStage(t *testing.T) (*createResourceStage, *createResourceStage, *createResourceStage) {
+	host := getEnvOrDefault("SERVER_HOST", "localhost")
+	port := getEnvOrDefault("SERVER_PORT", "8080")
+	
+	stage := &createResourceStage{
+		t:    t,
+		host: fmt.Sprintf("http://%s:%s", host, port),
+		http: &http.Client{
+			Timeout: 30 * time.Second,
+		},
+		contentType: applicationJSONContentType,
+	}
+	
+	return stage, stage, stage
+}
+```
+
+### Setup with Message Broker (NATS JetStream)
+
+```go
+func newCreateResourceStage(t *testing.T) (*createResourceStage, *createResourceStage, *createResourceStage) {
+	// HTTP configuration
+	host := getEnvOrDefault("SERVER_HOST", "localhost")
+	port := getEnvOrDefault("SERVER_PORT", "8080")
+	
+	// NATS configuration
+	natsHost := getEnvOrDefault("NATS_HOST", "localhost:4222")
+	stream := getEnvOrDefault("NATS_STREAM", "resources")
+	subject := getEnvOrDefault("NATS_SUBJECT", "resources.created")
+	
+	// Connect to NATS
+	conn, err := nats.Connect(natsHost)
+	require.Nil(t, err)
+	require.NotNil(t, conn)
+	
+	// Create JetStream context
+	js, err := jetstream.New(conn)
+	require.Nil(t, err)
+	
+	// Create or get consumer for event verification
+	consumer, err := js.CreateConsumer(context.TODO(), stream, jetstream.ConsumerConfig{
+		Durable:       "test_resource_created",
+		AckPolicy:     jetstream.AckExplicitPolicy,
+		FilterSubject: subject,
+	})
+	require.Nil(t, err)
+	require.NotNil(t, consumer)
+	
+	stage := &createResourceStage{
+		t:        t,
+		host:     fmt.Sprintf("http://%s:%s", host, port),
+		http:     &http.Client{Timeout: 30 * time.Second},
+		stream:   stream,
+		subject:  subject,
+		conn:     conn,
+		js:       js,
+		consumer: consumer,
+	}
+	
+	// Cleanup on test completion
+	t.Cleanup(func() {
+		if conn != nil {
+			conn.Close()
+		}
+	})
+	
+	return stage, stage, stage
+}
+```
+
+### Setup with Database Connection
+
+```go
+func newCreateResourceStage(t *testing.T) (*createResourceStage, *createResourceStage, *createResourceStage) {
+	// HTTP configuration
+	host := getEnvOrDefault("SERVER_HOST", "localhost")
+	port := getEnvOrDefault("SERVER_PORT", "8080")
+	
+	// Database configuration
+	dbHost := getEnvOrDefault("DB_HOST", "localhost")
+	dbPort := getEnvOrDefault("DB_PORT", "5432")
+	dbName := getEnvOrDefault("DB_NAME", "testdb")
+	dbUser := getEnvOrDefault("DB_USER", "postgres")
+	dbPass := getEnvOrDefault("DB_PASSWORD", "postgres")
+	
+	// Connect to database
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		dbHost, dbPort, dbUser, dbPass, dbName)
+	db, err := sql.Open("postgres", dsn)
+	require.Nil(t, err)
+	require.NotNil(t, db)
+	
+	// Verify connection
+	err = db.Ping()
+	require.Nil(t, err)
+	
+	stage := &createResourceStage{
+		t:    t,
+		host: fmt.Sprintf("http://%s:%s", host, port),
+		http: &http.Client{Timeout: 30 * time.Second},
+		db:   db,
+	}
+	
+	// Cleanup on test completion
+	t.Cleanup(func() {
+		if db != nil {
+			db.Close()
+		}
+	})
+	
+	return stage, stage, stage
+}
+```
+
+## Key Setup Principles
+
+1. **Configuration from Environment**: Always use environment variables with sensible defaults
+2. **Resource Initialization**: Set up all required dependencies in the constructor
+3. **Connection Verification**: Test connections immediately after setup
+4. **Cleanup with t.Cleanup()**: Always register cleanup handlers for resources
+5. **Single Instance**: Return the same stage instance three times (for given, when, then)
+6. **Fail Fast**: Use `require` for setup operations - if setup fails, the test should not continue

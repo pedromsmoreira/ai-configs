@@ -1,0 +1,43 @@
+---
+name: skills-index
+description: Quick reference for when to use each skill
+alwaysApply: true
+---
+
+# Skills Quick Reference
+
+| Task | Skill | Key Rules |
+|------|-------|-----------|
+| Backend API, handlers, services, domain | `go-backend` | architecture, go-style-guide |
+| REST/HTTP endpoint design, URL structure, status codes | `rest-api-design` | architecture, go-style-guide, authentication-security |
+| Schema changes, migrations | `database-migrations` | database-migrations |
+| React components, frontend UI | `frontend-react` | frontend-patterns |
+| Writing/fixing tests, coverage | `testing` | go-testing-practices, frontend-testing-practices, testing-agent |
+| TDD cycle details, examples | `tdd-workflow` | test-driven-development |
+| Requirements, acceptance criteria | `user-stories` | - |
+| Clean code principles | `clean-code` | go-style-guide |
+
+Skills are in `.cursor/skills/<name>/SKILL.md`
+
+## How to Use Skills
+
+1. Check the table above for your task type
+2. Read the skill file for detailed instructions
+3. Follow references to relevant rules as needed
+
+## Rule Reference
+
+| Rule File | Description |
+|-----------|-------------|
+| `architecture.mdc` | DDD and layered architecture |
+| `go-style-guide.mdc` | Go coding standards |
+| `frontend-patterns.mdc` | React/TypeScript guidelines |
+| `go-testing-practices.mdc` | Go testing |
+| `frontend-testing-practices.mdc` | Frontend testing |
+| `authentication-security.mdc` | JWT and security |
+| `database-migrations.mdc` | Database patterns |
+| `agent-behavior.mdc` | Agent guidelines |
+| `testing-agent.mdc` | Bug handling (agent-requestable) |
+| `test-driven-development.mdc` | TDD principles |
+| `go-e2e-testing-standards.mdc` | E2E testing with BDD patterns |
+| `http-rest-standards.mdc` | HTTP/REST standards |
