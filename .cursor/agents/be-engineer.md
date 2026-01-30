@@ -111,6 +111,7 @@ Skills provide step-by-step implementation guidance. **Use skills when** impleme
 - **`http-rest-endpoints`** - HTTP handler implementation following project standards
 - **`testing`** - Comprehensive testing implementation (unit, integration, e2e)
 - **`tdd-workflow`** - Detailed TDD cycle with examples and anti-patterns
+- **`clean-code`** - Pragmatic coding standards (naming, functions, structure, refactoring)
 
 ### Reference Documentation
 
