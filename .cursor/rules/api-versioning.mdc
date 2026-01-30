@@ -1,0 +1,549 @@
+---
+description: "API versioning strategies, best practices, and implementation patterns"
+alwaysApply: false
+globs:
+  - "internal/handler/**/*.go"
+  - "internal/http/**/*.go"
+  - "cmd/**/*.go"
+---
+
+# API Versioning Patterns
+
+## Core Principle
+
+**Version your API from day one.** Even if you only have v1, explicit versioning makes future changes easier.
+
+## Versioning Strategies
+
+### 1. URL Path Versioning (Recommended)
+
+Include version in the URL path:
+
+```
+GET /v1/users
+GET /v2/users
+```
+
+**Pros**:
+- Clear and explicit
+- Easy to understand and test
+- Browser-friendly
+- Works with all HTTP clients
+
+**Cons**:
+- Requires routing updates for new versions
+
+### 2. Header Versioning
+
+Use custom header to specify version:
+
+```
+GET /users
+Header: API-Version: v1
+```
+
+**Pros**:
+- Clean URLs
+- Version separate from resource path
+
+**Cons**:
+- Less visible
+- Harder to test manually
+- Not browser-friendly
+
+### 3. Query Parameter Versioning
+
+Include version as query parameter:
+
+```
+GET /users?version=1
+```
+
+**Pros**:
+- Flexible
+- Easy to add
+
+**Cons**:
+- Mixes versioning with filtering
+- Can be overlooked
+- Not RESTful
+
+### Recommendation
+
+**Use URL path versioning** (`/v1/`, `/v2/`) for clarity and simplicity.
+
+## Version Format
+
+### Major Versions Only
+
+Use major versions in URLs: `v1`, `v2`, `v3`
+
+```
+✅ GOOD: /v1/users
+✅ GOOD: /v2/users
+
+❌ BAD: /v1.2/users
+❌ BAD: /v1.2.3/users
+```
+
+### Semantic Versioning for Implementation
+
+Use semantic versioning internally for release management:
+
+- **Major (v1 → v2)**: Breaking changes, new API version
+- **Minor (v1.1 → v1.2)**: New features, backward compatible
+- **Patch (v1.1.0 → v1.1.1)**: Bug fixes, backward compatible
+
+**Public API**: `/v1/users` (major only)  
+**Internal version**: `1.2.3` (semantic versioning)
+
+## What Constitutes a Breaking Change
+
+Breaking changes require a new major version:
+
+### ❌ Breaking Changes
+
+- **Removing fields** from responses
+- **Changing field types** (string → int)
+- **Renaming fields**
+- **Changing URL structure**
+- **Removing endpoints**
+- **Changing authentication method**
+- **Changing error response format**
+- **Making required fields optional (validation changes)**
+- **Changing HTTP status codes for existing flows**
+
+### ✅ Non-Breaking Changes (Same Version)
+
+- **Adding new fields** to responses (optional)
+- **Adding new endpoints**
+- **Adding new query parameters** (optional)
+- **Adding new HTTP headers** (optional)
+- **Relaxing validations** (making required → optional)
+- **Bug fixes** that don't change behavior contracts
+
+## Implementation Patterns
+
+### Go with gorilla/mux
+
+```go
+// ✅ GOOD: Clear versioning with gorilla/mux
+func SetupRouter() *mux.Router {
+    router := mux.NewRouter()
+    
+    // Version 1 API
+    v1 := router.PathPrefix("/v1").Subrouter()
+    v1.HandleFunc("/users", handlers.V1ListUsers).Methods("GET")
+    v1.HandleFunc("/users", handlers.V1CreateUser).Methods("POST")
+    v1.HandleFunc("/users/{id}", handlers.V1GetUser).Methods("GET")
+    
+    // Version 2 API (new version with breaking changes)
+    v2 := router.PathPrefix("/v2").Subrouter()
+    v2.HandleFunc("/users", handlers.V2ListUsers).Methods("GET")
+    v2.HandleFunc("/users", handlers.V2CreateUser).Methods("POST")
+    v2.HandleFunc("/users/{id}", handlers.V2GetUser).Methods("GET")
+    
+    return router
+}
+
+// Separate handler implementations per version
+func V1GetUser(w http.ResponseWriter, r *http.Request) {
+    // v1 response format
+    response := V1UserResponse{
+        ID:       user.ID,
+        Username: user.Username,
+        Email:    user.Email,
+    }
+    json.NewEncoder(w).Encode(response)
+}
+
+func V2GetUser(w http.ResponseWriter, r *http.Request) {
+    // v2 response format (different structure)
+    response := V2UserResponse{
+        UserID: user.ID,
+        Profile: ProfileData{
+            Username: user.Username,
+            Email:    user.Email,
+        },
+    }
+    json.NewEncoder(w).Encode(response)
+}
+```
+
+### Go with chi Router
+
+```go
+// ✅ GOOD: Versioning with chi router
+func SetupRouter() chi.Router {
+    r := chi.NewRouter()
+    
+    // Version 1
+    r.Route("/v1", func(r chi.Router) {
+        r.Get("/users", handlers.V1ListUsers)
+        r.Post("/users", handlers.V1CreateUser)
+        r.Get("/users/{id}", handlers.V1GetUser)
+    })
+    
+    // Version 2
+    r.Route("/v2", func(r chi.Router) {
+        r.Get("/users", handlers.V2ListUsers)
+        r.Post("/users", handlers.V2CreateUser)
+        r.Get("/users/{id}", handlers.V2GetUser)
+    })
+    
+    return r
+}
+```
+
+### Versioned Response Types
+
+```go
+// ✅ GOOD: Separate types per version
+package v1
+
+type UserResponse struct {
+    ID       string `json:"id"`
+    Username string `json:"username"`
+    Email    string `json:"email"`
+}
+
+package v2
+
+type UserResponse struct {
+    UserID  string      `json:"user_id"`  // Renamed field
+    Profile ProfileData `json:"profile"`   // Nested structure
+}
+
+type ProfileData struct {
+    Username string `json:"username"`
+    Email    string `json:"email"`
+}
+```
+
+### Shared Business Logic
+
+```go
+// ✅ GOOD: Share domain logic, version handlers
+package handlers
+
+import (
+    "myapp/internal/service"
+    "myapp/internal/handlers/v1"
+    "myapp/internal/handlers/v2"
+)
+
+// V1 handler
+func V1GetUser(userService *service.UserService) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        user, err := userService.GetUser(id)  // Shared service
+        response := v1.MapToUserResponse(user)  // V1 mapping
+        json.NewEncoder(w).Encode(response)
+    }
+}
+
+// V2 handler
+func V2GetUser(userService *service.UserService) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        user, err := userService.GetUser(id)  // Same service
+        response := v2.MapToUserResponse(user)  // V2 mapping
+        json.NewEncoder(w).Encode(response)
+    }
+}
+```
+
+## Best Practices
+
+### 1. Version from Day One
+
+```go
+// ✅ GOOD: Start with v1 from beginning
+r.Route("/v1", func(r chi.Router) {
+    r.Get("/users", handlers.ListUsers)
+})
+
+// ❌ BAD: No version initially
+r.Get("/users", handlers.ListUsers)  // Hard to add versioning later
+```
+
+### 2. Never Break Existing Versions
+
+```go
+// ❌ BAD: Breaking change in v1
+func V1GetUser(w http.ResponseWriter, r *http.Request) {
+    response := UserResponse{
+        UserID: user.ID,  // Changed field name - BREAKS v1!
+    }
+}
+
+// ✅ GOOD: Keep v1 stable, create v2 for changes
+func V1GetUser(w http.ResponseWriter, r *http.Request) {
+    response := V1UserResponse{
+        ID: user.ID,  // Original field name
+    }
+}
+
+func V2GetUser(w http.ResponseWriter, r *http.Request) {
+    response := V2UserResponse{
+        UserID: user.ID,  // New field name in v2
+    }
+}
+```
+
+### 3. Maintain Multiple Versions During Transition
+
+```go
+// ✅ GOOD: Support multiple versions simultaneously
+func SetupRouter() chi.Router {
+    r := chi.NewRouter()
+    
+    // Keep v1 running for existing clients
+    r.Route("/v1", func(r chi.Router) {
+        r.Get("/users", handlers.V1ListUsers)
+    })
+    
+    // Launch v2 for new clients
+    r.Route("/v2", func(r chi.Router) {
+        r.Get("/users", handlers.V2ListUsers)
+    })
+    
+    return r
+}
+```
+
+### 4. Document Version Differences
+
+```go
+// ✅ GOOD: Clear documentation
+// V1UserResponse represents user data in API v1
+// Fields: id, username, email (flat structure)
+type V1UserResponse struct {
+    ID       string `json:"id"`
+    Username string `json:"username"`
+    Email    string `json:"email"`
+}
+
+// V2UserResponse represents user data in API v2
+// Breaking changes from v1:
+// - 'id' renamed to 'user_id'
+// - 'username' and 'email' moved to nested 'profile' object
+type V2UserResponse struct {
+    UserID  string      `json:"user_id"`
+    Profile ProfileData `json:"profile"`
+}
+```
+
+### 5. Use Deprecation Headers
+
+```go
+// ✅ GOOD: Warn clients about deprecation
+func V1GetUser(w http.ResponseWriter, r *http.Request) {
+    // Warn that v1 is deprecated
+    w.Header().Set("Deprecation", "true")
+    w.Header().Set("Sunset", "2024-12-31")  // RFC 8594
+    w.Header().Set("Link", "</v2/users>; rel=\"successor-version\"")
+    
+    // Continue serving v1 response
+    response := V1UserResponse{ID: user.ID}
+    json.NewEncoder(w).Encode(response)
+}
+```
+
+## Deprecation Process
+
+### 1. Announce Deprecation
+
+- Add deprecation headers to old version
+- Update API documentation
+- Notify clients via email/dashboard
+- Provide migration guide
+
+### 2. Transition Period
+
+- Maintain both versions (minimum 6 months recommended)
+- Monitor usage of old version
+- Assist clients with migration
+- Track migration progress
+
+### 3. Sunset Old Version
+
+- Set sunset date (HTTP `Sunset` header)
+- Send reminders before sunset
+- Return `410 Gone` after sunset date
+- Keep redirect to new version
+
+```go
+// ✅ GOOD: Sunset old version gracefully
+func V1GetUser(w http.ResponseWriter, r *http.Request) {
+    // Check if sunset date passed
+    if time.Now().After(sunsetDate) {
+        w.WriteHeader(http.StatusGone)
+        json.NewEncoder(w).Encode(map[string]string{
+            "error": "API v1 has been sunset. Please use /v2/users",
+            "successor": "/v2/users",
+        })
+        return
+    }
+    
+    // Still serving if before sunset
+    // ...
+}
+```
+
+## Error Responses
+
+### Version-Specific Error Format
+
+```go
+// ✅ GOOD: Consistent error format per version
+// V1 error format
+type V1ErrorResponse struct {
+    Error   string `json:"error"`
+    Message string `json:"message"`
+}
+
+// V2 error format (improved)
+type V2ErrorResponse struct {
+    Code    string            `json:"code"`
+    Message string            `json:"message"`
+    Details map[string]string `json:"details,omitempty"`
+}
+```
+
+### Version Not Supported
+
+```go
+// ✅ GOOD: Handle unsupported versions
+func VersionMiddleware(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        // Extract version from path
+        if !strings.HasPrefix(r.URL.Path, "/v1") && 
+           !strings.HasPrefix(r.URL.Path, "/v2") {
+            w.WriteHeader(http.StatusNotFound)
+            json.NewEncoder(w).Encode(map[string]string{
+                "error": "API version not supported",
+                "supported_versions": "v1, v2",
+            })
+            return
+        }
+        next.ServeHTTP(w, r)
+    })
+}
+```
+
+## Testing Multiple Versions
+
+### Unit Tests
+
+```go
+// ✅ GOOD: Test each version separately
+func TestV1GetUser(t *testing.T) {
+    t.Run("returns user in v1 format", func(t *testing.T) {
+        req := httptest.NewRequest("GET", "/v1/users/123", nil)
+        w := httptest.NewRecorder()
+        
+        V1GetUser(w, req)
+        
+        var response V1UserResponse
+        json.NewDecoder(w.Body).Decode(&response)
+        
+        assert.Equal(t, "123", response.ID)  // v1 uses 'id'
+        assert.Equal(t, "john", response.Username)
+    })
+}
+
+func TestV2GetUser(t *testing.T) {
+    t.Run("returns user in v2 format", func(t *testing.T) {
+        req := httptest.NewRequest("GET", "/v2/users/123", nil)
+        w := httptest.NewRecorder()
+        
+        V2GetUser(w, req)
+        
+        var response V2UserResponse
+        json.NewDecoder(w.Body).Decode(&response)
+        
+        assert.Equal(t, "123", response.UserID)  // v2 uses 'user_id'
+        assert.Equal(t, "john", response.Profile.Username)
+    })
+}
+```
+
+### Integration Tests
+
+```go
+// ✅ GOOD: Test version compatibility
+func TestAPIVersionCompatibility(t *testing.T) {
+    t.Run("v1 and v2 both work", func(t *testing.T) {
+        // Test v1
+        resp1 := makeRequest(t, "GET", "/v1/users/123")
+        assert.Equal(t, 200, resp1.StatusCode)
+        
+        // Test v2
+        resp2 := makeRequest(t, "GET", "/v2/users/123")
+        assert.Equal(t, 200, resp2.StatusCode)
+    })
+}
+```
+
+## Migration Guide Template
+
+When releasing a new version, provide migration guide:
+
+```markdown
+# Migrating from API v1 to v2
+
+## Breaking Changes
+
+### 1. User Response Structure
+
+**v1**:
+```json
+{
+  "id": "123",
+  "username": "john",
+  "email": "john@example.com"
+}
+```
+
+**v2**:
+```json
+{
+  "user_id": "123",
+  "profile": {
+    "username": "john",
+    "email": "john@example.com"
+  }
+}
+```
+
+### 2. Updated Endpoints
+
+- `GET /v1/users` → `GET /v2/users`
+- Query parameters unchanged
+
+### 3. Error Response Format
+
+See error handling documentation for updated format.
+
+## Migration Checklist
+
+- [ ] Update base URL from `/v1` to `/v2`
+- [ ] Update response parsing (nested profile object)
+- [ ] Update field names (`id` → `user_id`)
+- [ ] Test error handling with new format
+- [ ] Update documentation
+```
+
+## Summary
+
+- **Always version** from day one (start with `/v1/`)
+- **Use URL path versioning** for clarity
+- **Never break** existing versions without releasing new version
+- **Maintain multiple versions** during transition (6+ months)
+- **Document differences** clearly
+- **Use deprecation headers** before sunset
+- **Test each version** independently
+- **Provide migration guides** for clients
+
+---
+
+**Version wisely, deprecate gracefully. 🚀**

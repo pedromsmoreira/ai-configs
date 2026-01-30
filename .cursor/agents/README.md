@@ -69,6 +69,28 @@ Task-focused, [Agent Skills](https://agentskills.io/specification)-compliant ins
 - Planning sprints or releases
 - Clarifying requirements
 
+### 🚀 DevOps Engineer (`devops-engineer.md`)
+
+**Best for:**
+- CI/CD pipeline setup and management
+- Docker and containerization
+- GitHub Actions, GitLab CI workflows
+- Docker Compose for local development
+- Deployment automation
+- Environment configuration
+- Secret management
+- Infrastructure as code
+
+**Use when:**
+- Setting up CI/CD pipelines
+- Creating Dockerfiles
+- Configuring Docker Compose
+- Automating deployments
+- Managing environment variables
+- Troubleshooting build/deployment issues
+- Optimizing container images
+- Setting up monitoring and logging
+
 ## How to Use
 
 ### In Cursor IDE
@@ -89,6 +111,7 @@ Task-focused, [Agent Skills](https://agentskills.io/specification)-compliant ins
    @product-owner Define requirements for [feature area]
    @be-engineer Implement the backend for [feature area]
    @fe-engineer Build the UI to display [feature area]
+   @devops-engineer Set up deployment for [feature area]
    ```
 
 ## Agent Selection Guide
@@ -116,6 +139,16 @@ Task-focused, [Agent Skills](https://agentskills.io/specification)-compliant ins
 - ✅ Reviewing implementations
 - ✅ Defining acceptance criteria
 - ✅ Creating roadmaps
+
+### Choose DevOps Engineer when:
+- ✅ Setting up CI/CD pipelines
+- ✅ Creating or optimizing Dockerfiles
+- ✅ Configuring Docker Compose
+- ✅ Automating deployments
+- ✅ Managing secrets and environment variables
+- ✅ Troubleshooting build or deployment issues
+- ✅ Setting up monitoring and logging
+- ✅ Optimizing container images
 
 ## Typical Workflows
 
@@ -175,21 +208,53 @@ Task-focused, [Agent Skills](https://agentskills.io/specification)-compliant ins
    @fe-engineer Design the notification UI components
    ```
 
+### Deployment Flow
+
+1. **DevOps Engineer** - Set up infrastructure
+   ```
+   @devops-engineer Create Dockerfile for the backend service
+   ```
+
+2. **DevOps Engineer** - Configure CI/CD
+   ```
+   @devops-engineer Set up GitHub Actions pipeline with tests and deployment
+   ```
+
+3. **DevOps Engineer** - Local development setup
+   ```
+   @devops-engineer Create Docker Compose for local development
+   ```
+
+4. **Backend Engineer** - Database migrations in CI/CD
+   ```
+   @be-engineer How should we run migrations in the deployment pipeline?
+   ```
+
+5. **DevOps Engineer** - Deploy
+   ```
+   @devops-engineer Deploy the application to staging environment
+   ```
+
 ## Agent Expertise Matrix
 
-| Task Type | BE Engineer | FE Engineer | Product Owner |
-|-----------|-------------|-------------|---------------|
-| User Stories | ❌ | ❌ | ✅ |
-| API Design | ✅ | 🟡 | 🟡 |
-| Database Schema | ✅ | ❌ | 🟡 |
-| React Components | ❌ | ✅ | ❌ |
-| Business Logic | ✅ | ❌ | 🟡 |
-| UI/UX Design | ❌ | ✅ | 🟡 |
-| Testing | ✅ | ✅ | ❌ |
-| Requirements | 🟡 | 🟡 | ✅ |
-| Prioritization | ❌ | ❌ | ✅ |
-| Code Review | ✅ | ✅ | ❌ |
-| Acceptance Review | 🟡 | 🟡 | ✅ |
+| Task Type | BE Engineer | FE Engineer | Product Owner | DevOps Engineer |
+|-----------|-------------|-------------|---------------|-----------------|
+| User Stories | ❌ | ❌ | ✅ | ❌ |
+| API Design | ✅ | 🟡 | 🟡 | ❌ |
+| Database Schema | ✅ | ❌ | 🟡 | 🟡 |
+| React Components | ❌ | ✅ | ❌ | ❌ |
+| Business Logic | ✅ | ❌ | 🟡 | ❌ |
+| UI/UX Design | ❌ | ✅ | 🟡 | ❌ |
+| Testing | ✅ | ✅ | ❌ | 🟡 |
+| Requirements | 🟡 | 🟡 | ✅ | ❌ |
+| Prioritization | ❌ | ❌ | ✅ | ❌ |
+| Code Review | ✅ | ✅ | ❌ | 🟡 |
+| Acceptance Review | 🟡 | 🟡 | ✅ | ❌ |
+| CI/CD Pipelines | 🟡 | 🟡 | ❌ | ✅ |
+| Dockerfiles | 🟡 | 🟡 | ❌ | ✅ |
+| Deployment | ❌ | ❌ | ❌ | ✅ |
+| Infrastructure | ❌ | ❌ | ❌ | ✅ |
+| Monitoring | 🟡 | ❌ | ❌ | ✅ |
 
 Legend:
 - ✅ Primary expertise
@@ -215,6 +280,7 @@ Legend:
 1. "@product-owner Define requirements for [feature area] (see project context)"
 2. "@be-engineer Implement the [feature] backend service"
 3. "@fe-engineer Create the UI to configure [feature]"
+4. "@devops-engineer Add [feature] to deployment pipeline"
 ```
 
 ### 4. Reference Context
@@ -239,6 +305,7 @@ Yes! For complex tasks, you can reference multiple agents:
 - Backend tests: `@be-engineer`
 - Frontend tests: `@fe-engineer`
 - Test planning and acceptance: `@product-owner`
+- CI/CD test automation: `@devops-engineer`
 
 ### What if I'm not sure which agent to use?
 Start with the **Product Owner** to clarify requirements, then they can guide you to the appropriate technical agent.
@@ -268,11 +335,13 @@ They also respect:
 cat .cursor/agents/be-engineer.md
 cat .cursor/agents/fe-engineer.md
 cat .cursor/agents/product-owner.md
+cat .cursor/agents/devops-engineer.md
 
 # Common prompts
 "@product-owner Create a user story for [feature]"
 "@be-engineer Implement [backend feature]"
 "@fe-engineer Build UI for [feature]"
+"@devops-engineer Set up CI/CD pipeline"
 "@product-owner Review [feature] implementation"
 ```
 
