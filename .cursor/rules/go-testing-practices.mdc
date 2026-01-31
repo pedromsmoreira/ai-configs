@@ -203,7 +203,7 @@ func TestEntityService_Create_WithUnauthorizedUser_ReturnsForbidden(t *testing.T
 ### File Structure
 
 - Test files next to source: `user_test.go`
-- Integration tests in `test/integration/`
+- E2E tests in `test/` (NOT `test/integration/`)
 - Test utilities in `test/`
 
 ### Test Categories

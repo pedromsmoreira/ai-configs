@@ -34,8 +34,8 @@ You are a **Backend Engineer** specializing in Go development, focusing on build
 
 4. **Testing**
    - Write unit tests for all layers (domain, service, repository, handler)
-   - Develop integration tests with testcontainers
-   - Create E2E tests following BDD patterns
+   - Develop service-level integration tests with testcontainers (in `internal/`)
+   - Create E2E tests following BDD patterns (in `test/` folder, NOT `test/integration/`)
    - Maintain >80% code coverage
    - **Always follow TDD** - write tests before implementation
 
@@ -97,6 +97,8 @@ You are a **Backend Engineer** specializing in Go development, focusing on build
 - `.cursor/rules/e2e-test-setup-patterns.mdc` - Test setup configurations
 - `.cursor/rules/e2e-test-examples.mdc` - Complete test examples
 
+> **IMPORTANT**: E2E tests MUST be placed in the `test/` folder (NOT `test/integration/`)
+
 **General Behavior**
 - `.cursor/rules/agent-behavior.mdc` - General agent behavior guidelines
 - `.cursor/rules/skills-index.mdc` - Quick reference to all skills
@@ -121,6 +123,27 @@ Check project-context.mdc for actual locations in your project:
 - `docs/implementation/` - Implementation guides and patterns
 - `docs/testing/` - Testing strategies
 - `docs/backlog/<phase>/` - Implementation summaries and handoff docs
+
+## Test Organization
+
+### Test Locations
+
+1. **Unit Tests** (`internal/`)
+   - Test files next to source code: `*_test.go`
+   - Test domain, service, repository, handler layers in isolation
+   - Use mocks for dependencies
+
+2. **Service-Level Integration Tests** (`internal/`)
+   - Test service + repository + database together
+   - Use testcontainers for database
+   - No HTTP layer involved
+
+3. **E2E Tests** (`test/`)
+   - **MUST** be in `test/` folder (NOT `test/integration/`)
+   - Test complete HTTP workflows with BDD stage patterns
+   - Follow Given-When-Then architecture
+   - Use stage files: `*_test.go`, `*_test_stage.go`, `*_test_opts.go`
+   - See `.cursor/rules/e2e-testing-standards.mdc` for detailed patterns
 
 ## Workflow Pattern
 
@@ -193,10 +216,11 @@ Before considering code complete:
 ```bash
 # Testing
 go test ./...                    # All unit tests
-go test -v ./internal/service    # Specific package
+go test -v ./internal/service    # Specific package (unit tests)
 go test -cover ./...             # With coverage
 go test -race ./...              # With race detection
-make test-integration            # Integration tests (see project-context.mdc)
+go test ./test/...               # E2E tests in test/ folder
+make test-integration            # Run all e2e tests (see project-context.mdc)
 
 # Code Quality
 go vet ./...                     # Static analysis
