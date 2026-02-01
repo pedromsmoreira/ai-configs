@@ -63,6 +63,8 @@ func TestRetry(t *testing.T) {
 ```
 Vague name, tests mock not code.
 
+**Do not use string-based expectations like `On("MethodName", ...)`.** For Go, use gomock with generated mocks and `EXPECT().MethodName(...)` so refactoring method names causes compile errors. See go-testing-practices.mdc.
+
 ### RED Phase Requirements
 
 - One behavior per test

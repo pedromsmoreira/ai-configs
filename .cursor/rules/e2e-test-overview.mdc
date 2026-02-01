@@ -34,6 +34,7 @@ Before creating a new e2e test, answer these questions:
 - [ ] Do I need to verify published events/messages?
 - [ ] Will I test multiple variations? (determines if opts file is needed)
 - [ ] What external dependencies do I need? (database, message broker, cache)
+- [ ] When mocking 3rd party services, use gomock (method-based expectations); see go-testing-practices.mdc
 
 ## Method Naming Quick Reference
 

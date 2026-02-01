@@ -110,6 +110,19 @@ func TestUserService_GetUser(t *testing.T) {
 }
 ```
 
+## Mocking
+
+- Use **gomock** with mocks generated from interfaces (e.g. mockgen). Set expectations using the **method**, not the name.
+- **Required**: `ctrl := gomock.NewController(t)`; generated mock (e.g. `mocks.NewMockUserRepository(ctrl)`); expectations via `mock.EXPECT().GetByID(...).Return(...)`.
+- **Forbidden**: String-based method expectations (e.g. `mock.On("GetByID", ...)`). No hand-written mocks that use `On("MethodName", ...)`.
+- **Why**: Renaming an interface method (e.g. `GetByID` → `FindByID`) causes compile errors at every `EXPECT().GetByID(...)`; you update tests in one pass. With `On("GetByID", ...)`, refactors don't break the build and tests become brittle.
+
+```go
+// ❌ BAD: String-based expectations — forbidden
+mockRepo.On("GetByID", "123").Return(&domain.User{ID: "123"}, nil)
+// Use gomock with EXPECT().GetByID(...) instead.
+```
+
 ## Integration Tests
 
 There are two types of integration tests in this project:

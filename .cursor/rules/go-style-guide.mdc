@@ -204,7 +204,7 @@ func (h *EntityHandler) CreateResource(ctx context.Context, req *pb.CreateResour
 - Test files: `*_test.go`
 - Always use `t.Run` with descriptive test names for each test case
 - Use `testify` for assertions
-- Mock interfaces for unit tests
+- Mock interfaces for unit tests; use gomock with generated mocks and method-based expectations (`EXPECT().Method(...)`), not string-based (`On("Method", ...)`)
 
 ```go
 // ✅ GOOD: Individual test functions with descriptive names

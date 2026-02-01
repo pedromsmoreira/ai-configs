@@ -18,6 +18,10 @@ Tests follow a **Given-When-Then** pattern with dedicated stage files:
 - `*_test_stage.go` - Stage struct, constructor, and methods
 - `*_test_opts.go` - Functional options for test data setup
 
+### Mocking external services
+
+When E2E tests need to mock 3rd party services (external APIs, payment gateways, etc.), use **gomock** with mocks generated from interfaces and method-based expectations (`EXPECT().Method(...)`), not string-based. See **go-testing-practices.mdc** for mocking rules.
+
 ## File Organization
 
 ### Test File Naming
