@@ -10,6 +10,13 @@ Copy these configurations to your projects to give AI assistants context about y
 
 ## What's Included
 
+### AGENTS.md (Cross-Editor Baseline)
+
+Project-root file for **any AI editor** (Zed, Windsurf, Copilot, Cursor, Aider, etc.). Provides condensed project context: setup commands, code style, architecture summary. Supported by 60k+ projects. See [agents.md](https://agents.md/).
+
+- **Cursor**: Full experience via `.cursor/`; AGENTS.md supplements
+- **Other editors**: AGENTS.md provides baseline; no `.cursor/` required for minimal setup
+
 ### Rules (`.cursor/rules/`)
 
 Project conventions and coding standards in `.mdc` format:
@@ -55,6 +62,7 @@ Task-focused instructions following the [Agent Skills](https://agentskills.io) s
 
 ```
 ai-configs/
+├── AGENTS.md             # Cross-editor baseline (Zed, Windsurf, Copilot, etc.)
 ├── .cursor/
 │   ├── agents/           # AI agent personas
 │   │   ├── be-engineer.md
@@ -67,8 +75,10 @@ ai-configs/
 │   └── skills/           # Reusable skills
 │       ├── go-backend/SKILL.md
 │       └── ...
-├── setup-cursor.sh       # Setup script (Linux/macOS)
-├── setup-cursor.ps1      # Setup script (Windows)
+├── setup-cursor.sh       # Full Cursor setup (Linux/macOS)
+├── setup-cursor.ps1      # Full Cursor setup (Windows)
+├── setup-ai.sh           # Editor-agnostic setup (Linux/macOS)
+├── setup-ai.ps1          # Editor-agnostic setup (Windows)
 ├── LICENSE
 └── README.md
 ```
@@ -189,7 +199,7 @@ git submodule update --init --recursive
 | Type | Files | Reason |
 |------|-------|--------|
 | **Symlinked** (shared) | `rules/*.mdc` (except project-context), `skills/`, `agents/` | Generic, reusable across all projects |
-| **Copied** (per-project) | `rules/project-context.mdc` | Must be customized for each project |
+| **Copied** (per-project) | `rules/project-context.mdc`, `AGENTS.md` | Must be customized for each project |
 | **Submodule** | `.cursor/ai-configs/` | Version-controlled reference to this repository |
 
 ### Updating Shared Configs
@@ -219,7 +229,12 @@ git submodule update --remote --merge
 
 Use the included setup scripts for quick project configuration with git submodules:
 
-#### Linux/macOS
+| Script | Purpose |
+|--------|---------|
+| `setup-cursor.sh` / `setup-cursor.ps1` | Full Cursor setup: rules, skills, agents, AGENTS.md |
+| `setup-ai.sh` / `setup-ai.ps1` | Editor-agnostic: AGENTS.md only (Zed, Windsurf, etc.) |
+
+#### Linux/macOS (Full Cursor Setup)
 
 ```bash
 cd /path/to/your-project
@@ -227,35 +242,30 @@ cd /path/to/your-project
 # Clone this repo first (if not already cloned)
 git clone https://github.com/your-org/ai-configs.git /tmp/ai-configs
 
-# Run setup script
+# Run Cursor setup (rules, skills, agents, AGENTS.md)
 /tmp/ai-configs/setup-cursor.sh
 ```
 
-Or specify a project path:
+#### Linux/macOS (Editor-Agnostic / Minimal)
+
 ```bash
-/tmp/ai-configs/setup-cursor.sh /path/to/your-project
+/tmp/ai-configs/setup-ai.sh /path/to/your-project
+# Optional: CREATE_RULES_LINK=1 for .rules symlink (Zed)
 ```
 
 #### Windows (PowerShell as Administrator)
 
 ```powershell
-cd C:\path\to\your-project
-
-# Clone this repo first (if not already cloned)
-git clone https://github.com/your-org/ai-configs.git C:\temp\ai-configs
-
-# Run setup script
-C:\temp\ai-configs\setup-cursor.ps1
-```
-
-Or specify a project path:
-```powershell
+# Full Cursor setup
 C:\temp\ai-configs\setup-cursor.ps1 -ProjectPath "C:\path\to\your-project"
+
+# Editor-agnostic (AGENTS.md only)
+C:\temp\ai-configs\setup-ai.ps1 -ProjectPath "C:\path\to\your-project" -CreateRulesLink
 ```
 
 #### Using Submodule URL
 
-The setup scripts will automatically add this repository as a submodule. You can override the submodule URL:
+Override the submodule URL:
 
 ```bash
 # Linux/macOS
@@ -270,15 +280,24 @@ $env:AI_CONFIGS_REPO = "https://github.com/your-org/ai-configs.git"
 
 ### Cursor
 
-Native support via the `.cursor/` folder:
+Full experience via the `.cursor/` folder:
 - Rules are automatically loaded from `.cursor/rules/`
 - Agents are available via `@agent-name` references
 - Skills are discoverable and usable by the AI
+- AGENTS.md is also read for cross-editor baseline
+
+### Other AI Editors (Zed, Windsurf, Copilot, Aider, etc.)
+
+Baseline via **AGENTS.md** at project root:
+- Auto-discovered by Zed, Windsurf, Copilot, and others
+- Provides project overview, commands, code style, architecture summary
+- For full rules and skills, run `setup-cursor.sh` (adds `.cursor/` structure)
+- For minimal setup (AGENTS.md only): run `setup-ai.sh`
 
 ### Claude Code
 
 Compatible patterns:
-- Agent files can be adapted to `AGENTS.md` format
+- AGENTS.md provides baseline context
 - Rules can be consolidated into `CLAUDE.md`
 - Skills follow the Agent Skills specification
 
@@ -287,6 +306,7 @@ Compatible patterns:
 ### Files to Customize (Per Project)
 
 - `project-context.mdc` - Always customize for your project
+- `AGENTS.md` - Customize project overview and commands (cross-editor baseline)
 - Agent files - Add project-specific context if needed
 
 ### Files That Are Generic (Reusable As-Is)

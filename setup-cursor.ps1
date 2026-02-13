@@ -112,6 +112,16 @@ if (-not (Test-Path $ContextDest)) {
     Write-Host "  Skipped: rules/project-context.mdc (already exists)" -ForegroundColor Gray
 }
 
+# Copy AGENTS.md for cross-editor compatibility (Zed, Windsurf, Copilot, etc.)
+$AgentsSource = Join-Path $SubmodulePath "AGENTS.md"
+$AgentsDest = Join-Path $ProjectPath "AGENTS.md"
+if ((Test-Path $AgentsSource) -and -not (Test-Path $AgentsDest)) {
+    Copy-Item -Path $AgentsSource -Destination $AgentsDest -Force
+    Write-Host "  Copied: AGENTS.md (cross-editor baseline)" -ForegroundColor Green
+} elseif (Test-Path $AgentsDest) {
+    Write-Host "  Skipped: AGENTS.md (already exists)" -ForegroundColor Gray
+}
+
 Write-Host "`nCursor config set up successfully!" -ForegroundColor Green
 Write-Host "Next step: Edit .cursor/rules/project-context.mdc for this project." -ForegroundColor Yellow
 Write-Host "To update the submodule: cd .cursor\ai-configs; git pull; cd ..\.." -ForegroundColor Gray

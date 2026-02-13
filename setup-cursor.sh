@@ -100,6 +100,17 @@ else
     echo -e "${GRAY}  Skipped: rules/project-context.mdc (already exists)${NC}"
 fi
 
+# Copy AGENTS.md for cross-editor compatibility (Zed, Windsurf, Copilot, etc.)
+AGENTS_SOURCE="$SUBMODULE_PATH/AGENTS.md"
+if [ -f "$AGENTS_SOURCE" ]; then
+    if [ ! -f "AGENTS.md" ]; then
+        cp "$AGENTS_SOURCE" "AGENTS.md"
+        echo -e "${GREEN}  Copied: AGENTS.md (cross-editor baseline)${NC}"
+    else
+        echo -e "${GRAY}  Skipped: AGENTS.md (already exists)${NC}"
+    fi
+fi
+
 echo ""
 echo -e "${GREEN}Cursor config set up successfully!${NC}"
 echo -e "${YELLOW}Next step: Edit .cursor/rules/project-context.mdc for this project.${NC}"

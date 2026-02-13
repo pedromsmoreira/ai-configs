@@ -2,6 +2,14 @@
 
 Welcome to the Cursor AI configuration system! This directory contains specialized AI agents, coding rules, and task-focused skills to help you build high-quality software efficiently.
 
+## Cross-Editor Support (AGENTS.md)
+
+For **any AI editor** (Zed, Windsurf, Copilot, etc.), a project-root `AGENTS.md` provides baseline context. Cursor gets the **full experience** via `.cursor/` (rules, skills, agents); other editors use AGENTS.md.
+
+- **Cursor**: Full experience via `.cursor/`; AGENTS.md supplements
+- **Zed, Windsurf, Copilot**: AGENTS.md at project root (auto-discovered)
+- **Setup**: `setup-cursor.sh` copies AGENTS.md; `setup-ai.sh` for AGENTS.md-only setup
+
 ## What's Inside
 
 ```
@@ -159,6 +167,8 @@ globs:
 ```
 
 ## File Structure Overview
+
+Project root may also include `AGENTS.md` for cross-editor baseline (see above).
 
 ```
 .cursor/
