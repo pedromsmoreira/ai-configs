@@ -160,7 +160,7 @@ func TestEntityRepository_Create_WithValidEntity_PersistsToDatabase(t *testing.T
 
 For testing complete HTTP workflows with BDD stage patterns:
 
-> **Important**: E2E tests in the `test/` folder **must** follow `11-go-e2e-testing-standards.mdc` for Given-When-Then architecture, stage files, and HTTP/event testing.
+> **Important**: E2E tests in the `test/` folder **must** follow `e2e-testing-standards.mdc` for Given-When-Then architecture, stage files, and HTTP/event testing.
 
 ```go
 // ✅ GOOD: E2E test using BDD stage pattern (in test/)

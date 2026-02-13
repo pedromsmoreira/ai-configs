@@ -12,7 +12,7 @@ alwaysApply: true
 | REST/HTTP endpoint design, URL structure, status codes | `rest-api-design` | architecture, go-style-guide, authentication-security |
 | Schema changes, migrations | `database-migrations` | database-migrations |
 | React components, frontend UI | `frontend-react` | frontend-patterns |
-| Writing/fixing tests, coverage | `testing` | go-testing-practices, frontend-testing-practices, testing-agent |
+| Writing/fixing tests, coverage | `testing` | go-testing-practices, frontend-testing-practices, e2e-testing-standards, testing-agent |
 | TDD cycle details, examples | `tdd-workflow` | test-driven-development |
 | Requirements, acceptance criteria | `user-stories` | - |
 | Clean code principles | `clean-code` | go-style-guide |
@@ -39,5 +39,5 @@ Skills are in `.cursor/skills/<name>/SKILL.md`
 | `agent-behavior.mdc` | Agent guidelines |
 | `testing-agent.mdc` | Bug handling (agent-requestable) |
 | `test-driven-development.mdc` | TDD principles |
-| `go-e2e-testing-standards.mdc` | E2E testing with BDD patterns |
+| `e2e-testing-standards.mdc` | E2E testing with BDD patterns |
 | `http-rest-standards.mdc` | HTTP/REST standards |

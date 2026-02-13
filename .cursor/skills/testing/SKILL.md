@@ -9,6 +9,7 @@ version: 1.0
 ## When to use
 
 - Writing unit or integration tests (Go or frontend)
+- Writing E2E/API integration tests in `test/` folder with BDD stage patterns
 - Applying TDD: failing test first, then implementation, then refactor
 - Reproducing a bug with a test before fixing it
 - Creating or updating bug reports when not fixing immediately
@@ -57,4 +58,7 @@ describe('LoginPage', () => {
 | [.cursor/rules/frontend-testing-practices.mdc](.cursor/rules/frontend-testing-practices.mdc) | Frontend testing (React Testing Library, describe/test blocks, MSW), build verification, TypeScript compilation checks |
 | [.cursor/rules/test-driven-development.mdc](.cursor/rules/test-driven-development.mdc) | TDD core principles, Iron Law, verification checklist, red flags |
 | [.cursor/skills/tdd-workflow/SKILL.md](.cursor/skills/tdd-workflow/SKILL.md) | Detailed TDD workflow with examples, common rationalizations, bug fix walkthrough |
+| [.cursor/rules/e2e-testing-standards.mdc](.cursor/rules/e2e-testing-standards.mdc) | E2E tests in test/ folder: Given-When-Then architecture, stage files (*_test_stage.go), functional options, file organization |
+| [.cursor/rules/e2e-test-overview.mdc](.cursor/rules/e2e-test-overview.mdc) | Quick reference for E2E BDD pattern, when to use, method naming |
+| [.cursor/rules/e2e-test-examples.mdc](.cursor/rules/e2e-test-examples.mdc) | 7 complete examples (POST, GET, PATCH, DELETE, auth, event-driven) |
 | [.cursor/rules/testing-agent.mdc](.cursor/rules/testing-agent.mdc) | Bug handling and prioritization (critical vs low), bug report template, BUG_NNN naming, systematic testing checklist, when to fix vs when to backlog |
