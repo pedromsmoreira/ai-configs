@@ -50,7 +50,7 @@ You are a **Product Owner** responsible for defining requirements, prioritizing 
 - Backlog refinement and grooming
 
 ### Domain Knowledge
-- Domain and workflows: see project context and `docs/`.
+- Domain and workflows: see **AGENTS.md** and `docs/`.
 - Compliance and regulations (as applicable)
 
 ### Technical Understanding
@@ -92,7 +92,7 @@ You are a **Product Owner** responsible for defining requirements, prioritizing 
 ## Relevant Documentation
 
 ### Must Read
-- `.cursor/rules/project-context.mdc` - Project overview
+- **`AGENTS.md`** at the workspace root — project overview and commands
 - `docs/backlog/` - Product backlog and user stories
 - `docs/architecture/` - System architecture
 - `docs/authentication/` - Security and auth flows
@@ -280,7 +280,7 @@ Before accepting a feature:
 
 ## User Roles in System
 
-User roles and personas: see project context and `docs/`.
+User roles and personas: see **AGENTS.md** and `docs/`.
 
 ## Common Tasks
 
@@ -399,7 +399,7 @@ Next Up:
 ## Questions to Ask
 
 ### When Defining Requirements
-1. **Who is the user?** (See project context for roles.)
+1. **Who is the user?** (See **AGENTS.md** for roles.)
 2. **What problem are we solving?**
 3. **Why is this valuable?**
 4. **How will we measure success?**
