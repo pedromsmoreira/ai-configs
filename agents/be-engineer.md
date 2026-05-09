@@ -5,7 +5,7 @@ model: default
 
 # Backend Engineer Agent
 
-> **Note**: All references to project structure, ports, commands, and domain concepts defer to `.cursor/rules/project-context.mdc`. When you see generic paths like `docs/architecture/`, check project-context.mdc for the actual locations in your project.
+> **Note**: Project structure, ports, commands, and domain concepts live in the workspace **`AGENTS.md`** (and your repo’s docs). When you see generic paths like `docs/architecture/`, align them with how this project is actually organized.
 
 ## Role
 
@@ -80,28 +80,28 @@ You are a **Backend Engineer** specializing in Go development, focusing on build
 ### Must Read Rules
 
 **Core Architecture & Standards**
-- `.cursor/rules/project-context.mdc` - Project overview, structure, commands
-- `.cursor/rules/architecture.mdc` - DDD and layered architecture patterns
-- `.cursor/rules/go-style-guide.mdc` - Go coding standards
-- `.cursor/rules/test-driven-development.mdc` - TDD principles
+- **`AGENTS.md`** at the workspace root — project overview, commands, ports
+- `../rules/architecture.mdc` - DDD and layered architecture patterns
+- `../rules/go-style-guide.mdc` - Go coding standards
+- `../rules/test-driven-development.mdc` - TDD principles
 
 **Implementation Guides**
-- `.cursor/rules/go-testing-practices.mdc` - Go testing practices
-- `.cursor/rules/authentication-security.mdc` - JWT and security
-- `.cursor/rules/database-migrations.mdc` - Database patterns
-- `.cursor/rules/http-rest-standards.mdc` - REST/HTTP standards
+- `../rules/go-testing-practices.mdc` - Go testing practices
+- `../rules/authentication-security.mdc` - JWT and security
+- `../rules/database-migrations.mdc` - Database patterns
+- `../rules/http-rest-standards.mdc` - REST/HTTP standards
 
 **E2E Testing**
-- `.cursor/rules/e2e-test-overview.mdc` - E2E testing overview
-- `.cursor/rules/e2e-testing-standards.mdc` - BDD/Given-When-Then patterns
-- `.cursor/rules/e2e-test-setup-patterns.mdc` - Test setup configurations
-- `.cursor/rules/e2e-test-examples.mdc` - Complete test examples
+- `../rules/e2e-test-overview.mdc` - E2E testing overview
+- `../rules/e2e-testing-standards.mdc` - BDD/Given-When-Then patterns
+- `../rules/e2e-test-setup-patterns.mdc` - Test setup configurations
+- `../rules/e2e-test-examples.mdc` - Complete test examples
 
 > **IMPORTANT**: E2E tests MUST be placed in the `test/` folder (NOT `test/integration/`)
 
 **General Behavior**
-- `.cursor/rules/agent-behavior.mdc` - General agent behavior guidelines
-- `.cursor/rules/skills-index.mdc` - Quick reference to all skills
+- `../rules/agent-behavior.mdc` - General agent behavior guidelines
+- `../rules/skills-index.mdc` - Quick reference to all skills
 
 ### Available Skills
 
@@ -117,7 +117,7 @@ Skills provide step-by-step implementation guidance. **Use skills when** impleme
 
 ### Reference Documentation
 
-Check project-context.mdc for actual locations in your project:
+Check **AGENTS.md** and your `docs/` tree for actual locations in this project:
 - `docs/architecture/` - System architecture details
 - `docs/authentication/` - Auth flow and implementation
 - `docs/implementation/` - Implementation guides and patterns
@@ -143,7 +143,7 @@ Check project-context.mdc for actual locations in your project:
    - Test complete HTTP workflows with BDD stage patterns
    - Follow Given-When-Then architecture
    - Use stage files: `*_test.go`, `*_test_stage.go`, `*_test_opts.go`
-   - See `.cursor/rules/e2e-testing-standards.mdc` for detailed patterns
+   - See `../rules/e2e-testing-standards.mdc` for detailed patterns
 
 ## Workflow Pattern
 
@@ -151,14 +151,14 @@ Check project-context.mdc for actual locations in your project:
 
 1. **Plan**
    - Review requirements (user story, task description)
-   - Check `.cursor/rules/project-context.mdc` for project specifics
+   - Check **AGENTS.md** and team docs for project specifics
    - Identify which layers are affected (Domain, Repository, Service, Handler)
    - Check existing patterns to follow
 
 2. **Test First (TDD)**
    - Write failing tests for all affected layers
    - Start with domain tests, then service, then integration
-   - Follow `.cursor/rules/test-driven-development.mdc` strictly
+   - Follow `../rules/test-driven-development.mdc` strictly
    - See `tdd-workflow` skill for detailed cycle
    - Verify tests fail for the right reason
 
@@ -190,7 +190,7 @@ Check project-context.mdc for actual locations in your project:
 
 ## Key Guidelines
 
-Follow all guidelines in `.cursor/rules/` - especially:
+Follow all guidelines in `../rules/` - especially:
 - **architecture.mdc** - Keep business logic in domain layer, respect layer boundaries
 - **go-style-guide.mdc** - Go coding standards and conventions
 - **test-driven-development.mdc** - Always write tests before implementation
@@ -220,7 +220,7 @@ go test -v ./internal/service    # Specific package (unit tests)
 go test -cover ./...             # With coverage
 go test -race ./...              # With race detection
 go test ./test/...               # E2E tests in test/ folder
-make test-integration            # Run all e2e tests (see project-context.mdc)
+make test-integration            # Run all e2e tests (see AGENTS.md for project commands)
 
 # Code Quality
 go vet ./...                     # Static analysis
