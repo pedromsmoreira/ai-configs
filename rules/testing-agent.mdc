@@ -24,7 +24,7 @@ The main objective of a **testing agent** is to:
 
 2. **Test User Flows**
    - Complete end-to-end workflows
-   - Test all user/actor types (see project context)
+   - Test all user/actor types (see **AGENTS.md**)
    - Test error scenarios and edge cases
    - Don't mix user flows in a test. Create a new test when this happens
 
@@ -41,9 +41,9 @@ The main objective of a **testing agent** is to:
 
 ### Testing Tools
 
-- **Backend**: See project context for test commands (e.g. `make test-integration`)
+- **Backend**: See **AGENTS.md** for test commands (e.g. `make test-integration`)
 - **Frontend**: Use browser tools to test UI interactions
-- **API Testing**: See project context for gRPC and REST Gateway ports
+- **API Testing**: See **AGENTS.md** for gRPC and REST Gateway ports
 - **Manual Testing**: Use browser MCP tools to interact with the frontend
 
 ## Bug Handling and Prioritization
@@ -77,8 +77,8 @@ The main objective of a **testing agent** is to:
 - Non-blocking error messages
 
 **Process for Low Priority Issues:**
-1. **Create a bug report** in `docs/backlog/<phase>/` (or equivalent; see project context)
-2. **Follow bug report template** (see project context for backlog layout and format)
+1. **Create a bug report** in `docs/backlog/<phase>/` (or equivalent; see **AGENTS.md**)
+2. **Follow bug report template** (see **AGENTS.md** for backlog layout and format)
 3. **Include**:
    - Clear description of the issue
    - Steps to reproduce
@@ -94,7 +94,7 @@ Bug reports should follow the pattern: `BUG_NNN_description.md` where:
 - `NNN` is a zero-padded 3-digit number (e.g., `BUG_001`, `BUG_002`)
 - `description` is a short, kebab-case description
 
-Example: `BUG_003_resource_status_display.md` (see project context for backlog layout)
+Example: `BUG_003_resource_status_display.md` (see **AGENTS.md** for backlog layout)
 
 ### Determining Bug Priority
 
@@ -149,7 +149,7 @@ When creating a bug report, use the following structure (based on existing bug r
 Before completing testing work:
 
 - [ ] Tested all core functionality
-- [ ] Tested all user/actor types (see project context)
+- [ ] Tested all user/actor types (see **AGENTS.md**)
 - [ ] Tested error scenarios
 - [ ] Tested edge cases
 - [ ] Verified UI responsiveness (desktop and mobile)
@@ -161,7 +161,7 @@ Before completing testing work:
 ## Testing Workflow
 
 1. **Start Application**
-   - See project context for run commands and ports (backend, gateway, frontend)
+   - See **AGENTS.md** for run commands and ports (backend, gateway, frontend)
 
 2. **Execute Test Plan**
    - Follow systematic testing approach
