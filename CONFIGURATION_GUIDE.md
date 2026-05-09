@@ -1,48 +1,49 @@
-# Cursor AI Configuration Guide
+# Cursor AI configuration guide
 
-Welcome to the Cursor AI configuration system! This directory contains specialized AI agents, coding rules, and task-focused skills to help you build high-quality software efficiently.
+This pack provides **agents**, **rules**, and **skills** at the **repository root** (`agents/`, `rules/`, `skills/`). Cursor expects them under a project’s **`.cursor/`** directory, so install by copying or symlinking those three folders into `your-project/.cursor/`.
 
-## Cross-Editor Support (AGENTS.md)
+## Cross-editor support (`AGENTS.md`)
 
-For **any AI editor** (Zed, Windsurf, Copilot, etc.), a project-root `AGENTS.md` provides baseline context. Cursor gets the **full experience** via `.cursor/` (rules, skills, agents); other editors use AGENTS.md.
+For **any AI editor** (Zed, Windsurf, Copilot, etc.), a project-root `AGENTS.md` provides baseline context. **Cursor** loads rules, skills, and agents from `.cursor/rules`, `.cursor/skills`, and `.cursor/agents` inside the workspace; keep **`AGENTS.md`** at the project root when you want the same baseline as other tools.
 
-- **Cursor**: Full experience via `.cursor/`; AGENTS.md supplements
-- **Zed, Windsurf, Copilot**: AGENTS.md at project root (auto-discovered)
-- **Setup**: `setup-cursor.sh` copies AGENTS.md; `setup-ai.sh` for AGENTS.md-only setup
+- **Cursor**: Install `agents/`, `rules/`, and `skills/` under `.cursor/` in the app repo; `AGENTS.md` at project root supplements
+- **Zed, Windsurf, Copilot**: `AGENTS.md` at project root (auto-discovered)
 
-## What's Inside
+## What’s in this repository
 
 ```
-.cursor/
-├── agents/          # Specialized AI personas (BE, FE, Product Owner, DevOps)
-├── rules/           # Coding standards and architectural patterns
-├── skills/          # Task-focused, Agent Skills-compliant instructions
-├── README.md        # This file - your quick start guide
-└── CHECKLIST.md     # Setup checklist for new projects
+ai-configs/                 # clone root
+├── agents/                 # AI personas (BE, FE, Product Owner, DevOps)
+├── rules/                  # Coding standards (.mdc)
+├── skills/                 # Agent Skills–compliant task guides
+├── AGENTS.md               # Cross-editor baseline (optional in each app repo)
+├── CONFIGURATION_GUIDE.md  # This file
+└── CONFIGURATION_CHECKLIST.md
 ```
 
-## Quick Setup (4 Steps)
+## Quick setup (four steps)
 
-### 1. Copy Configuration Directory
+### 1. Install into a Cursor project
 
-Copy this `.cursor/` directory to your project root:
+From this repository’s root (`<clone>/ai-configs`):
 
 ```bash
-cp -r /path/to/ai-configs/.cursor /path/to/your-project/
+mkdir -p /path/to/your-project/.cursor
+cp -r agents rules skills /path/to/your-project/.cursor/
 ```
 
-### 2. Customize Project Context
+On Windows, use `Copy-Item -Recurse` or directory junctions instead of `cp -r` if you prefer.
 
-Edit `.cursor/rules/project-context.mdc` and replace ALL `[PLACEHOLDER]` values:
+### 2. Customize `AGENTS.md`
+
+In the **target** project root, edit **`AGENTS.md`** and replace placeholders with real values:
 
 - Project name and description
-- Tech stack (backend, frontend, database)
-- Project structure and key directories
-- Design principles
-- Domain concepts
-- Ports and commands
+- Install, build, test, lint, and run commands
+- Ports, URLs, and how to run integration or E2E tests
+- Domain concepts and stack notes
 
-**Important**: Remove the example section at the bottom after customizing.
+**Optional**: Adjust individual `.mdc` files under `.cursor/rules/` only where a rule still mentions example paths or placeholders that do not match your repo.
 
 ### 3. Update Documentation References
 
@@ -60,10 +61,10 @@ If you have [skills-ref](https://agentskills.io/specification) installed:
 ```bash
 make validate-skills
 # or
-skills-ref validate .cursor/skills
+skills-ref validate skills
 ```
 
-See [CHECKLIST.md](CHECKLIST.md) for the complete setup checklist.
+See [CONFIGURATION_CHECKLIST.md](CONFIGURATION_CHECKLIST.md) for the complete setup checklist.
 
 ## Using Agents
 
@@ -131,7 +132,7 @@ Rules are coding standards and architectural patterns that AI assistants follow 
 
 These rules are **always active** for all conversations:
 
-- `project-context.mdc` - Project overview (customize this!)
+- **`AGENTS.md`** — project overview, commands, ports (customize this first)
 - `architecture.mdc` - DDD and layered architecture
 - `go-style-guide.mdc` - Go coding conventions
 - `frontend-patterns.mdc` - React/TypeScript guidelines
@@ -168,38 +169,26 @@ globs:
 
 ## File Structure Overview
 
-Project root may also include `AGENTS.md` for cross-editor baseline (see above).
+The **application** project root should include `AGENTS.md` when you want a cross-editor baseline (see above). After install, Cursor sees:
 
 ```
-.cursor/
-├── agents/
-│   ├── README.md              # Agent documentation
-│   ├── be-engineer.md         # Backend Engineer agent
-│   ├── fe-engineer.md         # Frontend Engineer agent
-│   ├── product-owner.md       # Product Owner agent
-│   └── devops-engineer.md     # DevOps Engineer agent
-│
-├── rules/
-│   ├── project-context.mdc    # ⚠️ CUSTOMIZE THIS FIRST
-│   ├── architecture.mdc       # DDD patterns
-│   ├── go-style-guide.mdc     # Go conventions
-│   ├── frontend-patterns.mdc  # React/TS guidelines
-│   ├── test-driven-development.mdc  # TDD principles
-│   ├── api-versioning.mdc     # API versioning patterns
-│   ├── skills-index.mdc       # Skills quick reference
-│   └── ...                    # Additional rules
-│
-└── skills/
-    ├── README.md              # Skills documentation
-    ├── go-backend/            # Go backend development
-    ├── frontend-react/        # React development
-    ├── database-migrations/   # Schema migrations
-    ├── testing/               # TDD and testing
-    ├── rest-api-design/       # REST API design
-    ├── http-rest-endpoints/   # HTTP handlers
-    ├── tdd-workflow/          # Red-Green-Refactor
-    ├── user-stories/          # Requirements and stories
-    └── clean-code/            # Clean code principles
+your-project/
+├── AGENTS.md              # optional; copy from this pack’s AGENTS.md
+└── .cursor/
+    ├── agents/
+    │   ├── README.md
+    │   ├── be-engineer.md
+    │   ├── fe-engineer.md
+    │   ├── product-owner.md
+    │   └── devops-engineer.md
+    ├── rules/
+    │   ├── architecture.mdc
+    │   ├── go-style-guide.mdc
+    │   └── ...
+    └── skills/
+        ├── README.md
+        ├── go-backend/
+        └── ...
 ```
 
 ## Validation
@@ -212,8 +201,8 @@ Before committing changes, verify your configuration:
 # Validate skills (if skills-ref installed)
 make validate-skills
 
-# Check project context is customized
-grep -r "\[PLACEHOLDER\]" .cursor/rules/project-context.mdc
+# Check AGENTS.md is customized
+grep "\[PLACEHOLDER\]" AGENTS.md
 # Should return no results
 
 # Verify all tests pass
@@ -222,7 +211,7 @@ make test  # or your project's test command
 
 ### Checklist
 
-Use [CHECKLIST.md](CHECKLIST.md) to track your setup progress.
+Use [CONFIGURATION_CHECKLIST.md](CONFIGURATION_CHECKLIST.md) to track your setup progress.
 
 ## Common Workflows
 
@@ -298,7 +287,7 @@ Let agents determine **how** to implement. Focus on **what** and **why**:
 
 ### "Agent doesn't understand my project"
 
-→ Ensure `project-context.mdc` is fully customized with your project details.
+→ Ensure **`AGENTS.md`** fully describes your project (commands, ports, structure).
 
 ### "Skills aren't activating"
 
@@ -350,14 +339,14 @@ Rules in `.cursor/rules/` are loaded alphabetically. Use prefixes if order matte
 
 - **Agent Documentation**: See [agents/README.md](agents/README.md)
 - **Skills Documentation**: See [skills/README.md](skills/README.md)
-- **Setup Checklist**: See [CHECKLIST.md](CHECKLIST.md)
-- **Project Context Template**: See [rules/project-context.mdc](rules/project-context.mdc)
+- **Setup checklist**: See [CONFIGURATION_CHECKLIST.md](CONFIGURATION_CHECKLIST.md)
+- **Project baseline**: See [AGENTS.md](AGENTS.md) in this pack (copy into the app repo root)
 
 ## Next Steps
 
 1. ✅ Read this guide
-2. ⬜ Complete [CHECKLIST.md](CHECKLIST.md)
-3. ⬜ Customize `project-context.mdc`
+2. ⬜ Complete [CONFIGURATION_CHECKLIST.md](CONFIGURATION_CHECKLIST.md)
+3. ⬜ Customize `AGENTS.md` in the target project
 4. ⬜ Try referencing an agent: `@be-engineer Hello!`
 5. ⬜ Start building with AI assistance
 
