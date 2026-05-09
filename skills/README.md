@@ -2,7 +2,7 @@
 
 Agent Skills are task-focused instruction sets that follow the [Agent Skills specification](https://agentskills.io/specification). Each skill defines **what it does** and **when to use it**, so agents can activate the right skill for a given task.
 
-Skills in this project **complement** the existing Cursor agents (`.cursor/agents/`) and **reference** `.cursor/rules/` for full guidance. Each skill is thin: "when to use" plus pointers to rules and agents; rules and agents remain the single source of truth.
+Skills in this project **complement** the existing Cursor agents (`../agents/`) and **reference** `../rules/` for full guidance. Each skill is thin: "when to use" plus pointers to rules and agents; rules and agents remain the single source of truth.
 
 ## Skills
 
@@ -14,6 +14,7 @@ Skills in this project **complement** the existing Cursor agents (`.cursor/agent
 | **testing** | TDD, unit tests, integration tests with testcontainers, mocks, regression tests |
 | **frontend-react** | React 18+, TypeScript, Material-UI, Zustand, React Query, REST API integration |
 | **user-stories** | User stories, acceptance criteria, backlog items, requirements, and review |
+| **conventional-commits** | Commit messages and PR/squash titles per Conventional Commits; git-only evidence, no MCP |
 
 ## Validation
 
@@ -22,18 +23,19 @@ Skills in this project **complement** the existing Cursor agents (`.cursor/agent
 If you have the [skills-ref](https://agentskills.io/specification) tool (or run `make validate-skills` when it is installed):
 
 ```bash
-skills-ref validate .cursor/skills/go-backend
-skills-ref validate .cursor/skills/rest-api-design
-skills-ref validate .cursor/skills/database-migrations
-skills-ref validate .cursor/skills/testing
-skills-ref validate .cursor/skills/frontend-react
-skills-ref validate .cursor/skills/user-stories
+skills-ref validate ./go-backend
+skills-ref validate ./rest-api-design
+skills-ref validate ./database-migrations
+skills-ref validate ./testing
+skills-ref validate ./frontend-react
+skills-ref validate ./user-stories
+skills-ref validate ./conventional-commits
 ```
 
 Or validate all at once (if your skills-ref supports a directory):
 
 ```bash
-skills-ref validate .cursor/skills
+skills-ref validate .
 ```
 
 ### Manual checks
@@ -47,7 +49,7 @@ skills-ref validate .cursor/skills
 Each skill is a directory with at least `SKILL.md`:
 
 ```
-.cursor/skills/
+skills/                 # at repository root (alongside rules/ and agents/)
 ├── README.md           # This file
 ├── go-backend/
 │   └── SKILL.md
@@ -59,7 +61,9 @@ Each skill is a directory with at least `SKILL.md`:
 │   └── SKILL.md
 ├── frontend-react/
 │   └── SKILL.md
-└── user-stories/
+├── user-stories/
+│   └── SKILL.md
+└── conventional-commits/
     └── SKILL.md
 ```
 
