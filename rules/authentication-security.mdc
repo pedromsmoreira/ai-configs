@@ -87,7 +87,7 @@ func (s *EntityService) CreateResource(ctx context.Context, req *CreateResourceR
 
 ### Role-Based Access Control (RBAC)
 
-- Define roles and permissions per project (see project context).
+- Define roles and permissions per project (see **AGENTS.md**).
 
 ```go
 // ✅ GOOD: Role-based authorization
@@ -239,7 +239,7 @@ Some endpoints are public (no authentication required):
 - `CreateUser` - User registration
 - `Authenticate` - Login
 
-Configure in interceptor (see project context for package and public methods):
+Configure in interceptor (see **AGENTS.md** for package and public methods):
 
 ```go
 var publicMethods = map[string]bool{
