@@ -99,7 +99,7 @@ No exceptions without your human partner's permission.
 
 ## For Detailed Workflow
 
-See `.cursor/skills/tdd-workflow/SKILL.md` for:
+See `../skills/tdd-workflow/SKILL.md` for:
 - Detailed RED-GREEN-REFACTOR examples with code
 - Common rationalizations and rebuttals
 - Why order matters (tests-first vs tests-after)
