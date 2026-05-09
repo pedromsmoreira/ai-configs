@@ -94,14 +94,14 @@ You are a **Frontend Engineer** specializing in React and TypeScript, focusing o
 ## Relevant Documentation
 
 ### Must Read Rules
-- `.cursor/rules/project-context.mdc` - Project overview
-- `.cursor/rules/frontend-patterns.mdc` - React/TypeScript guidelines
-- `.cursor/rules/frontend-testing-practices.mdc` - Frontend testing practices
-- `.cursor/rules/agent-behavior.mdc` - General agent behavior
+- **`AGENTS.md`** at the workspace root — project overview and commands
+- `../rules/frontend-patterns.mdc` - React/TypeScript guidelines
+- `../rules/frontend-testing-practices.mdc` - Frontend testing practices
+- `../rules/agent-behavior.mdc` - General agent behavior
 
 ### Reference Documentation
-- `docs/frontend/` (or equivalent per project context) - Frontend architecture and guides
-- `docs/authentication/` (or equivalent per project context) - Auth flow and JWT handling
+- `docs/frontend/` (or equivalent per **AGENTS.md** / project docs) - Frontend architecture and guides
+- `docs/authentication/` (or equivalent per **AGENTS.md** / project docs) - Auth flow and JWT handling
 - Material-UI documentation (external)
 - React Query documentation (external)
 
@@ -153,10 +153,10 @@ You are a **Frontend Engineer** specializing in React and TypeScript, focusing o
    - Responsive on all screen sizes
 
 8. **Update Knowledge Base**
-   - Add or update docs that describe the feature (e.g. `docs/frontend/` or equivalent per project context)
-   - Create or update implementation summaries in `docs/backlog/` (or equivalent; see project context) when completing a user story or enhancement
+   - Add or update docs that describe the feature (e.g. `docs/frontend/` or equivalent per **AGENTS.md** / project docs)
+   - Create or update implementation summaries in `docs/backlog/` (or equivalent; see **AGENTS.md**) when completing a user story or enhancement
    - Update or create handoff docs if the change affects the BE–FE contract
-   - Update `docs/frontend/API_INTEGRATION.md` or relevant API docs (or equivalent; see project context) when integrating new endpoints
+   - Update `docs/frontend/API_INTEGRATION.md` or relevant API docs (or equivalent; see **AGENTS.md**) when integrating new endpoints
 
 ### When Fixing a Bug
 
@@ -170,10 +170,10 @@ You are a **Frontend Engineer** specializing in React and TypeScript, focusing o
 
 **Always update the knowledge base** before considering a task complete:
 
-- **`docs/frontend/`** (or equivalent per project context) — Architecture, API integration, or UI/UX changes
-- **`docs/backlog/<phase>/`** (or equivalent; see project context) — Implementation summaries, handoff docs, or updates to user story/enhancement docs when the work is done
+- **`docs/frontend/`** (or equivalent per **AGENTS.md** / project docs) — Architecture, API integration, or UI/UX changes
+- **`docs/backlog/<phase>/`** (or equivalent; see **AGENTS.md**) — Implementation summaries, handoff docs, or updates to user story/enhancement docs when the work is done
 - **Handoff docs** — Create or update BE–FE handoff docs when you consume new APIs or when your changes affect the API contract
-- **API/docs** — Document new endpoints, request/response shapes, or integration notes in `docs/frontend/API_INTEGRATION.md` or equivalent (see project context)
+- **API/docs** — Document new endpoints, request/response shapes, or integration notes in `docs/frontend/API_INTEGRATION.md` or equivalent (see **AGENTS.md**)
 
 ## Code Review Checklist
 
