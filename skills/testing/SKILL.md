@@ -54,11 +54,11 @@ describe('LoginPage', () => {
 
 | File | Purpose |
 |------|---------|
-| [.cursor/rules/go-testing-practices.mdc](.cursor/rules/go-testing-practices.mdc) | Go testing (testify, t.Run subtests pattern, unit tests with mocks, integration tests with testcontainers), test naming, coverage, test data factories |
-| [.cursor/rules/frontend-testing-practices.mdc](.cursor/rules/frontend-testing-practices.mdc) | Frontend testing (React Testing Library, describe/test blocks, MSW), build verification, TypeScript compilation checks |
-| [.cursor/rules/test-driven-development.mdc](.cursor/rules/test-driven-development.mdc) | TDD core principles, Iron Law, verification checklist, red flags |
-| [.cursor/skills/tdd-workflow/SKILL.md](.cursor/skills/tdd-workflow/SKILL.md) | Detailed TDD workflow with examples, common rationalizations, bug fix walkthrough |
-| [.cursor/rules/e2e-testing-standards.mdc](.cursor/rules/e2e-testing-standards.mdc) | E2E tests in test/ folder: Given-When-Then architecture, stage files (*_test_stage.go), functional options, file organization |
-| [.cursor/rules/e2e-test-overview.mdc](.cursor/rules/e2e-test-overview.mdc) | Quick reference for E2E BDD pattern, when to use, method naming |
-| [.cursor/rules/e2e-test-examples.mdc](.cursor/rules/e2e-test-examples.mdc) | 7 complete examples (POST, GET, PATCH, DELETE, auth, event-driven) |
-| [.cursor/rules/testing-agent.mdc](.cursor/rules/testing-agent.mdc) | Bug handling and prioritization (critical vs low), bug report template, BUG_NNN naming, systematic testing checklist, when to fix vs when to backlog |
+| [../../rules/go-testing-practices.mdc](../../rules/go-testing-practices.mdc) | Go testing (testify, t.Run subtests pattern, unit tests with mocks, integration tests with testcontainers), test naming, coverage, test data factories |
+| [../../rules/frontend-testing-practices.mdc](../../rules/frontend-testing-practices.mdc) | Frontend testing (React Testing Library, describe/test blocks, MSW), build verification, TypeScript compilation checks |
+| [../../rules/test-driven-development.mdc](../../rules/test-driven-development.mdc) | TDD core principles, Iron Law, verification checklist, red flags |
+| [../tdd-workflow/SKILL.md](../tdd-workflow/SKILL.md) | Detailed TDD workflow with examples, common rationalizations, bug fix walkthrough |
+| [../../rules/e2e-testing-standards.mdc](../../rules/e2e-testing-standards.mdc) | E2E tests in test/ folder: Given-When-Then architecture, stage files (*_test_stage.go), functional options, file organization |
+| [../../rules/e2e-test-overview.mdc](../../rules/e2e-test-overview.mdc) | Quick reference for E2E BDD pattern, when to use, method naming |
+| [../../rules/e2e-test-examples.mdc](../../rules/e2e-test-examples.mdc) | 7 complete examples (POST, GET, PATCH, DELETE, auth, event-driven) |
+| [../../rules/testing-agent.mdc](../../rules/testing-agent.mdc) | Bug handling and prioritization (critical vs low), bug report template, BUG_NNN naming, systematic testing checklist, when to fix vs when to backlog |
