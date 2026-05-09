@@ -9,15 +9,15 @@ version: 1.0
 ## When to use
 
 - Creating or changing pages, components, or forms (React, TypeScript, MUI)
-- Integrating with the REST API (see project context for API base URL), auth, or state (Zustand, React Query)
+- Integrating with the REST API (see **AGENTS.md** or team docs for API base URL), auth, or state (Zustand, React Query)
 - Writing or adjusting frontend tests (Vitest, React Testing Library)
 - Verifying build (`npm run build`) or fixing TypeScript/unused-import issues
 
-For **testing** focus (TDD, mocks, coverage), use the `testing` skill and `.cursor/rules/frontend-testing-practices.mdc`.
+For **testing** focus (TDD, mocks, coverage), use the `testing` skill and `../../rules/frontend-testing-practices.mdc`.
 
 ## References
 
 | File | Purpose |
 |------|---------|
-| [.cursor/rules/frontend-patterns.mdc](.cursor/rules/frontend-patterns.mdc) | TypeScript (no `any`, braces, unused imports), state (Zustand, React Query, local), API and auth, MUI, forms (RHF+Zod), routing, loading/error, performance, pre-commit checklist, file layout |
+| [../../rules/frontend-patterns.mdc](../../rules/frontend-patterns.mdc) | TypeScript (no `any`, braces, unused imports), state (Zustand, React Query, local), API and auth, MUI, forms (RHF+Zod), routing, loading/error, performance, pre-commit checklist, file layout |
 | [docs/frontend/](docs/frontend/) | Architecture, API integration, UI/UX |
