@@ -16,8 +16,9 @@ alwaysApply: true
 | TDD cycle details, examples | `tdd-workflow` | test-driven-development |
 | Requirements, acceptance criteria | `user-stories` | - |
 | Clean code principles | `clean-code` | go-style-guide |
+| Commit messages, PR/squash titles, conventional commits | `conventional-commits` | - |
 
-Skills are in `.cursor/skills/<name>/SKILL.md`
+Skills are in `../skills/<name>/SKILL.md` (relative to `rules/`; at repo root: `skills/<name>/SKILL.md`)
 
 ## How to Use Skills
 
