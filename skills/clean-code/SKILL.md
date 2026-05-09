@@ -143,5 +143,5 @@ Before saying "task complete", verify:
 
 | File | Purpose |
 |------|---------|
-| [.cursor/rules/go-style-guide.mdc](.cursor/rules/go-style-guide.mdc) | Go coding standards, naming conventions, error handling, context usage, domain layer design, service patterns, testing conventions |
-| [.cursor/rules/frontend-patterns.mdc](.cursor/rules/frontend-patterns.mdc) | TypeScript standards, React patterns, state management, code organization, unused imports/variables rules, control flow statement braces |
+| [../../rules/go-style-guide.mdc](../../rules/go-style-guide.mdc) | Go coding standards, naming conventions, error handling, context usage, domain layer design, service patterns, testing conventions |
+| [../../rules/frontend-patterns.mdc](../../rules/frontend-patterns.mdc) | TypeScript standards, React patterns, state management, code organization, unused imports/variables rules, control flow statement braces |
