@@ -5,7 +5,7 @@ description: Create HTTP handlers and REST endpoints following shrtner project s
 
 # HTTP and REST Endpoint Development
 
-Quick reference for creating HTTP handlers and REST endpoints in the shrtner project. For comprehensive standards and detailed patterns, see `.cursor/rules/http-rest-standards.mdc`.
+Quick reference for creating HTTP handlers and REST endpoints in the shrtner project. For comprehensive standards and detailed patterns, see `../../rules/http-rest-standards.mdc`.
 
 ## Quick Checklist
 
@@ -118,8 +118,8 @@ NewInternalServerError("message")
 
 ## Additional Resources
 
-- **Full standards**: `.cursor/rules/http-rest-standards.mdc` - Complete shrtner-specific HTTP/REST standards
-- **General REST principles**: `.cursor/skills/rest-api-design/SKILL.md` - General REST design patterns and principles
+- **Full standards**: `../../rules/http-rest-standards.mdc` - Complete shrtner-specific HTTP/REST standards
+- **General REST principles**: `../rest-api-design/SKILL.md` - General REST design patterns and principles
 - **Router configuration**: See rule file for `internal/shrtner/http/router.go` setup
 - **Error types**: See rule file for all error constructors (`NewBadRequestError`, `NewConflictError`, etc.)
 - **Pagination**: See rule file for `page`/`size` defaults and `next_link` format
