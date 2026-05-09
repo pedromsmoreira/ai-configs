@@ -1,40 +1,30 @@
 # Configuration Checklist for New Projects
 
-Use this checklist when applying the `.cursor/` configuration to a new project.
+Use this checklist when applying this pack to a project. **This repository** keeps `agents/`, `rules/`, and `skills/` at the **repo root**. For **Cursor**, copy or symlink those three folders into your application repo under `.cursor/` (so you get `.cursor/agents`, `.cursor/rules`, `.cursor/skills`).
 
-## Required Setup
+## Required setup
 
-### 1. Copy Configuration Directory
+### 1. Install configuration into the target project
 
-- [ ] Copy `.cursor/` directory to your project root
-- [ ] Verify all subdirectories copied (agents, rules, skills)
-- [ ] Verify this CHECKLIST.md is present
+- [ ] Copy `agents/`, `rules/`, and `skills/` from this pack into the target project’s `.cursor/` directory (or symlink them there)
+- [ ] Verify all three directories are present under `.cursor/`
+- [ ] Optionally copy [CONFIGURATION_CHECKLIST.md](CONFIGURATION_CHECKLIST.md) into project docs for the team
 
-### 2. Customize Project Context
+### 2. Customize project baseline (`AGENTS.md`)
 
-Edit `.cursor/rules/project-context.mdc`:
+Edit **`AGENTS.md`** at the application repository root:
 
-- [ ] Replace `[PROJECT_NAME]` with your actual project name
-- [ ] Fill in project overview/description
-- [ ] Update **Tech Stack** section:
-  - [ ] Backend language, framework, database
-  - [ ] Frontend framework, UI library (or remove if backend-only)
-  - [ ] Authentication method
-  - [ ] Migration tool
-  - [ ] Testing frameworks
-- [ ] Update **Project Structure** with your actual directories
-- [ ] Define **Key Design Principles** (3-5 principles)
-- [ ] Document **Domain Concepts** (key terms in your domain)
-- [ ] Update **Current Status** with completed and planned features
-- [ ] Fill in **Quick Reference** (ports, commands, database info)
-- [ ] **Remove the example section** at the bottom (URL Shortener example)
-- [ ] Verify no `[PLACEHOLDER]` text remains
+- [ ] Replace project name and description placeholders
+- [ ] Update **Setup & Commands** (install, build, test, lint, run)
+- [ ] Document **ports**, **URLs**, and how to run integration/E2E tests
+- [ ] Capture **domain** terms and roles the team uses
+- [ ] Verify no `[PLACEHOLDER]` or template-only text remains
 
 ### 3. Update Agent Documentation References
 
 Review these agent files and update `docs/` path references to match your project:
 
-- [ ] `.cursor/agents/be-engineer.md`:
+- [ ] `.cursor/agents/be-engineer.md` (in the **target** project, after install):
   - [ ] Line 157-159: Update knowledge base paths
   - [ ] Check documentation references match your structure
 - [ ] `.cursor/agents/fe-engineer.md`:
@@ -66,15 +56,10 @@ Check if these rules need customization:
 ### Automated Checks
 
 - [ ] Run `make validate-skills` (if [skills-ref](https://agentskills.io/specification) installed)
-- [ ] Verify no placeholders remain:
+- [ ] Verify no placeholders remain in **AGENTS.md**:
   ```bash
-  grep -r "\[PLACEHOLDER\]" .cursor/rules/project-context.mdc
+  grep "\[PLACEHOLDER\]" AGENTS.md
   # Should return no results
-  ```
-- [ ] Check for template instructions:
-  ```bash
-  grep -A5 "EXAMPLE:" .cursor/rules/project-context.mdc
-  # Should return no results after removing example
   ```
 
 ### Manual Verification
@@ -82,7 +67,7 @@ Check if these rules need customization:
 - [ ] All file paths in rules match your actual project structure
 - [ ] Skills validate correctly (if skills-ref available)
 - [ ] Agent personas align with your team structure
-- [ ] Project context accurately describes your system
+- [ ] **AGENTS.md** accurately describes your system
 
 ### Testing Agent References
 
@@ -93,7 +78,7 @@ Try these simple prompts to verify agents work:
 - [ ] `@product-owner How do I write user stories?`
 - [ ] `@devops-engineer What's our deployment process?`
 
-If agents give generic or incorrect answers, review `project-context.mdc`.
+If agents give generic or incorrect answers, review **`AGENTS.md`** and the relevant files under `.cursor/rules/`.
 
 ## Optional Customizations
 
@@ -148,7 +133,7 @@ Skills must follow the [Agent Skills specification](https://agentskills.io/speci
 
 ### Git Integration
 
-- [ ] Add `.cursor/` directory to git:
+- [ ] Add the installed `.cursor/` directory (or this pack’s `agents/`, `rules/`, `skills/` if you track them at repo root) to git:
   ```bash
   git add .cursor/
   git commit -m "Add Cursor AI configuration"
@@ -158,15 +143,16 @@ Skills must follow the [Agent Skills specification](https://agentskills.io/speci
   ## AI Assistance
   
   This project uses Cursor AI with custom configurations.
-  See `.cursor/README.md` for details.
+  See `CONFIGURATION_GUIDE.md` in the ai-configs pack (or your project’s AI docs) for details.
   ```
 
 ### Team Onboarding
 
-- [ ] Share `.cursor/README.md` with team
+- [ ] Share [CONFIGURATION_GUIDE.md](CONFIGURATION_GUIDE.md) with the team
 - [ ] Add AI configuration to onboarding docs
 - [ ] Document expected AI usage patterns
 - [ ] Set up validation in pre-commit hooks (optional)
+- [ ] To strip automatic Cursor co-author lines from commits, run `git config core.hooksPath .githooks` in this repository (uses `.githooks/prepare-commit-msg`)
 
 ### CI/CD Integration
 
@@ -184,7 +170,7 @@ Skills must follow the [Agent Skills specification](https://agentskills.io/speci
 Schedule periodic reviews:
 
 - [ ] Quarterly: Review agent effectiveness
-- [ ] Per sprint: Update project context with new features
+- [ ] Per sprint: Update **AGENTS.md** with new features and commands
 - [ ] On major changes: Update relevant rules
 - [ ] When onboarding: Gather feedback on AI assistance
 
@@ -208,7 +194,7 @@ Before considering setup complete:
 
 ### Issue: Agent doesn't understand project structure
 
-**Solution**: Ensure `project-context.mdc` has accurate directory structure and descriptions.
+**Solution**: Ensure **`AGENTS.md`** and your `docs/` layout match the real repository structure.
 
 ### Issue: Skills aren't activating
 
@@ -227,15 +213,15 @@ Before considering setup complete:
 
 ### Issue: Placeholders still in responses
 
-**Solution**: Search for remaining `[PLACEHOLDER]` text in all `.cursor/` files and replace.
+**Solution**: Search for remaining `[PLACEHOLDER]` text under your project’s `.cursor/` tree (or in `rules/` if you edit this pack in place) and replace.
 
 ## Resources
 
-- **Quick Start**: [.cursor/README.md](.cursor/README.md)
-- **Agent Documentation**: [.cursor/agents/README.md](.cursor/agents/README.md)
-- **Skills Documentation**: [.cursor/skills/README.md](.cursor/skills/README.md)
-- **Agent Skills Spec**: https://agentskills.io/specification
-- **Project Context Template**: [.cursor/rules/project-context.mdc](.cursor/rules/project-context.mdc)
+- **Quick start**: [CONFIGURATION_GUIDE.md](CONFIGURATION_GUIDE.md)
+- **Agent documentation**: [agents/README.md](agents/README.md)
+- **Skills documentation**: [skills/README.md](skills/README.md)
+- **Agent Skills spec**: https://agentskills.io/specification
+- **Project baseline**: [AGENTS.md](AGENTS.md)
 
 ## Next Steps
 
