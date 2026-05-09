@@ -5,7 +5,7 @@ This directory contains specialized AI agent configurations for this project's d
 
 ## Agent Skills
 
-Task-focused, [Agent Skills](https://agentskills.io/specification)-compliant instructions live in **`.cursor/skills/`**. They **complement** (do not replace) the agents here. Skills: `go-backend`, `database-migrations`, `testing`, `frontend-react`, `user-stories`. See `.cursor/skills/README.md`. Validate with `make validate-skills` when [skills-ref](https://agentskills.io/specification) is installed.
+Task-focused, [Agent Skills](https://agentskills.io/specification)-compliant instructions live in **`../skills/`**. They **complement** (do not replace) the agents here. Skills: `go-backend`, `database-migrations`, `testing`, `frontend-react`, `user-stories`. See `../skills/README.md`. Validate with `make validate-skills` when [skills-ref](https://agentskills.io/specification) is installed.
 
 ## Available Agents
 
@@ -103,7 +103,7 @@ Task-focused, [Agent Skills](https://agentskills.io/specification)-compliant ins
 2. **Switch context** based on task:
    ```
    @fe-engineer Create a new [feature] listing page
-   @product-owner Write a user story for [domain feature] (see project context)
+   @product-owner Write a user story for [domain feature] (see **AGENTS.md**)
    ```
 
 3. **Collaborate** between agents:
@@ -156,7 +156,7 @@ Task-focused, [Agent Skills](https://agentskills.io/specification)-compliant ins
 
 1. **Product Owner** - Define feature requirements
    ```
-   @product-owner Create a user story for [feature area] (see project context)
+   @product-owner Create a user story for [feature area] (see **AGENTS.md**)
    ```
 
 2. **Backend Engineer** - Implement backend
@@ -277,7 +277,7 @@ Legend:
 
 ### 3. Chain Agents for Complex Tasks
 ```
-1. "@product-owner Define requirements for [feature area] (see project context)"
+1. "@product-owner Define requirements for [feature area] (see **AGENTS.md**)"
 2. "@be-engineer Implement the [feature] backend service"
 3. "@fe-engineer Create the UI to configure [feature]"
 4. "@devops-engineer Add [feature] to deployment pipeline"
@@ -298,7 +298,7 @@ Legend:
 ### Can I mix agents in one prompt?
 Yes! For complex tasks, you can reference multiple agents:
 ```
-"@product-owner and @be-engineer: Plan and implement a new [feature area] (see project context)"
+"@product-owner and @be-engineer: Plan and implement a new [feature area] (see **AGENTS.md**)"
 ```
 
 ### Which agent should I use for testing?
@@ -316,7 +316,7 @@ Absolutely! Agents are designed to collaborate. The Product Owner can hand off t
 ## Project-Specific Context
 
 All agents have access to:
-- Project architecture documentation (`.cursor/rules/`)
+- Project architecture documentation (`../rules/`)
 - Coding standards and best practices
 - Testing guidelines
 - Authentication patterns
@@ -332,10 +332,10 @@ They also respect:
 
 ```bash
 # View agent details
-cat .cursor/agents/be-engineer.md
-cat .cursor/agents/fe-engineer.md
-cat .cursor/agents/product-owner.md
-cat .cursor/agents/devops-engineer.md
+cat agents/be-engineer.md
+cat agents/fe-engineer.md
+cat agents/product-owner.md
+cat agents/devops-engineer.md
 
 # Common prompts
 "@product-owner Create a user story for [feature]"
