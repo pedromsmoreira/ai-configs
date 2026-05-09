@@ -101,7 +101,7 @@ const { data: items } = useQuery({
 ### API Integration
 
 - Use Axios for HTTP requests
-- Configure base URL per project (see project context for base URL)
+- Configure base URL per project (see **AGENTS.md** for base URL)
 - Add JWT token via interceptors
 - Handle token refresh automatically
 
@@ -209,7 +209,7 @@ test('calls getUser with correct id', () => {
     </ProtectedRoute>
   }
 />
-// Or see project context for routes
+// Or see **AGENTS.md** for routes
 ```
 
 ## Form Handling
