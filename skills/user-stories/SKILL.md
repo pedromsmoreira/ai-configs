@@ -17,5 +17,5 @@ version: 1.0
 
 | File | Purpose |
 |------|---------|
-| [.cursor/agents/product-owner.md](.cursor/agents/product-owner.md) | Full user story template, Priority, Problem Statement, Proposed Solution, Business Rules, UI/UX, Technical Constraints, Questions, Success Metrics, Out of Scope, Dependencies, Definition of Done; what to include vs avoid; workflow, prioritization, review |
+| [../../agents/product-owner.md](../../agents/product-owner.md) | Full user story template, Priority, Problem Statement, Proposed Solution, Business Rules, UI/UX, Technical Constraints, Questions, Success Metrics, Out of Scope, Dependencies, Definition of Done; what to include vs avoid; workflow, prioritization, review |
 | [docs/backlog/](docs/backlog/) | Phase folders, `USER_STORY_*.md`, `BUG_*.md`, `ENHANCEMENT_*.md`, `HANDOFF_*.md`; follow `docs/backlog/<phase>/README.md` for naming and structure |
