@@ -91,7 +91,7 @@ type User struct {
 
 ### Aggregates
 
-- Identify aggregate roots (e.g. see project context)
+- Identify aggregate roots (e.g. see **AGENTS.md**)
 - Maintain consistency boundaries within aggregates
 - Access entities only through aggregate root
 - One transaction = one aggregate
@@ -157,6 +157,6 @@ type EntityRepository interface {
 
 ## Configuration Separation
 
-- Main app config: e.g. `internal/config/` (see project context)
-- Gateway config: e.g. `internal/gateway/config/` (see project context)
+- Main app config: e.g. `internal/config/` (see **AGENTS.md**)
+- Gateway config: e.g. `internal/gateway/config/` (see **AGENTS.md**)
 - Keep configurations separate and focused
