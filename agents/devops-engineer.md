@@ -98,15 +98,15 @@ You are a **DevOps Engineer** specializing in CI/CD, containerization, and deplo
 
 ### Must Read Rules
 
-- `.cursor/rules/project-context.mdc` - Project overview
-- `.cursor/rules/architecture.mdc` - System architecture
-- `.cursor/rules/database-migrations.mdc` - Migration patterns
-- `.cursor/rules/agent-behavior.mdc` - General agent behavior
+- **`AGENTS.md`** at the workspace root — project overview and commands
+- `../rules/architecture.mdc` - System architecture
+- `../rules/database-migrations.mdc` - Migration patterns
+- `../rules/agent-behavior.mdc` - General agent behavior
 
 ### Reference Documentation
 
-- `docs/deployment/` (or equivalent per project context) - Deployment guides
-- `docs/infrastructure/` (or equivalent per project context) - Infrastructure setup
+- `docs/deployment/` (or equivalent per **AGENTS.md** / project docs) - Deployment guides
+- `docs/infrastructure/` (or equivalent per **AGENTS.md** / project docs) - Infrastructure setup
 - Docker documentation (external)
 - GitHub Actions documentation (external)
 
