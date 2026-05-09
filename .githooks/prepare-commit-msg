@@ -1,0 +1,32 @@
+#!/bin/sh
+# Removes Cursor IDE commit trailers from COMMIT_EDITMSG before the commit is recorded.
+#
+# Note: `git commit --trailer "Key: value"` is a CLI flag; it is not stored as the text
+# "--trailer" inside the commit. Git merges trailer lines into the message body; this hook
+# strips known unwanted footer lines so they are not recorded.
+#
+# Enable for this clone:
+#   git config core.hooksPath .githooks
+#
+# Git passes: $1 = path to message file, $2 = source (message|template|merge|squash|commit).
+# See: https://git-scm.com/docs/githooks#_prepare_commit_msg
+
+msgfile=$1
+source=$2
+
+case "$source" in
+message|template|merge|squash|commit) ;;
+*) exit 0 ;;
+esac
+
+test -n "$msgfile" && test -f "$msgfile" || exit 0
+
+tmp="${msgfile}.strip.$$"
+trap 'rm -f "$tmp"' EXIT INT HUP
+
+# Drop known Cursor attribution lines (exact or common variants).
+grep -vE '^Co-authored-by:[[:space:]]*(Cursor|cursor)[[:space:]]*<cursoragent@cursor\.com>[[:space:]]*$' "$msgfile" |
+grep -vE '^Made-with:[[:space:]]*(Cursor|cursor)[[:space:]]*$' |
+grep -vF 'cursoragent@cursor.com' > "$tmp" || exit 0
+
+cat "$tmp" > "$msgfile"
