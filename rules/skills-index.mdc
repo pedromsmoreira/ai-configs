@@ -16,7 +16,8 @@ alwaysApply: true
 | TDD cycle details, examples | `tdd-workflow` | test-driven-development |
 | Requirements, acceptance criteria | `user-stories` | - |
 | Clean code principles | `clean-code` | go-style-guide |
-| Commit messages, PR/squash titles, conventional commits | `conventional-commits` | - |
+| Commit messages, PR/squash titles, conventional commits | `conventional-commits` | agent-behavior |
+| Stage and create git commits (Conventional Commits) | `git-commit` | conventional-commits, agent-behavior |
 
 Skills are in `../skills/<name>/SKILL.md` (relative to `rules/`; at repo root: `skills/<name>/SKILL.md`)
 
