@@ -9,6 +9,55 @@ alwaysApply: true
 
 For the full TDD workflow (Red-Green-Refactor), see `test-driven-development.mdc`.
 
+## Black Box Testing (Required)
+
+**Always use black box testing.** Test files must use an external test package (`package <name>_test`), import the package under test, and exercise only its **public API** (exported types, functions, and methods).
+
+```go
+// ✅ GOOD: Black box test — external test package, public API only
+package email_test
+
+import (
+    "testing"
+
+    "github.com/pedromsmoreira/rewards-center/internal/domain/email"
+    "github.com/stretchr/testify/assert"
+)
+
+func TestNewEmail_WithValidEmail_ReturnsEmail(t *testing.T) {
+    t.Run("creates email successfully", func(t *testing.T) {
+        e, err := email.NewEmail("user@example.com")
+        assert.NoError(t, err)
+        assert.Equal(t, "user@example.com", e.Value())
+    })
+}
+
+// ❌ BAD: White box test — same package as implementation
+package email
+
+func TestNewEmail_WithValidEmail_ReturnsEmail(t *testing.T) {
+    e, err := NewEmail("user@example.com") // accesses unexported internals easily
+    // ...
+}
+
+// ❌ BAD: External package but testing unexported symbols
+package email_test
+
+func Test_parseEmail(t *testing.T) {
+    // parseEmail is unexported — forbidden
+}
+```
+
+**Rules:**
+
+- **Required**: `package <dirname>_test` (e.g. `config_test` for `internal/config`, `http_test` for `internal/handler/http`)
+- **Required**: Import the package under test with its module path; reference exported symbols via the import prefix (e.g. `config.Load()`, `httphandler.Liveness()`)
+- **Forbidden**: `package foo` in `foo_test.go` when testing package `foo` (white box)
+- **Forbidden**: Accessing unexported identifiers from the package under test
+- **Why**: Tests document and verify the public contract; refactors of internals don't break tests unless behavior changes
+
+If a behavior cannot be observed through the public API, expose it via the public API (or redesign) rather than switching to white box tests.
+
 ## Test Structure
 
 - Use `testify` for assertions
@@ -21,41 +70,43 @@ For the full TDD workflow (Red-Green-Refactor), see `test-driven-development.mdc
 **Rule**: Every main test function (`TestXxx`) should contain one or more subtests using `t.Run`. The main test function acts as a container for related test cases.
 
 ```go
-// ✅ GOOD: Main test function contains subtests
+// ✅ GOOD: Main test function contains subtests (black box)
+package email_test
+
 func TestNewEmail_WithValidEmail_ReturnsEmail(t *testing.T) {
     t.Run("creates email successfully", func(t *testing.T) {
-        email, err := NewEmail("user@example.com")
+        e, err := email.NewEmail("user@example.com")
         assert.NoError(t, err)
-        assert.Equal(t, "user@example.com", email.Value())
+        assert.Equal(t, "user@example.com", e.Value())
     })
 }
 
 // ✅ GOOD: Main test function with multiple subtests for related scenarios
 func TestNewEmail_WithInvalidInput_ReturnsError(t *testing.T) {
     t.Run("returns error for invalid email format", func(t *testing.T) {
-        _, err := NewEmail("not-an-email")
+        _, err := email.NewEmail("not-an-email")
         assert.Error(t, err)
-        assert.Equal(t, ErrInvalidEmail, err)
+        assert.Equal(t, email.ErrInvalidEmail, err)
     })
     
     t.Run("returns error for empty string", func(t *testing.T) {
-        _, err := NewEmail("")
+        _, err := email.NewEmail("")
         assert.Error(t, err)
-        assert.Equal(t, ErrInvalidEmail, err)
+        assert.Equal(t, email.ErrInvalidEmail, err)
     })
     
     t.Run("returns error for missing @ symbol", func(t *testing.T) {
-        _, err := NewEmail("userexample.com")
+        _, err := email.NewEmail("userexample.com")
         assert.Error(t, err)
-        assert.Equal(t, ErrInvalidEmail, err)
+        assert.Equal(t, email.ErrInvalidEmail, err)
     })
 }
 
 // ❌ BAD: Test function without subtests
 func TestNewEmail_WithValidEmail_ReturnsEmail(t *testing.T) {
-    email, err := NewEmail("user@example.com")
+    e, err := email.NewEmail("user@example.com")
     assert.NoError(t, err)
-    assert.Equal(t, "user@example.com", email.Value())
+    assert.Equal(t, "user@example.com", e.Value())
 }
 
 // ❌ BAD: Multiple separate test functions for related scenarios
@@ -73,7 +124,21 @@ func TestNewEmail_MissingAtSymbol(t *testing.T) { /* ... */ }
 - Keep tests fast (< 100ms each)
 
 ```go
-// ✅ GOOD: Unit test with mock - main function contains subtest
+// ✅ GOOD: Unit test with mock — black box, public constructor
+package service_test
+
+import (
+    "context"
+    "testing"
+
+    "github.com/pedromsmoreira/rewards-center/internal/domain"
+    "github.com/pedromsmoreira/rewards-center/internal/service"
+    "github.com/pedromsmoreira/rewards-center/internal/service/mocks"
+    "github.com/pedromsmoreira/rewards-center/pkg/errors"
+    "github.com/stretchr/testify/assert"
+    "go.uber.org/mock/gomock"
+)
+
 func TestUserService_GetUser(t *testing.T) {
     t.Run("returns user when found", func(t *testing.T) {
         ctrl := gomock.NewController(t)
@@ -84,8 +149,8 @@ func TestUserService_GetUser(t *testing.T) {
             GetByID("123").
             Return(&domain.User{ID: "123"}, nil)
         
-        service := NewUserService(mockRepo)
-        user, err := service.GetUser(context.Background(), "123")
+        svc := service.NewUserService(mockRepo)
+        user, err := svc.GetUser(context.Background(), "123")
         
         assert.NoError(t, err)
         assert.Equal(t, "123", user.ID)
@@ -100,8 +165,8 @@ func TestUserService_GetUser(t *testing.T) {
             GetByID("999").
             Return(nil, errors.ErrNotFound)
         
-        service := NewUserService(mockRepo)
-        user, err := service.GetUser(context.Background(), "999")
+        svc := service.NewUserService(mockRepo)
+        user, err := svc.GetUser(context.Background(), "999")
         
         assert.Error(t, err)
         assert.Nil(t, user)
@@ -137,7 +202,18 @@ For testing service + repository + database without HTTP:
 - Clean up after tests
 
 ```go
-// ✅ GOOD: Service-level integration test (in internal/)
+// ✅ GOOD: Service-level integration test (in internal/) — black box
+package repository_test
+
+import (
+    "context"
+    "testing"
+
+    "github.com/pedromsmoreira/rewards-center/internal/repository"
+    "github.com/stretchr/testify/assert"
+    "github.com/stretchr/testify/require"
+)
+
 func TestEntityRepository_Create_WithValidEntity_PersistsToDatabase(t *testing.T) {
     t.Run("persists entity and retrieves it", func(t *testing.T) {
         ctx := context.Background()
@@ -215,9 +291,10 @@ func TestEntityService_Create_WithUnauthorizedUser_ReturnsForbidden(t *testing.T
 
 ### File Structure
 
-- Test files next to source: `user_test.go`
+- Test files next to source: `user_test.go` with `package user_test` (black box)
 - E2E tests in `test/` (NOT `test/integration/`)
 - Test utilities in `test/`
+- Shared test helpers for a package may live in the test file or a `*_test.go` helper file in the **test package** (still `package user_test`)
 
 ### Test Categories
 
@@ -235,6 +312,7 @@ func TestEntityService_Create_WithUnauthorizedUser_ReturnsForbidden(t *testing.T
 
 ### DO
 
+- ✅ Use black box testing (`package <name>_test`, public API only)
 - ✅ Write tests before implementation (TDD)
 - ✅ Test behavior, not implementation
 - ✅ Keep tests independent and isolated
@@ -245,6 +323,8 @@ func TestEntityService_Create_WithUnauthorizedUser_ReturnsForbidden(t *testing.T
 
 ### DON'T
 
+- ❌ Use white box tests (`package foo` in `foo_test.go`)
+- ❌ Access unexported symbols from the package under test
 - ❌ Test implementation details
 - ❌ Write tests that depend on other tests
 - ❌ Ignore flaky tests (fix them)

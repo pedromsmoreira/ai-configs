@@ -20,6 +20,7 @@ version: 1.0
 **Critical Rule**: Main test functions must contain subtests.
 
 ### Go Tests
+- **Black box only**: use `package <name>_test`, import the package under test, test public API only (see `go-testing-practices.mdc`)
 - **Main test functions** (`TestXxx`) **MUST** contain one or more subtests using `t.Run`
 - Each test case should be a subtest within the main test function
 - Group related scenarios as subtests within the same main test function

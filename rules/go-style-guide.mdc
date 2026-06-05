@@ -22,7 +22,7 @@ alwaysApply: true
 - One package per directory
 - Related types in same file
 - Keep files focused (< 500 lines when possible)
-- Test files: `*_test.go` in same package
+- Test files: `*_test.go` with external test package (`package <name>_test`); see `go-testing-practices.mdc`
 
 ### Error Handling
 
