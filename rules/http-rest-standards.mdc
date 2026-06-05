@@ -2,8 +2,8 @@
 description: HTTP and REST endpoint standards for the shrtner project
 alwaysApply: false
 globs: 
-  - internal/shrtner/handlers/**/*.go
-  - internal/shrtner/http/**/*.go
+  - internal/**/handlers/**/*.go
+  - internal/**/http/**/*.go
 ---
 
 # HTTP and REST Endpoint Standards
