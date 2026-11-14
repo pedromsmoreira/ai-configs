@@ -204,7 +204,7 @@ Handlers stay thin: transform proto to domain input, call the service, map error
 ```go
 // ✅ GOOD: Thin handler
 func (h *EntityHandler) CreateResource(ctx context.Context, req *pb.CreateResourceRequest) (*pb.CreateResourceResponse, error) {
-    entity, err := h.service.CreateResource(ctx, &CreateResourceRequest{
+    entity, err := h.service.CreateResource(ctx, &service.CreateResourceRequest{
         Name:    req.GetName(),
         OwnerID: req.GetOwnerId(),
     })

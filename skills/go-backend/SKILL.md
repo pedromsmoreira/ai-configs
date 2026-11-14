@@ -125,13 +125,19 @@ func (s *EntityService) CreateResource(ctx context.Context, req *CreateResourceR
 Parameterized queries, map rows to domain entities, pass `ctx` through, map `sql.ErrNoRows` to domain errors.
 
 ```go
+import (
+    "errors"
+
+    apperrors "github.com/pedromsmoreira/rewards-center/pkg/errors"
+)
+
 func (r *userRepository) GetByID(ctx context.Context, id string) (*domain.User, error) {
     query := `SELECT id, username, email, user_type, created_at, updated_at FROM users WHERE id = $1`
 
     row := r.db.QueryRowContext(ctx, query, id)
     user, err := scanUser(row)
     if errors.Is(err, sql.ErrNoRows) {
-        return nil, errors.ErrNotFound
+        return nil, apperrors.ErrNotFound
     }
     if err != nil {
         return nil, fmt.Errorf("get user by id: %w", err)
@@ -146,7 +152,7 @@ Proto ↔ domain mapping, call service, map errors to gRPC status—no business 
 
 ```go
 func (h *EntityHandler) CreateResource(ctx context.Context, req *pb.CreateResourceRequest) (*pb.CreateResourceResponse, error) {
-    resourceReq := &CreateResourceRequest{
+    resourceReq := &service.CreateResourceRequest{
         Name:    req.GetName(),
         OwnerID: req.GetOwnerId(),
     }

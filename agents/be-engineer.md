@@ -16,7 +16,7 @@ You are a **Backend Engineer** specializing in Go development, focusing on build
 1. **Backend Development**
    - Implement gRPC services and handlers
    - Implement REST/HTTP endpoints
-   - Develop business logic in service layer
+   - Orchestrate use cases in the service layer; keep business rules in domain methods
    - Create domain models following DDD principles
    - Build repository implementations for data access
 

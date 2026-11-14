@@ -15,25 +15,25 @@ For the full TDD workflow (Red-Green-Refactor), see `test-driven-development.mdc
 
 ```go
 // ✅ GOOD: Black box test — external test package, public API only
-package email_test
+package domain_test
 
 import (
     "testing"
 
-    "github.com/pedromsmoreira/rewards-center/internal/domain/email"
+    "github.com/pedromsmoreira/rewards-center/internal/domain"
     "github.com/stretchr/testify/assert"
 )
 
 func TestNewEmail_WithValidEmail_ReturnsEmail(t *testing.T) {
     t.Run("creates email successfully", func(t *testing.T) {
-        e, err := email.NewEmail("user@example.com")
+        e, err := domain.NewEmail("user@example.com")
         assert.NoError(t, err)
         assert.Equal(t, "user@example.com", e.Value())
     })
 }
 
 // ❌ BAD: White box test — same package as implementation
-package email
+package domain
 
 func TestNewEmail_WithValidEmail_ReturnsEmail(t *testing.T) {
     e, err := NewEmail("user@example.com") // accesses unexported internals easily
@@ -41,7 +41,7 @@ func TestNewEmail_WithValidEmail_ReturnsEmail(t *testing.T) {
 }
 
 // ❌ BAD: External package but testing unexported symbols
-package email_test
+package domain_test
 
 func Test_parseEmail(t *testing.T) {
     // parseEmail is unexported — forbidden
@@ -71,11 +71,11 @@ If a behavior cannot be observed through the public API, expose it via the publi
 
 ```go
 // ✅ GOOD: Main test function contains subtests (black box)
-package email_test
+package domain_test
 
 func TestNewEmail_WithValidEmail_ReturnsEmail(t *testing.T) {
     t.Run("creates email successfully", func(t *testing.T) {
-        e, err := email.NewEmail("user@example.com")
+        e, err := domain.NewEmail("user@example.com")
         assert.NoError(t, err)
         assert.Equal(t, "user@example.com", e.Value())
     })
@@ -84,24 +84,24 @@ func TestNewEmail_WithValidEmail_ReturnsEmail(t *testing.T) {
 // ✅ GOOD: Main test function with multiple subtests for related scenarios
 func TestNewEmail_WithInvalidInput_ReturnsError(t *testing.T) {
     t.Run("returns error for invalid email format", func(t *testing.T) {
-        _, err := email.NewEmail("not-an-email")
-        assert.ErrorIs(t, err, email.ErrInvalidEmail)
+        _, err := domain.NewEmail("not-an-email")
+        assert.ErrorIs(t, err, domain.ErrInvalidEmail)
     })
     
     t.Run("returns error for empty string", func(t *testing.T) {
-        _, err := email.NewEmail("")
-        assert.ErrorIs(t, err, email.ErrInvalidEmail)
+        _, err := domain.NewEmail("")
+        assert.ErrorIs(t, err, domain.ErrInvalidEmail)
     })
     
     t.Run("returns error for missing @ symbol", func(t *testing.T) {
-        _, err := email.NewEmail("userexample.com")
-        assert.ErrorIs(t, err, email.ErrInvalidEmail)
+        _, err := domain.NewEmail("userexample.com")
+        assert.ErrorIs(t, err, domain.ErrInvalidEmail)
     })
 }
 
 // ❌ BAD: Test function without subtests
 func TestNewEmail_WithValidEmail_ReturnsEmail(t *testing.T) {
-    e, err := email.NewEmail("user@example.com")
+    e, err := domain.NewEmail("user@example.com")
     assert.NoError(t, err)
     assert.Equal(t, "user@example.com", e.Value())
 }
