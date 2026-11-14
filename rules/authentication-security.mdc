@@ -79,7 +79,7 @@ func (s *EntityService) CreateResource(ctx context.Context, req *CreateResourceR
         OwnerID: principal.UserID,
         // ...
     }
-    return s.repo.Create(entity)
+    return s.repo.Create(ctx, entity)
 }
 ```
 
@@ -97,7 +97,7 @@ func (s *EntityService) GetResource(ctx context.Context, id string) (*domain.Ent
         return nil, errors.ErrUnauthorized
     }
     
-    entity, err := s.repo.GetByID(id)
+    entity, err := s.repo.GetByID(ctx, id)
     if err != nil {
         return nil, err
     }
@@ -124,13 +124,13 @@ func (s *ResourceService) GetResource(ctx context.Context, id string) (*domain.R
         return nil, errors.ErrUnauthorized
     }
     
-    resource, err := s.repo.GetByID(id)
+    resource, err := s.repo.GetByID(ctx, id)
     if err != nil {
         return nil, err
     }
     
     // Verify user has access via parent resource
-    parent, err := s.parentRepo.GetByID(resource.ParentID)
+    parent, err := s.parentRepo.GetByID(ctx, resource.ParentID)
     if err != nil {
         return nil, err
     }
@@ -266,7 +266,7 @@ func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (st
     
     // Optionally check token blacklist here
     
-    user, err := s.userRepo.GetByID(claims.UserID)
+    user, err := s.userRepo.GetByID(ctx, claims.UserID)
     if err != nil {
         return "", err
     }

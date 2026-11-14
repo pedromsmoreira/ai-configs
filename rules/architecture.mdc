@@ -3,7 +3,7 @@ description: "Domain-Driven Design patterns, layered architecture, and architect
 globs:
   - "internal/**/*.go"
   - "cmd/**/*.go"
-alwaysApply: true
+alwaysApply: false
 ---
 
 # Architecture Patterns and DDD Principles
@@ -48,8 +48,21 @@ Handler → Service → Domain → Repository
 
 Entities should have **behavior**, not just data:
 
+- Use unexported fields; expose state through accessor methods without a `Get` prefix (`ID()`, `Email()`)
+- Enforce invariants in methods; no direct field access from outside the package
+- Construct through `NewXxx` constructors or factories that validate input
+
 ```go
-// ✅ GOOD: Entity with behavior
+// ✅ GOOD: Encapsulated entity with behavior
+type User struct {
+    id        string
+    email     Email
+    updatedAt time.Time
+}
+
+func (u *User) ID() string   { return u.id }
+func (u *User) Email() Email { return u.email }
+
 func (u *User) ChangeEmail(newEmail Email) error {
     if u.email == newEmail {
         return ErrEmailUnchanged
@@ -70,6 +83,10 @@ type User struct {
 
 Use value objects instead of primitives:
 
+- Immutable: no setters after creation; methods use value receivers
+- Validated in the constructor, so every instance is valid
+- Compared with `==` (keep fields comparable); don't add an `Equals()` method
+
 ```go
 // ✅ GOOD: Value object with validation
 type Email struct {
@@ -82,6 +99,8 @@ func NewEmail(value string) (Email, error) {
     }
     return Email{value: strings.ToLower(value)}, nil
 }
+
+func (e Email) Value() string { return e.value }
 
 // ❌ BAD: Primitive obsession
 type User struct {
@@ -138,14 +157,61 @@ func (s *EntityService) AssociateResource(...) {
 ```go
 // ✅ GOOD: Domain-focused repository
 type EntityRepository interface {
-    Save(entity *domain.Entity) error
-    FindByID(id string) (*domain.Entity, error)
-    FindByOwner(ownerID string) ([]*domain.Entity, error)
+    Save(ctx context.Context, entity *domain.Entity) error
+    FindByID(ctx context.Context, id string) (*domain.Entity, error)
+    FindByOwner(ctx context.Context, ownerID string) ([]*domain.Entity, error)
 }
 
 // ❌ BAD: Database-focused repository
 type EntityRepository interface {
     SaveEntity(db *sql.DB, entity *db.Entity) error  // Exposes DB types
+}
+```
+
+## Service Layer
+
+- One service per domain area (`UserService`, `EntityService`)
+- Services orchestrate: authorize, load aggregates, call domain methods, persist
+- Business rules live in domain methods, not in services
+- Authorization uses the Principal from context (`auth.GetPrincipal(ctx)`)
+
+```go
+// ✅ GOOD: Service orchestrates
+func (s *EntityService) CreateResource(ctx context.Context, req *CreateResourceRequest) (*domain.Entity, error) {
+    principal := auth.GetPrincipal(ctx)
+    if principal == nil {
+        return nil, errors.ErrUnauthorized
+    }
+    if principal.UserType != domain.RoleX {
+        return nil, errors.ErrForbidden
+    }
+
+    entity, err := domain.NewEntity(req.Name, req.OwnerID)
+    if err != nil {
+        return nil, err
+    }
+    if err := s.repo.Save(ctx, entity); err != nil {
+        return nil, fmt.Errorf("save entity: %w", err)
+    }
+    return entity, nil
+}
+```
+
+## Handler Layer
+
+Handlers stay thin: transform proto to domain input, call the service, map errors to gRPC status, and transform the result back to proto.
+
+```go
+// ✅ GOOD: Thin handler
+func (h *EntityHandler) CreateResource(ctx context.Context, req *pb.CreateResourceRequest) (*pb.CreateResourceResponse, error) {
+    entity, err := h.service.CreateResource(ctx, &service.CreateResourceRequest{
+        Name:    req.GetName(),
+        OwnerID: req.GetOwnerId(),
+    })
+    if err != nil {
+        return nil, h.mapError(err)
+    }
+    return &pb.CreateResourceResponse{Entity: h.toProto(entity)}, nil
 }
 ```
 

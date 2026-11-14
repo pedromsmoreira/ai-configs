@@ -2,7 +2,7 @@
 description: "Go backend testing practices and guidelines"
 globs:
   - "**/*_test.go"
-alwaysApply: true
+alwaysApply: false
 ---
 
 # Go Testing Practices
@@ -15,25 +15,25 @@ For the full TDD workflow (Red-Green-Refactor), see `test-driven-development.mdc
 
 ```go
 // ✅ GOOD: Black box test — external test package, public API only
-package email_test
+package domain_test
 
 import (
     "testing"
 
-    "github.com/pedromsmoreira/rewards-center/internal/domain/email"
+    "github.com/pedromsmoreira/rewards-center/internal/domain"
     "github.com/stretchr/testify/assert"
 )
 
 func TestNewEmail_WithValidEmail_ReturnsEmail(t *testing.T) {
     t.Run("creates email successfully", func(t *testing.T) {
-        e, err := email.NewEmail("user@example.com")
+        e, err := domain.NewEmail("user@example.com")
         assert.NoError(t, err)
         assert.Equal(t, "user@example.com", e.Value())
     })
 }
 
 // ❌ BAD: White box test — same package as implementation
-package email
+package domain
 
 func TestNewEmail_WithValidEmail_ReturnsEmail(t *testing.T) {
     e, err := NewEmail("user@example.com") // accesses unexported internals easily
@@ -41,7 +41,7 @@ func TestNewEmail_WithValidEmail_ReturnsEmail(t *testing.T) {
 }
 
 // ❌ BAD: External package but testing unexported symbols
-package email_test
+package domain_test
 
 func Test_parseEmail(t *testing.T) {
     // parseEmail is unexported — forbidden
@@ -71,11 +71,11 @@ If a behavior cannot be observed through the public API, expose it via the publi
 
 ```go
 // ✅ GOOD: Main test function contains subtests (black box)
-package email_test
+package domain_test
 
 func TestNewEmail_WithValidEmail_ReturnsEmail(t *testing.T) {
     t.Run("creates email successfully", func(t *testing.T) {
-        e, err := email.NewEmail("user@example.com")
+        e, err := domain.NewEmail("user@example.com")
         assert.NoError(t, err)
         assert.Equal(t, "user@example.com", e.Value())
     })
@@ -84,27 +84,24 @@ func TestNewEmail_WithValidEmail_ReturnsEmail(t *testing.T) {
 // ✅ GOOD: Main test function with multiple subtests for related scenarios
 func TestNewEmail_WithInvalidInput_ReturnsError(t *testing.T) {
     t.Run("returns error for invalid email format", func(t *testing.T) {
-        _, err := email.NewEmail("not-an-email")
-        assert.Error(t, err)
-        assert.Equal(t, email.ErrInvalidEmail, err)
+        _, err := domain.NewEmail("not-an-email")
+        assert.ErrorIs(t, err, domain.ErrInvalidEmail)
     })
     
     t.Run("returns error for empty string", func(t *testing.T) {
-        _, err := email.NewEmail("")
-        assert.Error(t, err)
-        assert.Equal(t, email.ErrInvalidEmail, err)
+        _, err := domain.NewEmail("")
+        assert.ErrorIs(t, err, domain.ErrInvalidEmail)
     })
     
     t.Run("returns error for missing @ symbol", func(t *testing.T) {
-        _, err := email.NewEmail("userexample.com")
-        assert.Error(t, err)
-        assert.Equal(t, email.ErrInvalidEmail, err)
+        _, err := domain.NewEmail("userexample.com")
+        assert.ErrorIs(t, err, domain.ErrInvalidEmail)
     })
 }
 
 // ❌ BAD: Test function without subtests
 func TestNewEmail_WithValidEmail_ReturnsEmail(t *testing.T) {
-    e, err := email.NewEmail("user@example.com")
+    e, err := domain.NewEmail("user@example.com")
     assert.NoError(t, err)
     assert.Equal(t, "user@example.com", e.Value())
 }
@@ -131,46 +128,45 @@ import (
     "context"
     "testing"
 
-    "github.com/pedromsmoreira/rewards-center/internal/domain"
     "github.com/pedromsmoreira/rewards-center/internal/service"
     "github.com/pedromsmoreira/rewards-center/internal/service/mocks"
     "github.com/pedromsmoreira/rewards-center/pkg/errors"
+    "github.com/pedromsmoreira/rewards-center/test/fixtures"
     "github.com/stretchr/testify/assert"
+    "github.com/stretchr/testify/require"
     "go.uber.org/mock/gomock"
 )
 
 func TestUserService_GetUser(t *testing.T) {
     t.Run("returns user when found", func(t *testing.T) {
         ctrl := gomock.NewController(t)
-        defer ctrl.Finish()
-        
+
+        want := fixtures.NewUser(t, fixtures.WithID("123"))
         mockRepo := mocks.NewMockUserRepository(ctrl)
         mockRepo.EXPECT().
-            GetByID("123").
-            Return(&domain.User{ID: "123"}, nil)
-        
+            GetByID(gomock.Any(), "123").
+            Return(want, nil)
+
         svc := service.NewUserService(mockRepo)
         user, err := svc.GetUser(context.Background(), "123")
-        
-        assert.NoError(t, err)
-        assert.Equal(t, "123", user.ID)
+
+        require.NoError(t, err)
+        assert.Equal(t, "123", user.ID())
     })
-    
+
     t.Run("returns error when user not found", func(t *testing.T) {
         ctrl := gomock.NewController(t)
-        defer ctrl.Finish()
-        
+
         mockRepo := mocks.NewMockUserRepository(ctrl)
         mockRepo.EXPECT().
-            GetByID("999").
+            GetByID(gomock.Any(), "999").
             Return(nil, errors.ErrNotFound)
-        
+
         svc := service.NewUserService(mockRepo)
         user, err := svc.GetUser(context.Background(), "999")
-        
-        assert.Error(t, err)
+
+        assert.ErrorIs(t, err, errors.ErrNotFound)
         assert.Nil(t, user)
-        assert.Equal(t, errors.ErrNotFound, err)
     })
 }
 ```
@@ -184,8 +180,8 @@ func TestUserService_GetUser(t *testing.T) {
 
 ```go
 // ❌ BAD: String-based expectations — forbidden
-mockRepo.On("GetByID", "123").Return(&domain.User{ID: "123"}, nil)
-// Use gomock with EXPECT().GetByID(...) instead.
+mockRepo.On("GetByID", mock.Anything, "123").Return(user, nil)
+// Use gomock with EXPECT().GetByID(gomock.Any(), "123") instead.
 ```
 
 ## Integration Tests
@@ -225,9 +221,9 @@ func TestEntityRepository_Create_WithValidEntity_PersistsToDatabase(t *testing.T
         entity, err := repo.Create(ctx, testEntity)
         require.NoError(t, err)
         
-        found, err := repo.GetByID(ctx, entity.ID)
+        found, err := repo.GetByID(ctx, entity.ID())
         require.NoError(t, err)
-        assert.Equal(t, entity.ID, found.ID)
+        assert.Equal(t, entity.ID(), found.ID())
     })
 }
 ```
@@ -344,23 +340,49 @@ make test-integration            # Integration tests
 
 ## Test Data
 
-- Use factories/builders for test data
+- Use factories/builders for test data (e.g. a `test/fixtures` package)
+- Build entities through domain constructors; entity fields are unexported, so factories can't (and shouldn't) bypass validation
 - Keep test data realistic
 - Use constants for shared test data
 - Clean up test data after tests
 
 ```go
-// ✅ GOOD: Test data factory
-func NewTestUser(opts ...UserOption) *domain.User {
-    user := &domain.User{
-        ID:       uuid.New().String(),
-        Username: "testuser",
-        Email:    "test@example.com",
-        UserType: domain.RoleX,  // or appropriate role from domain
+// ✅ GOOD: Test data factory with functional options, built via domain constructors
+package fixtures
+
+type userParams struct {
+    id       string
+    username string
+    email    string
+    userType domain.UserType
+}
+
+type UserOption func(*userParams)
+
+func WithID(id string) UserOption {
+    return func(p *userParams) { p.id = id }
+}
+
+func NewUser(t testing.TB, opts ...UserOption) *domain.User {
+    t.Helper()
+
+    p := userParams{
+        id:       uuid.NewString(),
+        username: "testuser",
+        email:    "test@example.com",
+        userType: domain.RoleX, // or appropriate role from domain
     }
     for _, opt := range opts {
-        opt(user)
+        opt(&p)
     }
+
+    email, err := domain.NewEmail(p.email)
+    require.NoError(t, err)
+    user, err := domain.NewUser(p.id, p.username, email, p.userType)
+    require.NoError(t, err)
     return user
 }
+
+// ❌ BAD: Struct literal on an entity bypasses constructor validation
+user := &domain.User{ID: "123", Email: "test@example.com"}
 ```
