@@ -18,8 +18,25 @@ alwaysApply: true
 | Clean code principles | `clean-code` | go-style-guide |
 | Commit messages, PR/squash titles, conventional commits | `conventional-commits` | agent-behavior |
 | Stage and create git commits (Conventional Commits) | `git-commit` | conventional-commits, agent-behavior |
+| Stress-test a plan or design (on request only) | `grilling` | - |
+| Domain terms, `GLOSSARY.md`, ADRs in `docs/adr/` | `domain-modeling` | architecture |
+| Conversation to PRD as a GitHub issue | `to-prd` | - |
+| PRD or plan to tracer-bullet GitHub issues | `to-issues` | - |
+| Bug, failure, or performance regression | `diagnosing-bugs` | test-driven-development, testing-agent |
+| Review a branch or PR against standards and spec | `code-review` | all applicable rules |
+| Write a PR body | `pr` | - |
+| Steps only a human can do (secrets, dashboards, cutovers) | `wizard` | - |
+| Untrusted input, auth, secrets, dependencies | `security-and-hardening` | authentication-security |
+| Logging, metrics, tracing, alerts | `observability-and-instrumentation` | - |
+| Pre-launch gate, rollout, rollback | `shipping-and-launch` | - |
+| Hand work to a fresh agent (on request only) | `handoff` | - |
 
 Skills are in `../skills/<name>/SKILL.md` (relative to `rules/`; at repo root: `skills/<name>/SKILL.md`)
+
+## Workflows
+
+- **Greenfield:** `grilling` → `domain-modeling` → `to-prd` → `to-issues` → build test-first → `security-and-hardening` → `observability-and-instrumentation` → `shipping-and-launch` → `pr`
+- **Brownfield:** pstack `/how` or `/why` → `domain-modeling` to record existing terms → `diagnosing-bugs` or `/poteto-mode` → `code-review` → `pr`
 
 ## How to Use Skills
 
