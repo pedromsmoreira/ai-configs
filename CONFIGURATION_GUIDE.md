@@ -133,17 +133,22 @@ Rules are coding standards and architectural patterns that AI assistants follow 
 These rules are **always active** for all conversations:
 
 - **`AGENTS.md`** — project overview, commands, ports (customize this first)
-- `architecture.mdc` - DDD and layered architecture
-- `go-style-guide.mdc` - Go coding conventions
 - `frontend-patterns.mdc` - React/TypeScript guidelines
 - `test-driven-development.mdc` - TDD principles
-- `go-testing-practices.mdc` - Go testing standards
 - `frontend-testing-practices.mdc` - Frontend testing
 - `authentication-security.mdc` - JWT and security
 - `database-migrations.mdc` - Database patterns
 - `agent-behavior.mdc` - General agent guidelines
 - `skills-index.mdc` - Skills quick reference
 - And more...
+
+### File-Scoped Rules
+
+These rules attach automatically when matching files are in context (`alwaysApply: false` with `globs`):
+
+- `go-style-guide.mdc` - Idiomatic Go (Effective Go, Code Review Comments); `**/*.go`
+- `architecture.mdc` - DDD and layered architecture; `internal/**/*.go`, `cmd/**/*.go`
+- `go-testing-practices.mdc` - Go testing standards; `**/*_test.go`
 
 ### Agent-Requestable Rules
 

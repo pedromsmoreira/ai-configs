@@ -79,29 +79,19 @@ type UserRepository interface {
 
 ```go
 // ✅ GOOD: Repository implementation
-func (r *userRepository) GetByID(id string) (*domain.User, error) {
-    query := `SELECT id, username, email, password_hash, user_type, created_at, updated_at 
+func (r *userRepository) GetByID(ctx context.Context, id string) (*domain.User, error) {
+    query := `SELECT id, username, email, password_hash, user_type, created_at, updated_at
               FROM users WHERE id = $1`
-    
-    var user domain.User
-    err := r.db.QueryRow(query, id).Scan(
-        &user.ID,
-        &user.Username,
-        &user.Email,
-        &user.PasswordHash,
-        &user.UserType,
-        &user.CreatedAt,
-        &user.UpdatedAt,
-    )
-    
-    if err == sql.ErrNoRows {
+
+    row := r.db.QueryRowContext(ctx, query, id)
+    user, err := scanUser(row) // scans into locals, rebuilds the entity via a domain constructor
+    if errors.Is(err, sql.ErrNoRows) {
         return nil, errors.ErrNotFound
     }
     if err != nil {
-        return nil, fmt.Errorf("failed to get user: %w", err)
+        return nil, fmt.Errorf("get user %s: %w", id, err)
     }
-    
-    return &user, nil
+    return user, nil
 }
 ```
 
@@ -117,7 +107,7 @@ func (r *userRepository) GetByID(id string) (*domain.User, error) {
 ```go
 // ✅ GOOD: Parameterized query
 query := `SELECT * FROM entities WHERE owner_id = $1`
-rows, err := r.db.Query(query, ownerID)
+rows, err := r.db.QueryContext(ctx, query, ownerID)
 
 // ❌ BAD: String concatenation (SQL injection risk)
 query := fmt.Sprintf("SELECT * FROM entities WHERE owner_id = '%s'", ownerID)
@@ -131,23 +121,19 @@ query := fmt.Sprintf("SELECT * FROM entities WHERE owner_id = '%s'", ownerID)
 
 ```go
 // ✅ GOOD: Transaction usage
-func (r *entityRepository) CreateWithRelated(entity *domain.Entity, related *domain.Related) error {
-    tx, err := r.db.Begin()
+func (r *entityRepository) CreateWithRelated(ctx context.Context, entity *domain.Entity, related *domain.Related) error {
+    tx, err := r.db.BeginTx(ctx, nil)
     if err != nil {
-        return err
+        return fmt.Errorf("begin tx: %w", err)
     }
-    defer tx.Rollback()
-    
-    // Create entity
-    if err := r.createEntity(tx, entity); err != nil {
-        return err
+    defer tx.Rollback() // no-op after a successful Commit
+
+    if err := r.createEntity(ctx, tx, entity); err != nil {
+        return fmt.Errorf("create entity: %w", err)
     }
-    
-    // Create related
-    if err := r.createRelated(tx, related); err != nil {
-        return err
+    if err := r.createRelated(ctx, tx, related); err != nil {
+        return fmt.Errorf("create related: %w", err)
     }
-    
     return tx.Commit()
 }
 ```
@@ -203,17 +189,17 @@ CREATE INDEX idx_entities_owner_id ON entities(owner_id);
 
 ```go
 // ✅ GOOD: Error mapping
-func (r *userRepository) Create(user *domain.User) error {
-    query := `INSERT INTO users (id, username, email, password_hash, user_type) 
+func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
+    query := `INSERT INTO users (id, username, email, password_hash, user_type)
               VALUES ($1, $2, $3, $4, $5)`
-    
-    _, err := r.db.Exec(query, user.ID, user.Username, user.Email, user.PasswordHash, user.UserType)
+
+    _, err := r.db.ExecContext(ctx, query,
+        user.ID(), user.Username(), user.Email().Value(), user.PasswordHash(), user.UserType())
+    if isUniqueConstraintError(err) {
+        return errors.ErrAlreadyExists
+    }
     if err != nil {
-        // Check for unique constraint violation
-        if isUniqueConstraintError(err) {
-            return errors.ErrAlreadyExists
-        }
-        return fmt.Errorf("failed to create user: %w", err)
+        return fmt.Errorf("create user %s: %w", user.ID(), err)
     }
     return nil
 }

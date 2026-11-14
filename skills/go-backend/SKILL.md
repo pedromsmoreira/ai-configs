@@ -27,7 +27,7 @@ Apply Go community best practices **inside** this project's DDD layers (Handler 
 | **Packages** | One package per directory; lowercase single-word names; no circular imports; domain imports nothing from infra (no SQL, protobuf, HTTP) |
 | **Interfaces** | Small, consumer-defined; **accept interfaces, return structs**; generate mocks against those interfaces |
 | **Constructors** | `NewXxx(...) (T, error)` for non-trivial types; validate in constructor or factory |
-| **Receivers** | Consistent pointer vs value receivers on a type; prefer value receivers when the method does not mutate state |
+| **Receivers** | If any method on a type needs a pointer receiver, use pointer receivers for all its methods; value receivers for small immutable types (value objects) |
 | **Naming** | Idiomatic Go: short package names, no stutter (`user.ID` not `user.UserID`), exported API documented with doc comments |
 | **Concurrency** | Tie goroutines to `ctx`; use `errgroup` for parallel work; no fire-and-forget goroutines in request paths |
 | **Safety** | No `panic` in production request paths; use `defer` for cleanup (`Close`, `Rollback`) |
@@ -188,8 +188,8 @@ func (h *EntityHandler) CreateResource(ctx context.Context, req *pb.CreateResour
 
 | File | Purpose |
 |------|---------|
-| [../../rules/architecture.mdc](../../rules/architecture.mdc) | Layered architecture (Handler→Service→Domain→Repository), DDD, aggregates, repository pattern, error handling |
-| [../../rules/go-style-guide.mdc](../../rules/go-style-guide.mdc) | Naming, context, structs, interfaces, domain/service/handler guidelines |
+| [../../rules/architecture.mdc](../../rules/architecture.mdc) | Layered architecture (Handler→Service→Domain→Repository), DDD entities and value objects, service and handler patterns, repository pattern, error handling |
+| [../../rules/go-style-guide.mdc](../../rules/go-style-guide.mdc) | Idiomatic Go: naming, errors, interfaces, context, concurrency, doc comments |
 | [../../rules/authentication-security.mdc](../../rules/authentication-security.mdc) | JWT, Principal, `auth.GetPrincipal(ctx)`, password hashing, authorization patterns |
 | [../../rules/database-migrations.mdc](../../rules/database-migrations.mdc) | Repository and SQL patterns, connection pooling; for migration files see `database-migrations` skill |
 | [../../rules/go-testing-practices.mdc](../../rules/go-testing-practices.mdc) | Go unit and integration tests (testify, t.Run, gomock, testcontainers) |

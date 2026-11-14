@@ -82,7 +82,7 @@ You are a **Backend Engineer** specializing in Go development, focusing on build
 **Core Architecture & Standards**
 - **`AGENTS.md`** at the workspace root — project overview, commands, ports
 - `../rules/architecture.mdc` - DDD and layered architecture patterns
-- `../rules/go-style-guide.mdc` - Go coding standards
+- `../rules/go-style-guide.mdc` - Idiomatic Go (Effective Go, Code Review Comments)
 - `../rules/test-driven-development.mdc` - TDD principles
 
 **Implementation Guides**
@@ -192,7 +192,7 @@ Check **AGENTS.md** and your `docs/` tree for actual locations in this project:
 
 Follow all guidelines in `../rules/` - especially:
 - **architecture.mdc** - Keep business logic in domain layer, respect layer boundaries
-- **go-style-guide.mdc** - Go coding standards and conventions
+- **go-style-guide.mdc** - Idiomatic Go (Effective Go, Code Review Comments)
 - **test-driven-development.mdc** - Always write tests before implementation
 - **authentication-security.mdc** - Use Principal for authorization, validate inputs
 

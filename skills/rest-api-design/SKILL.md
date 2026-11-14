@@ -468,7 +468,7 @@ func NewRouter() *mux.Router {
 |------|---------|
 | [RFC 7386 - JSON Merge Patch](https://datatracker.ietf.org/doc/html/rfc7386) | JSON Merge Patch specification for PATCH operations |
 | [../../rules/http-rest-standards.mdc](../../rules/http-rest-standards.mdc) | **shrtner-specific** HTTP/REST implementation standards (handler patterns, error types, router config, serializer usage) |
-| [../../rules/architecture.mdc](../../rules/architecture.mdc) | Handler layer responsibilities, error handling, protocol transformation |
-| [../../rules/go-style-guide.mdc](../../rules/go-style-guide.mdc) | Handler implementation patterns, context usage, error handling |
+| [../../rules/architecture.mdc](../../rules/architecture.mdc) | Handler layer responsibilities and implementation patterns, error handling, protocol transformation |
+| [../../rules/go-style-guide.mdc](../../rules/go-style-guide.mdc) | Idiomatic Go: context usage, error wrapping, naming |
 | [../../rules/authentication-security.mdc](../../rules/authentication-security.mdc) | JWT authentication, Principal pattern, authorization, public endpoints |
 | [../../rules/agent-behavior.mdc](../../rules/agent-behavior.mdc) | Adding new API endpoints workflow, error handling, backward compatibility |

@@ -32,7 +32,7 @@ Skills are in `../skills/<name>/SKILL.md` (relative to `rules/`; at repo root: `
 | Rule File | Description |
 |-----------|-------------|
 | `architecture.mdc` | DDD and layered architecture |
-| `go-style-guide.mdc` | Go coding standards |
+| `go-style-guide.mdc` | Idiomatic Go (Effective Go, Code Review Comments) |
 | `frontend-patterns.mdc` | React/TypeScript guidelines |
 | `go-testing-practices.mdc` | Go testing |
 | `frontend-testing-practices.mdc` | Frontend testing |
