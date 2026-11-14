@@ -110,7 +110,7 @@ Skills provide step-by-step implementation guidance. **Use skills when** impleme
 - **`go-backend`** - Detailed Go backend implementation patterns (handlers, services, domain, repositories)
 - **`database-migrations`** - Migration creation and management with golang-migrate
 - **`rest-api-design`** - REST/HTTP endpoint design (URL structure, methods, status codes)
-- **`http-rest-endpoints`** - HTTP handler implementation following project standards
+- **`diagnosing-bugs`** - Feedback-loop debugging for bugs and performance regressions
 - **`testing`** - Comprehensive testing implementation (unit, integration, e2e)
 - **`tdd-workflow`** - Detailed TDD cycle with examples and anti-patterns
 - **`clean-code`** - Pragmatic coding standards (naming, functions, structure, refactoring)

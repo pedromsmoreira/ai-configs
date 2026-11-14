@@ -106,17 +106,7 @@ Skills are task-focused instructions following the [Agent Skills specification](
 
 ### Available Skills
 
-| Skill | Use For |
-|-------|---------|
-| `go-backend` | Go services, gRPC, handlers, domain logic |
-| `rest-api-design` | REST endpoint design, HTTP patterns |
-| `http-rest-endpoints` | HTTP handlers and routing |
-| `database-migrations` | PostgreSQL schema migrations |
-| `testing` | TDD, unit tests, integration tests |
-| `tdd-workflow` | Red-Green-Refactor cycle details |
-| `frontend-react` | React components, TypeScript, Material-UI |
-| `user-stories` | User stories, acceptance criteria |
-| `clean-code` | Pragmatic coding standards |
+See [skills/README.md](skills/README.md) for the full list, grouped by stack, planning, delivery, and production readiness.
 
 ### Quick Reference
 
