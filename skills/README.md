@@ -2,37 +2,59 @@
 
 Agent Skills are task-focused instruction sets that follow the [Agent Skills specification](https://agentskills.io/specification). Each skill defines **what it does** and **when to use it**, so agents can activate the right skill for a given task.
 
-Skills in this project **complement** the existing Cursor agents (`../agents/`) and **reference** `../rules/` for full guidance. Each skill is thin: "when to use" plus pointers to rules and agents; rules and agents remain the single source of truth.
+Skills in this project **complement** the existing Cursor agents (`../agents/`) and **reference** `../rules/` for full guidance. `../rules/skills-index.mdc` maps tasks to skills and lists the greenfield and brownfield workflows.
+
+Skills marked "on request" set `disable-model-invocation: true`, so they load only when you name them.
 
 ## Skills
+
+### Stack
 
 | Skill | Purpose |
 |-------|---------|
 | **go-backend** | Go services, gRPC, domain logic, handlers, services, repositories, Protocol Buffers |
-| **rest-api-design** | REST and HTTP endpoints design—URL structure, HTTP methods, status codes, request/response patterns, error handling, versioning |
-| **database-migrations** | PostgreSQL schema migrations with golang-migrate (tables, columns, indexes, up/down) |
-| **testing** | TDD, unit tests, integration tests with testcontainers, mocks, regression tests |
+| **rest-api-design** | REST and HTTP endpoints design: URL structure, HTTP methods, status codes, request/response patterns, error handling, versioning |
+| **database-migrations** | PostgreSQL schema migrations with golang-migrate (tables, columns, indexes, up/down, expand/contract renames) |
 | **frontend-react** | React 18+, TypeScript, Material-UI, Zustand, React Query, REST API integration |
+| **testing** | Unit tests, integration tests with testcontainers, mocks, regression tests |
+| **tdd-workflow** | Red-green-refactor walkthrough with examples, behind the `test-driven-development` rule |
+| **clean-code** | Pragmatic coding standards |
+
+### Planning and design
+
+| Skill | Purpose |
+|-------|---------|
+| **grilling** | Interview that walks every open design decision, one recommended answer each (on request) |
+| **domain-modeling** | Sharpen domain terms in `GLOSSARY.md` and record hard-to-reverse decisions in `docs/adr/` |
 | **user-stories** | User stories, acceptance criteria, backlog items, requirements, and review |
-| **conventional-commits** | Commit messages and PR/squash titles per Conventional Commits; git-only evidence, no MCP |
+| **to-prd** | Turn the conversation into a PRD and publish it as a GitHub issue |
+| **to-issues** | Break a PRD or plan into tracer-bullet GitHub issues with blocking edges |
+
+### Debugging, review, and delivery
+
+| Skill | Purpose |
+|-------|---------|
+| **diagnosing-bugs** | Build a red feedback loop, minimise, test ranked hypotheses, fix test-first |
+| **code-review** | Review a diff against documented standards and against its spec, as two separate reports |
+| **conventional-commits** | Commit messages and PR/squash titles per Conventional Commits |
+| **git-commit** | Stage and create commits safely |
+| **pr** | PR body template: diagram, before/after evidence, reversibility, blast radius |
+| **wizard** | Generate a bash script that walks a human through steps the agent cannot do |
+| **handoff** | Compact the conversation into a handoff document for a fresh agent (on request) |
+
+### Production readiness
+
+| Skill | Purpose |
+|-------|---------|
+| **security-and-hardening** | Threat model, OWASP checks, secrets, supply chain |
+| **observability-and-instrumentation** | Structured logs, correlation ids, RED metrics, alerts, runbooks |
+| **shipping-and-launch** | Pre-launch gate, feature flags, staged rollout, rollback plan |
+
+Third-party skills and their licenses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Validation
 
-### With skills-ref (when installed)
-
-If you have the [skills-ref](https://agentskills.io/specification) tool (or run `make validate-skills` when it is installed):
-
-```bash
-skills-ref validate ./go-backend
-skills-ref validate ./rest-api-design
-skills-ref validate ./database-migrations
-skills-ref validate ./testing
-skills-ref validate ./frontend-react
-skills-ref validate ./user-stories
-skills-ref validate ./conventional-commits
-```
-
-Or validate all at once (if your skills-ref supports a directory):
+If you have the [skills-ref](https://agentskills.io/specification) tool:
 
 ```bash
 skills-ref validate .
@@ -43,28 +65,8 @@ skills-ref validate .
 - **`name`** in each `SKILL.md` frontmatter must **exactly match** the parent directory name.
 - **`description`** must be 1–1024 characters and describe both what the skill does and when to use it.
 - **`name`** must use only lowercase letters, numbers, and hyphens; no leading/trailing hyphens; no consecutive hyphens (`--`).
+- Every skill directory appears in this README and in `../rules/skills-index.mdc`.
 
 ## Structure
 
-Each skill is a directory with at least `SKILL.md`:
-
-```
-skills/                 # at repository root (alongside rules/ and agents/)
-├── README.md           # This file
-├── go-backend/
-│   └── SKILL.md
-├── rest-api-design/
-│   └── SKILL.md
-├── database-migrations/
-│   └── SKILL.md
-├── testing/
-│   └── SKILL.md
-├── frontend-react/
-│   └── SKILL.md
-├── user-stories/
-│   └── SKILL.md
-└── conventional-commits/
-    └── SKILL.md
-```
-
-Optional `references/`, `scripts/`, or `assets/` may be added per skill when needed.
+Each skill is a directory with at least `SKILL.md`. Optional `references/`, `scripts/`, or supporting `.md` files sit beside it and are linked from `SKILL.md` by relative path.
