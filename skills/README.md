@@ -1,77 +1,68 @@
-# Agent Skills
+# Agent skills
 
-Agent Skills are task-focused instruction sets that follow the [Agent Skills specification](https://agentskills.io/specification). Each skill defines **what it does** and **when to use it**, so agents can activate the right skill for a given task.
+These skills follow the [Agent Skills specification](https://agentskills.io/specification). Each skill says what it does and when to use it.
 
-Skills in this project **complement** the existing Cursor agents (`../agents/`) and **reference** `../rules/` for full guidance. `../rules/skills-index.mdc` maps tasks to skills and lists the greenfield and brownfield workflows.
+Skills in this pack complement the agents in `../agents/` and point at `../rules/`. [`../rules/skills-index.mdc`](../rules/skills-index.mdc) maps tasks to the skills that ship here.
 
-Most skills set `disable-model-invocation: true` and load when you name them, for example `/go-backend`. `diagnosing-bugs`, `conventional-commits`, `to-prd`, and `to-issues` omit the flag, so Cursor can invoke them from the task.
+Matt Pocock skills and Addy Osmani skills are not in this pack. [`setup-pm51stack`](setup-pm51stack/SKILL.md) installs them. When to use each installed skill is [decision-graph.md](setup-pm51stack/decision-graph.md).
 
-## Skills
+`disable-model-invocation: true` means the skill loads when you name it, for example `/go-backend`. `conventional-commits` omits that flag, so Cursor can invoke it from the task.
 
-### Stack
-
-| Skill | Purpose |
-|-------|---------|
-| **go-backend** | Go services, gRPC, domain logic, handlers, services, repositories, Protocol Buffers |
-| **rest-api-design** | REST and HTTP endpoints design: URL structure, HTTP methods, status codes, request/response patterns, error handling, versioning |
-| **database-migrations** | PostgreSQL schema migrations with golang-migrate (tables, columns, indexes, up/down, expand/contract renames) |
-| **frontend-react** | React 18+, TypeScript, Material-UI, Zustand, React Query, REST API integration |
-| **testing** | Unit tests, integration tests with testcontainers, mocks, regression tests |
-| **tdd-workflow** | Red-green-refactor walkthrough with examples, behind the `test-driven-development` rule |
-| **clean-code** | Pragmatic coding standards |
-
-### Planning and design
+## Go
 
 | Skill | Purpose |
 |-------|---------|
-| **grilling** | Interview that walks every open design decision, one recommended answer each |
-| **domain-modeling** | Sharpen domain terms in `GLOSSARY.md` and record hard-to-reverse decisions in `docs/adr/` |
-| **user-stories** | User stories, acceptance criteria, backlog items, requirements, and review |
-| **to-prd** | Turn the conversation into a PRD and publish it as a GitHub issue |
-| **to-issues** | Break a PRD or plan into tracer-bullet GitHub issues with blocking edges |
+| `go-backend` | Go services, gRPC, domain logic, handlers, services, repositories, and Protocol Buffers |
+| `rest-api-design` | REST and HTTP endpoint design. URLs, methods, status codes, request and response shapes, errors, and versioning |
+| `database-migrations` | PostgreSQL schema migrations with golang-migrate. The expand and contract steps are adapted from addyosmani/agent-skills. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). |
 
-### Debugging, review, and delivery
+## React
 
 | Skill | Purpose |
 |-------|---------|
-| **diagnosing-bugs** | Build a red feedback loop, minimise, test ranked hypotheses, fix test-first |
-| **code-review** | Review a diff against documented standards and against its spec, as two separate reports |
-| **conventional-commits** | Commit messages and PR/squash titles per Conventional Commits |
-| **git-commit** | Stage and create commits safely |
-| **pr** | PR body template: diagram, before/after evidence, reversibility, blast radius |
-| **wizard** | Generate a bash script that walks a human through steps the agent cannot do |
-| **handoff** | Compact the conversation into a handoff document for a fresh agent |
+| `frontend-react` | React 18 or later, TypeScript, Material UI, Zustand, React Query, and REST calls |
 
-### Machine setup
+## Testing
 
 | Skill | Purpose |
 |-------|---------|
-| **setup-pm51stack** | Install Matt Pocock and Addy Osmani skills with `npx skills`, then install pstack in Cursor. When to use each installed skill: [decision-graph.md](setup-pm51stack/decision-graph.md) |
+| `testing` | Unit tests, integration tests with testcontainers, mocks, and regression tests |
+| `tdd-workflow` | Red, green, refactor, with examples. The rule behind it is `test-driven-development`. |
 
-### Production readiness
+## Git
 
 | Skill | Purpose |
 |-------|---------|
-| **security-and-hardening** | Threat model, OWASP checks, secrets, supply chain |
-| **observability-and-instrumentation** | Structured logs, correlation ids, RED metrics, alerts, runbooks |
-| **shipping-and-launch** | Pre-launch gate, feature flags, staged rollout, rollback plan |
+| `conventional-commits` | Commit messages and pull-request titles per Conventional Commits |
+| `git-commit` | Stage files and create commits |
 
-Third-party skills and their licenses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+## Setup
+
+| Skill | Purpose |
+|-------|---------|
+| `setup-pm51stack` | Install Matt Pocock skills and Addy Osmani skills with `npx skills`, then tell you how to add the pstack plugin |
 
 ## Validation
 
-If you have the [skills-ref](https://agentskills.io/specification) tool:
+If you have the [skills-ref](https://agentskills.io/specification) tool, from this directory run:
 
 ```bash
 skills-ref validate .
 ```
 
+From the repository root, run:
+
+```bash
+bash skills/setup-pm51stack/scripts/shipped_test.sh
+bash skills/setup-pm51stack/scripts/install_test.sh
+```
+
 ### Manual checks
 
-- **`name`** in each `SKILL.md` frontmatter must **exactly match** the parent directory name.
-- **`description`** must be 1–1024 characters and describe both what the skill does and when to use it.
-- **`name`** must use only lowercase letters, numbers, and hyphens; no leading/trailing hyphens; no consecutive hyphens (`--`).
-- Every skill directory appears in this README and in `../rules/skills-index.mdc`.
+- `name` in each `SKILL.md` frontmatter matches the parent directory name.
+- `description` is 1 to 1024 characters and says what the skill does and when to use it.
+- `name` uses only lowercase letters, numbers, and hyphens. It has no leading hyphen, no trailing hyphen, and no doubled hyphen.
+- Every skill directory is listed in this README and in `../rules/skills-index.mdc`.
 
 ## Structure
 

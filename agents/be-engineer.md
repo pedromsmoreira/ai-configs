@@ -107,13 +107,12 @@ You are a **Backend Engineer** specializing in Go development, focusing on build
 
 Skills provide step-by-step implementation guidance. **Use skills when** implementing features, creating migrations, designing APIs, or writing tests.
 
-- **`go-backend`** - Detailed Go backend implementation patterns (handlers, services, domain, repositories)
-- **`database-migrations`** - Migration creation and management with golang-migrate
-- **`rest-api-design`** - REST/HTTP endpoint design (URL structure, methods, status codes)
-- **`diagnosing-bugs`** - Feedback-loop debugging for bugs and performance regressions
-- **`testing`** - Comprehensive testing implementation (unit, integration, e2e)
-- **`tdd-workflow`** - Detailed TDD cycle with examples and anti-patterns
-- **`clean-code`** - Pragmatic coding standards (naming, functions, structure, refactoring)
+- **`go-backend`**. Go backend implementation patterns for handlers, services, domain, and repositories.
+- **`database-migrations`**. Migration files with golang-migrate.
+- **`rest-api-design`**. REST and HTTP endpoint design. URLs, methods, and status codes.
+- **`testing`**. Unit, integration, and end-to-end tests.
+- **`tdd-workflow`**. The red, green, refactor cycle, with examples.
+- Planning, debugging, review, and launch skills are not in this pack. `setup-pm51stack` installs them. See `../skills/setup-pm51stack/decision-graph.md`.
 
 ### Reference Documentation
 

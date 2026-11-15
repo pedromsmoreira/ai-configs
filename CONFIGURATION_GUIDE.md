@@ -102,11 +102,11 @@ See [agents/README.md](agents/README.md) for detailed agent documentation.
 
 ## Using Skills
 
-Skills are task-focused instructions following the [Agent Skills specification](https://agentskills.io/specification). They tell AI assistants **what to do** and **when to use them**. A skill with `disable-model-invocation: true` loads when you name it with `/skill-name`. `diagnosing-bugs`, `conventional-commits`, `to-prd`, and `to-issues` omit that flag, so Cursor can invoke them from the task.
+Skills are task-focused instructions following the [Agent Skills specification](https://agentskills.io/specification). They tell AI assistants what to do and when to use them. A skill with `disable-model-invocation: true` loads when you name it with `/skill-name`. `conventional-commits` omits that flag, so Cursor can invoke it from the task.
 
 ### Available Skills
 
-See [skills/README.md](skills/README.md) for the full list, grouped by stack, planning, delivery, and production readiness.
+See [skills/README.md](skills/README.md) for the skills that ship in this pack, grouped as Go, React, testing, git, and setup. Matt Pocock skills and Addy Osmani skills are installed by [skills/setup-pm51stack/SKILL.md](skills/setup-pm51stack/SKILL.md). When to use each one is [skills/setup-pm51stack/decision-graph.md](skills/setup-pm51stack/decision-graph.md).
 
 ### Quick Reference
 

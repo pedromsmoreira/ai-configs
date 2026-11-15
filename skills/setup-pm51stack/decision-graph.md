@@ -22,7 +22,7 @@ The walk below is the decision graph for the 16 skills `setup-pm51stack` install
 | `wizard` | You or the agent | A person must click a dashboard, paste a secret, or run a cutover |
 | `handoff` | You type it | This conversation has to continue in a fresh agent |
 
-`security-and-hardening` also runs beside the skill you land on when that change crosses a trust boundary. In this repo, the copies of `to-spec` and `to-tickets` are named `to-prd` and `to-issues`. The installer uses the upstream names.
+`security-and-hardening` also runs beside the skill you land on when that change crosses a trust boundary.
 
 ```mermaid
 flowchart TD

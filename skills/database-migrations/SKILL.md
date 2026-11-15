@@ -18,6 +18,8 @@ For **repository code** (queries, transactions, domain↔DB mapping), see `../..
 
 ## Renaming or dropping a column in production (expand/contract)
 
+These steps are adapted from addyosmani/agent-skills. The license is [../THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md).
+
 During a rollout, old and new code run at once. Never rename or drop a column in the same release that changes the code that reads it. Ship additive phases instead, each its own migration and deploy. Example, renaming `name` to `full_name`:
 
 1. **Expand.** Migration adds `full_name` as nullable. Deploy. Old code ignores it.

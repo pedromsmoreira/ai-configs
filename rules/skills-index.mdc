@@ -1,53 +1,38 @@
 ---
 name: skills-index
-description: Task-to-skill map. Use when the user asks which skill applies or asks for the skills index.
+description: Task-to-skill map for skills that ship in this pack. Use when the user asks which skill applies or asks for the skills index.
 alwaysApply: false
 ---
 
-# Skills Quick Reference
+# Skills that ship in this pack
 
-| Task | Skill | Key Rules |
+This index lists only the skills in `skills/`. Matt Pocock skills and Addy Osmani skills are installed by `setup-pm51stack`. When to use those, read `../skills/setup-pm51stack/decision-graph.md`.
+
+| Task | Skill | Key rules |
 |------|-------|-----------|
 | Backend API, handlers, services, domain | `go-backend` | architecture, go-style-guide |
-| REST/HTTP endpoint design, URL structure, status codes | `rest-api-design` | architecture, go-style-guide, authentication-security |
+| REST and HTTP endpoint design | `rest-api-design` | architecture, go-style-guide, authentication-security |
 | Schema changes, migrations | `database-migrations` | database-migrations |
 | React components, frontend UI | `frontend-react` | frontend-patterns |
-| Writing/fixing tests, coverage | `testing` | go-testing-practices, frontend-testing-practices, e2e-testing-standards, testing-agent |
-| TDD cycle details, examples | `tdd-workflow` | test-driven-development |
-| Requirements, acceptance criteria | `user-stories` | - |
-| Clean code principles | `clean-code` | go-style-guide |
-| Commit messages, PR/squash titles, conventional commits | `conventional-commits` | agent-behavior |
-| Stage and create git commits (Conventional Commits) | `git-commit` | conventional-commits, agent-behavior |
-| Stress-test a plan or design | `grilling` | - |
-| Domain terms, `GLOSSARY.md`, ADRs in `docs/adr/` | `domain-modeling` | architecture |
-| Conversation to PRD as a GitHub issue | `to-prd` | - |
-| PRD or plan to tracer-bullet GitHub issues | `to-issues` | - |
-| Bug, failure, or performance regression | `diagnosing-bugs` | test-driven-development, testing-agent |
-| Review a branch or PR against standards and spec | `code-review` | all applicable rules |
-| Write a PR body | `pr` | - |
-| Steps only a human can do (secrets, dashboards, cutovers) | `wizard` | - |
-| Untrusted input, auth, secrets, dependencies | `security-and-hardening` | authentication-security |
-| Logging, metrics, tracing, alerts | `observability-and-instrumentation` | - |
-| Pre-launch gate, rollout, rollback | `shipping-and-launch` | - |
-| Hand work to a fresh agent | `handoff` | - |
-| Install pstack, Matt Pocock skills, and Addy Osmani skills on this machine | `setup-pm51stack` | - |
+| Writing or fixing tests | `testing` | go-testing-practices, frontend-testing-practices, e2e-testing-standards, testing-agent |
+| TDD cycle | `tdd-workflow` | test-driven-development |
+| Commit messages and pull-request titles | `conventional-commits` | agent-behavior |
+| Stage and create git commits | `git-commit` | conventional-commits, agent-behavior |
+| Install Matt Pocock skills, Addy Osmani skills, and point at pstack | `setup-pm51stack` | - |
 
-Skills are in `../skills/<name>/SKILL.md` (relative to `rules/`; at repo root: `skills/<name>/SKILL.md`)
+Skills are in `../skills/<name>/SKILL.md`. That path is relative to `rules/`. At the repository root the same files are `skills/<name>/SKILL.md`.
 
-## Workflows
+## How to use
 
-- **Greenfield:** `grilling` → `domain-modeling` → `to-prd` → `to-issues` → build test-first → `security-and-hardening` → `observability-and-instrumentation` → `shipping-and-launch` → `pr`
-- **Brownfield:** pstack `/how` or `/why` → `domain-modeling` to record existing terms → `diagnosing-bugs` or `/poteto-mode` → `code-review` → `pr`
+1. Find the task in the table.
+2. Read that skill.
+3. Follow the rules the table names.
 
-## How to Use Skills
+For planning, debugging, review, and launch, run `setup-pm51stack`, then use `../skills/setup-pm51stack/decision-graph.md`.
 
-1. Check the table above for your task type
-2. Read the skill file for detailed instructions
-3. Follow references to relevant rules as needed
+## Rule reference
 
-## Rule Reference
-
-| Rule File | Description |
+| Rule file | Description |
 |-----------|-------------|
 | `architecture.mdc` | DDD and layered architecture |
 | `go-style-guide.mdc` | Idiomatic Go (Effective Go, Code Review Comments) |
