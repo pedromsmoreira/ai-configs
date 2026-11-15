@@ -1,6 +1,7 @@
 ---
 name: testing
 description: Implements Test-Driven Development for this project—unit tests, integration tests with testcontainers, mocks, and regression tests. Use when writing or fixing tests, reproducing bugs with tests, or improving coverage.
+disable-model-invocation: true
 version: 1.0
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: database-migrations
 description: Creates and manages PostgreSQL schema migrations with golang-migrate for this project. Use when adding or changing tables, columns, indexes, or constraints, or when running or rolling back migrations.
+disable-model-invocation: true
 version: 1.0
 ---
 

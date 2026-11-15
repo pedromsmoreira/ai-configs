@@ -1,7 +1,7 @@
 ---
 name: skills-index
-description: Quick reference for when to use each skill
-alwaysApply: true
+description: Task-to-skill map. Use when the user asks which skill applies or asks for the skills index.
+alwaysApply: false
 ---
 
 # Skills Quick Reference
@@ -18,7 +18,7 @@ alwaysApply: true
 | Clean code principles | `clean-code` | go-style-guide |
 | Commit messages, PR/squash titles, conventional commits | `conventional-commits` | agent-behavior |
 | Stage and create git commits (Conventional Commits) | `git-commit` | conventional-commits, agent-behavior |
-| Stress-test a plan or design (on request only) | `grilling` | - |
+| Stress-test a plan or design | `grilling` | - |
 | Domain terms, `GLOSSARY.md`, ADRs in `docs/adr/` | `domain-modeling` | architecture |
 | Conversation to PRD as a GitHub issue | `to-prd` | - |
 | PRD or plan to tracer-bullet GitHub issues | `to-issues` | - |
@@ -29,7 +29,7 @@ alwaysApply: true
 | Untrusted input, auth, secrets, dependencies | `security-and-hardening` | authentication-security |
 | Logging, metrics, tracing, alerts | `observability-and-instrumentation` | - |
 | Pre-launch gate, rollout, rollback | `shipping-and-launch` | - |
-| Hand work to a fresh agent (on request only) | `handoff` | - |
+| Hand work to a fresh agent | `handoff` | - |
 
 Skills are in `../skills/<name>/SKILL.md` (relative to `rules/`; at repo root: `skills/<name>/SKILL.md`)
 

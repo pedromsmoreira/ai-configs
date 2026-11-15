@@ -4,6 +4,7 @@ description: >-
   Creates git commits safely with Conventional Commits messages. Use when the
   user explicitly asks to commit, stage and commit changes, or save work to git.
   Drafts messages from git diff/log; does not commit unless requested.
+disable-model-invocation: true
 allowed-tools: Read, Bash
 version: 1.0
 ---

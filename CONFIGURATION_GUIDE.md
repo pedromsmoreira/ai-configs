@@ -102,7 +102,7 @@ See [agents/README.md](agents/README.md) for detailed agent documentation.
 
 ## Using Skills
 
-Skills are task-focused instructions following the [Agent Skills specification](https://agentskills.io/specification). They tell AI assistants **what to do** and **when to use them**.
+Skills are task-focused instructions following the [Agent Skills specification](https://agentskills.io/specification). They tell AI assistants **what to do** and **when to use them**. A skill with `disable-model-invocation: true` loads when you name it with `/skill-name`. `diagnosing-bugs`, `conventional-commits`, `to-prd`, and `to-issues` omit that flag, so Cursor can invoke them from the task.
 
 ### Available Skills
 
@@ -129,7 +129,6 @@ These rules are **always active** for all conversations:
 - `authentication-security.mdc` - JWT and security
 - `database-migrations.mdc` - Database patterns
 - `agent-behavior.mdc` - General agent guidelines
-- `skills-index.mdc` - Skills quick reference
 - And more...
 
 ### File-Scoped Rules
@@ -144,6 +143,7 @@ These rules attach automatically when matching files are in context (`alwaysAppl
 
 These rules are loaded on-demand when needed:
 
+- `skills-index.mdc` - Task-to-skill map, when you ask which skill applies
 - `testing-agent.mdc` - Bug handling and testing focus
 
 ### Adding Custom Rules

@@ -1,6 +1,7 @@
 ---
 name: go-backend
 description: Implements and modifies Go backend services for this project—gRPC handlers, services, domain logic, repositories, and Protocol Buffers—following idiomatic Go (context propagation, explicit errors, small interfaces, clear package boundaries). Use when building or changing backend APIs, business logic, domain entities, or repository layer.
+disable-model-invocation: true
 version: 1.1
 ---
 
