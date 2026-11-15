@@ -1,6 +1,7 @@
 ---
 name: frontend-react
 description: Builds React 18+ and TypeScript UI for this project—components, Material-UI, Zustand, React Query, and REST API integration. Use when creating or changing pages, components, forms, or frontend tests.
+disable-model-invocation: true
 version: 1.0
 ---
 

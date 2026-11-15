@@ -1,6 +1,7 @@
 ---
 name: tdd-workflow
 description: Detailed TDD workflow with examples, rationales, and anti-patterns. Use when following Red-Green-Refactor cycle.
+disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 

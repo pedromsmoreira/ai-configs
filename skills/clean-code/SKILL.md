@@ -1,6 +1,7 @@
 ---
 name: clean-code
 description: Pragmatic coding standards - concise, direct, no over-engineering, no unnecessary comments
+disable-model-invocation: true
 version: 1.0
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: rest-api-design
 description: Designs REST and HTTP endpoints for this project—URL structure, HTTP methods, status codes, request/response patterns, error handling, and versioning. Use when creating or modifying REST APIs, HTTP handlers, routing, or API contracts.
+disable-model-invocation: true
 version: 1.0
 ---
 

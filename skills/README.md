@@ -4,7 +4,7 @@ Agent Skills are task-focused instruction sets that follow the [Agent Skills spe
 
 Skills in this project **complement** the existing Cursor agents (`../agents/`) and **reference** `../rules/` for full guidance. `../rules/skills-index.mdc` maps tasks to skills and lists the greenfield and brownfield workflows.
 
-Skills marked "on request" set `disable-model-invocation: true`, so they load only when you name them.
+Every skill sets `disable-model-invocation: true`, so it loads only when you name it, for example `/go-backend`.
 
 ## Skills
 
@@ -24,7 +24,7 @@ Skills marked "on request" set `disable-model-invocation: true`, so they load on
 
 | Skill | Purpose |
 |-------|---------|
-| **grilling** | Interview that walks every open design decision, one recommended answer each (on request) |
+| **grilling** | Interview that walks every open design decision, one recommended answer each |
 | **domain-modeling** | Sharpen domain terms in `GLOSSARY.md` and record hard-to-reverse decisions in `docs/adr/` |
 | **user-stories** | User stories, acceptance criteria, backlog items, requirements, and review |
 | **to-prd** | Turn the conversation into a PRD and publish it as a GitHub issue |
@@ -40,7 +40,7 @@ Skills marked "on request" set `disable-model-invocation: true`, so they load on
 | **git-commit** | Stage and create commits safely |
 | **pr** | PR body template: diagram, before/after evidence, reversibility, blast radius |
 | **wizard** | Generate a bash script that walks a human through steps the agent cannot do |
-| **handoff** | Compact the conversation into a handoff document for a fresh agent (on request) |
+| **handoff** | Compact the conversation into a handoff document for a fresh agent |
 
 ### Production readiness
 

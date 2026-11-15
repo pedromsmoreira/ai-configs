@@ -1,6 +1,7 @@
 ---
 name: user-stories
 description: Writes user stories, acceptance criteria, and backlog items for this project. Use when defining requirements, acceptance criteria, backlog prioritization, or reviewing features against criteria.
+disable-model-invocation: true
 version: 1.0
 ---
 
