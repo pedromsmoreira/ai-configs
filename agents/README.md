@@ -5,7 +5,7 @@ This directory contains specialized AI agent configurations for this project's d
 
 ## Agent Skills
 
-Task-focused, [Agent Skills](https://agentskills.io/specification)-compliant instructions live in **`../skills/`**. They **complement** (do not replace) the agents here. Skills: `go-backend`, `database-migrations`, `testing`, `frontend-react`, `user-stories`. See `../skills/README.md`. Validate with `make validate-skills` when [skills-ref](https://agentskills.io/specification) is installed.
+Task-focused instructions that follow the [Agent Skills specification](https://agentskills.io/specification) live in `../skills/`. They complement the agents here. The list is [`../skills/README.md`](../skills/README.md). Validate with `make validate-skills` when skills-ref is installed.
 
 ## Available Agents
 

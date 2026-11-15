@@ -35,9 +35,9 @@ bash skills/setup-pm51stack/scripts/install.sh project
 
 Passing `user` or `project` skips the script's own prompt. A person who runs the script with no argument in a terminal gets the same two options.
 
-The script needs Node.js 22.20 or later, `npx`, and a network path to npm and GitHub. It installs the third-party skills named in `skills/THIRD_PARTY_NOTICES.md`, plus `wayfinder`, `research`, `prototype`, and `setup-matt-pocock-skills` from `mattpocock/skills`. Those four are not in this clone. `wayfinder` calls `research` and `prototype`. `wayfinder`, `to-spec`, `to-tickets`, and `code-review` tell the user to run `setup-matt-pocock-skills` when no issue tracker is configured. `database-migrations` stays out, because this repo only borrowed steps from it.
+The script needs Node.js 22.20 or later, `npx`, and a network path to npm and GitHub. It installs Matt Pocock skills and Addy Osmani skills. None of those installed skills live in this clone. The `--skill` flags in `scripts/install.sh` are the list. `wayfinder` calls `research` and `prototype`. `wayfinder`, `to-spec`, `to-tickets`, and `code-review` tell the user to run `setup-matt-pocock-skills` when no issue tracker is configured.
 
-Install names are the upstream names. `to-spec` and `to-tickets` stay `to-spec` and `to-tickets`. This repository's copies of those two are `to-prd` and `to-issues`.
+`database-migrations` ships in this repo. The script does not install it.
 
 User profile adds `-g`, so the skills load in every project. Current project omits `-g`, so they land in the directory where the script is run. `-y` skips the skills picker.
 
