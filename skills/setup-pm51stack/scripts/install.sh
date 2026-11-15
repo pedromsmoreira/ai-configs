@@ -48,23 +48,6 @@ case "$scope" in
     ;;
 esac
 
-root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)
-
-require_present() {
-  local name
-  for name in "$@"; do
-    if [[ ! -f "$root/skills/$name/SKILL.md" ]]; then
-      echo "setup-pm51stack: $name is not in this repository." >&2
-      exit 1
-    fi
-  done
-}
-
-# Local to-prd and to-issues are the copies of upstream to-spec and to-tickets.
-require_present \
-  grilling domain-modeling diagnosing-bugs code-review pr wizard handoff to-prd to-issues \
-  security-and-hardening observability-and-instrumentation shipping-and-launch
-
 if ! command -v node >/dev/null 2>&1 || ! command -v npx >/dev/null 2>&1; then
   echo "setup-pm51stack: install Node.js 22.20 or later so npx can run." >&2
   exit 1
