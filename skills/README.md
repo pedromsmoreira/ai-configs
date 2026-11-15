@@ -42,6 +42,12 @@ Most skills set `disable-model-invocation: true` and load when you name them, fo
 | **wizard** | Generate a bash script that walks a human through steps the agent cannot do |
 | **handoff** | Compact the conversation into a handoff document for a fresh agent |
 
+### Machine setup
+
+| Skill | Purpose |
+|-------|---------|
+| **setup-pm51stack** | Install Matt Pocock and Addy Osmani skills with `npx skills`, then install pstack in Cursor. When to use each installed skill: [decision-graph.md](setup-pm51stack/decision-graph.md) |
+
 ### Production readiness
 
 | Skill | Purpose |
