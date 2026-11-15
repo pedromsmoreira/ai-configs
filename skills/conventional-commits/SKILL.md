@@ -6,7 +6,6 @@ description: >-
   git commit messages, preparing squash or merge titles, or checking messages
   for spec compliance. Evidence must come from Git only; MCP servers are not
   used with this skill.
-disable-model-invocation: true
 allowed-tools: Read, Bash
 version: 1.0
 ---

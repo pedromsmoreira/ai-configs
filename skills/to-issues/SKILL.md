@@ -1,7 +1,6 @@
 ---
 name: to-issues
 description: Break a plan, spec, or PRD into tracer-bullet GitHub issues, each declaring the issues that block it. Use when the user wants to convert a plan into issues, create implementation tickets, or break down work into issues.
-disable-model-invocation: true
 ---
 
 # To Issues

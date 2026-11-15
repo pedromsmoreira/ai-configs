@@ -4,7 +4,7 @@ Agent Skills are task-focused instruction sets that follow the [Agent Skills spe
 
 Skills in this project **complement** the existing Cursor agents (`../agents/`) and **reference** `../rules/` for full guidance. `../rules/skills-index.mdc` maps tasks to skills and lists the greenfield and brownfield workflows.
 
-Every skill sets `disable-model-invocation: true`, so it loads only when you name it, for example `/go-backend`.
+Most skills set `disable-model-invocation: true` and load when you name them, for example `/go-backend`. `diagnosing-bugs`, `conventional-commits`, `to-prd`, and `to-issues` omit the flag, so Cursor can invoke them from the task.
 
 ## Skills
 
