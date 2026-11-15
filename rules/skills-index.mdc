@@ -30,6 +30,7 @@ alwaysApply: false
 | Logging, metrics, tracing, alerts | `observability-and-instrumentation` | - |
 | Pre-launch gate, rollout, rollback | `shipping-and-launch` | - |
 | Hand work to a fresh agent | `handoff` | - |
+| Install pstack, Matt Pocock skills, and Addy Osmani skills on this machine | `setup-pm51stack` | - |
 
 Skills are in `../skills/<name>/SKILL.md` (relative to `rules/`; at repo root: `skills/<name>/SKILL.md`)
 
