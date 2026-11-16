@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Install the Matt Pocock skills and the Addy Osmani agent skills for Cursor. Then tell the user how to load pstack and start `/pm51-mode`.
 
-The `--skill` flags below are the same list as `skills/setup-pm51stack/scripts/install.sh` in the ai-configs checkout. Add no others.
+The installer is `scripts/install.sh` in this skill's directory. The flags in that script are the list. Add no others. Do not retype the `npx` lines. Do not call an installer outside this skill.
 
 ## Ask where to install
 
@@ -23,39 +23,25 @@ Use AskQuestion when it is available. Do not pick for the user. Do not add a thi
 
 The script needs Node.js 22.20 or later, `npx`, and a network path to npm and GitHub.
 
-When this workspace is the ai-configs checkout, run the script and skip the `npx` lines. From the checkout root:
+Run `scripts/install.sh` from this skill's directory. Pass the answer. Passing `user` or `project` skips the script's own prompt.
 
 User profile:
 
 ```bash
-bash skills/setup-pm51stack/scripts/install.sh user
+bash scripts/install.sh user
 ```
 
 Current project:
 
 ```bash
-bash skills/setup-pm51stack/scripts/install.sh project
+bash scripts/install.sh project
 ```
 
-When that script is not in the workspace, run `npx` yourself. User profile adds `-g`. Current project omits `-g`. `-y` skips the skills picker. `-a cursor` selects Cursor.
-
-User profile:
-
-```bash
-npx --yes skills@latest add mattpocock/skills --skill grilling --skill domain-modeling --skill diagnosing-bugs --skill code-review --skill pr --skill wizard --skill handoff --skill to-spec --skill to-tickets --skill wayfinder --skill research --skill prototype --skill setup-matt-pocock-skills -a cursor -g -y
-npx --yes skills@latest add addyosmani/agent-skills --skill security-and-hardening --skill observability-and-instrumentation --skill shipping-and-launch -a cursor -g -y
-```
-
-Current project:
-
-```bash
-npx --yes skills@latest add mattpocock/skills --skill grilling --skill domain-modeling --skill diagnosing-bugs --skill code-review --skill pr --skill wizard --skill handoff --skill to-spec --skill to-tickets --skill wayfinder --skill research --skill prototype --skill setup-matt-pocock-skills -a cursor -y
-npx --yes skills@latest add addyosmani/agent-skills --skill security-and-hardening --skill observability-and-instrumentation --skill shipping-and-launch -a cursor -y
-```
-
-Matt Pocock is first. Addy Osmani is second. The skills CLI overwrites a skill when the second repository uses the same name.
+User profile adds `-g`, so the skills load in every project. Current project omits `-g`, so they land in the directory where the script is run. `-y` skips the skills picker. `-a cursor` selects Cursor.
 
 A later refresh is `npx skills update -g -y` after a user-profile install, and `npx skills update -p -y` after a current-project install.
+
+The skills CLI overwrites a skill when the second repository uses the same name. This script installs Matt Pocock first and Addy Osmani second.
 
 `database-migrations` ships in the ai-configs pack. This install does not replace it.
 

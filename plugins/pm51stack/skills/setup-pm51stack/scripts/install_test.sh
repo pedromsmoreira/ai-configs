@@ -6,8 +6,8 @@ src="$here/install.sh"
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
-mkdir -p "$tmp/bin" "$tmp/tree/skills/setup-pm51stack/scripts"
-cp "$src" "$tmp/tree/skills/setup-pm51stack/scripts/install.sh"
+mkdir -p "$tmp/bin" "$tmp/tree/plugins/pm51stack/skills/setup-pm51stack/scripts"
+cp "$src" "$tmp/tree/plugins/pm51stack/skills/setup-pm51stack/scripts/install.sh"
 
 cat >"$tmp/bin/node" <<'EOF'
 #!/usr/bin/env bash
@@ -32,7 +32,7 @@ export PATH="$tmp/bin:$PATH"
 : >"$NPX_LOG"
 
 set +e
-bash "$tmp/tree/skills/setup-pm51stack/scripts/install.sh" user >"$tmp/out.txt" 2>"$tmp/err.txt"
+bash "$tmp/tree/plugins/pm51stack/skills/setup-pm51stack/scripts/install.sh" user >"$tmp/out.txt" 2>"$tmp/err.txt"
 code=$?
 set -e
 

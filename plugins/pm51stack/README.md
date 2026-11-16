@@ -58,7 +58,7 @@ mkdir -p ~/.cursor/plugins/local
 ln -sfn "$(pwd)/plugins/pm51stack" ~/.cursor/plugins/local/pm51stack
 ```
 
-The pack's `skills/setup-pm51stack` is the same installer. If you copied `skills/` into a project's `.cursor/`, either `/setup-pm51stack` runs that script.
+`/setup-pm51stack` runs `plugins/pm51stack/skills/setup-pm51stack/scripts/install.sh`. Copying the pack's `skills/` does not include that installer.
 
 ## Publish it as a marketplace
 
@@ -82,13 +82,13 @@ plugins/pm51stack/
 ├── rules/pm51-workflow.mdc
 ├── skills/pm51-mode/          # controller, routing, playbooks
 ├── skills/pm51-help/
-└── skills/setup-pm51stack/
+└── skills/setup-pm51stack/   # installer and decision graph
 ```
 
 ## Check
 
 ```bash
 bash plugins/pm51stack/scripts/plugin_test.sh
-bash skills/setup-pm51stack/scripts/shipped_test.sh
-bash skills/setup-pm51stack/scripts/install_test.sh
+bash plugins/pm51stack/skills/setup-pm51stack/scripts/install_test.sh
+bash skills/shipped_test.sh
 ```

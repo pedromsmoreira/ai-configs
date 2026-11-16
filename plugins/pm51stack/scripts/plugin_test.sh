@@ -91,7 +91,10 @@ while IFS= read -r rel; do
   fi
 done <"$tmp/files"
 
-grep -E -- '--skill ' skills/setup-pm51stack/scripts/install.sh \
+install="$plugin/skills/setup-pm51stack/scripts/install.sh"
+graph="$plugin/skills/setup-pm51stack/decision-graph.md"
+
+grep -E -- '--skill ' "$install" \
   | sed -E 's/.*--skill ([a-z0-9-]+).*/\1/' \
   | sort -u >"$tmp/installed"
 
@@ -99,16 +102,9 @@ if [[ ! -s "$tmp/installed" ]]; then
   fail "install.sh has no --skill flags"
 fi
 
-grep -E -- '--skill ' "$plugin/skills/setup-pm51stack/SKILL.md" \
-  | grep -oE -- '--skill [a-z0-9-]+' \
-  | sed -E 's/--skill //' \
-  | sort -u >"$tmp/plugin-installed"
-
-if ! diff -u "$tmp/installed" "$tmp/plugin-installed" >"$tmp/install-diff"; then
-  printf '%s\n' "plugin setup skill and install.sh list different skills" >&2
-  cat "$tmp/install-diff" >&2
-  exit 1
-fi
+find skills -mindepth 2 -maxdepth 2 -name SKILL.md -printf '%h\n' \
+  | xargs -n1 basename \
+  | sort >"$tmp/shipped"
 
 while IFS= read -r name; do
   if ! grep -F -q -- "\`$name\`" "$plugin/skills/pm51-mode/routing.md"; then
@@ -116,6 +112,42 @@ while IFS= read -r name; do
   fi
   if [[ -e "$plugin/skills/$name/SKILL.md" ]]; then
     fail "plugin vendors installed skill $name"
+  fi
+  if ! grep -F -q -- "\`$name\`" "$graph"; then
+    fail "decision-graph.md does not list installed skill $name"
+  fi
+  if grep -F -x -q -- "$name" "$tmp/shipped"; then
+    fail "$name is both shipped and installed by setup-pm51stack"
+  fi
+done <"$tmp/installed"
+
+if grep -F -q 'skills/setup-pm51stack' "$plugin/skills/setup-pm51stack/SKILL.md"; then
+  fail "setup skill mentions skills/setup-pm51stack"
+fi
+
+leak_paths=(
+  README.md
+  AGENTS.md
+  CONFIGURATION_GUIDE.md
+  CONFIGURATION_CHECKLIST.md
+  rules
+  agents
+  skills/README.md
+  skills/conventional-commits
+  skills/database-migrations
+  skills/frontend-react
+  skills/git-commit
+  skills/go-backend
+  skills/rest-api-design
+  skills/tdd-workflow
+  skills/testing
+)
+
+while IFS= read -r name; do
+  if git grep -F -n -e "\`$name\`" -- "${leak_paths[@]}" >"$tmp/leak"; then
+    printf '%s\n' "installed skill $name is named in the pack" >&2
+    cat "$tmp/leak" >&2
+    exit 1
   fi
 done <"$tmp/installed"
 
@@ -152,15 +184,11 @@ for phrase in '.cursor/rules/pm51stack.mdc' 'GitHub' 'GitLab' 'project-config.md
   fi
 done
 
-for path in \
-  "$plugin/skills/setup-pm51stack/SKILL.md" \
-  skills/setup-pm51stack/SKILL.md
-do
-  for phrase in '.cursor/rules/pm51stack.mdc' 'GitHub' 'GitLab' '.cursor/rules' 'A path I will type'; do
-    if ! grep -F -q -- "$phrase" "$path"; then
-      fail "$path is missing: $phrase"
-    fi
-  done
+setup_skill="$plugin/skills/setup-pm51stack/SKILL.md"
+for phrase in '.cursor/rules/pm51stack.mdc' 'GitHub' 'GitLab' '.cursor/rules' 'A path I will type'; do
+  if ! grep -F -q -- "$phrase" "$setup_skill"; then
+    fail "setup skill is missing: $phrase"
+  fi
 done
 
 if ! grep -F -q 'project-config.md' "$plugin/skills/pm51-mode/playbooks/ship.md"; then

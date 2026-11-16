@@ -2,7 +2,7 @@
 
 The walk below is the decision graph for the 16 skills `setup-pm51stack` installs, plus the setup skill itself. Use the table to look up a skill. Use the chart to pick one from the job in front of you.
 
-To run the graph, use `/pm51-mode` from the pm51stack plugin. The playbook for each job is [plugins/pm51stack/skills/pm51-mode/routing.md](../../plugins/pm51stack/skills/pm51-mode/routing.md). That file is relative to this one.
+To run the graph, use `/pm51-mode` from the pm51stack plugin. The playbook for each job is [routing.md](../pm51-mode/routing.md).
 
 | Skill | Who invokes it | Use it when |
 | --- | --- | --- |
