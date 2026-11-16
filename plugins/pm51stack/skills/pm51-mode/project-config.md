@@ -1,14 +1,18 @@
 # Project configuration
 
-`.cursor/pm51stack.md` in the project root records two answers: where that project's rules live, and whether the forge is GitHub or GitLab. The workflow asks the user. The git remote is not an answer. A CI file is not an answer. A directory that happens to exist is not an answer. `.cursor/rules` is an answer only when the user chooses it.
+`.cursor/rules/pm51stack.mdc` is an always-applied Cursor rule. It records two answers: where that project's standards live, and whether the forge is GitHub or GitLab. Cursor loads it on every session in the project, the same way pstack loads `~/.cursor/rules/pstack-models.mdc` for model choices. pstack's file is per user. This file is per project.
 
-The file is per project. A user-profile skill install still writes it in the current project.
+The `rules` line is the standards directory. This rule is the record of the answers. It is not a coding standard. When the standards directory is `.cursor/rules`, skip `pm51stack.mdc` while reading standards.
+
+The workflow asks the user. The git remote is not an answer. A CI file is not an answer. A directory that happens to exist is not an answer. `.cursor/rules` is an answer only when the user chooses it.
+
+A user-profile skill install still writes the rule in the current project. When `.cursor/pm51stack.md` exists and the rule does not, copy its `rules` and `forge` lines into the rule and delete `.cursor/pm51stack.md`. Tell the user. When both exist, the rule wins.
 
 `docs/agents/issue-tracker.md` is the Matt Pocock tracker file. It stays a separate file. The `forge` line is what you tell `setup-matt-pocock-skills` when that skill asks.
 
 ## When to ask
 
-`/setup-pm51stack` asks every time. When `.cursor/pm51stack.md` already exists, show the two lines, then ask with AskQuestion. Offer only:
+`/setup-pm51stack` asks every time. When `.cursor/rules/pm51stack.mdc` already exists, show the two lines, then ask with AskQuestion. Offer only:
 
 - Keep these answers
 - Answer again
@@ -42,18 +46,26 @@ Record `github` or `gitlab`.
 
 ## File
 
-Overwrite `.cursor/pm51stack.md` with exactly this shape. `<path>` is the rules path. `<forge>` is `github` or `gitlab`.
+Overwrite `.cursor/rules/pm51stack.mdc` with exactly this shape. `<path>` is the standards directory. `<forge>` is `github` or `gitlab`. `alwaysApply` stays true.
 
 ```markdown
+---
+description: pm51stack project choices for the standards directory and the forge
+alwaysApply: true
+---
 # pm51stack project
 
 rules: <path>
 forge: <forge>
+
+Standards are the other .mdc files in the rules directory. This file records the choices.
+forge github: open a pull request on GitHub.
+forge gitlab: open a merge request on GitLab.
 ```
 
-Show the user the two lines after you write them.
+Show the user the `rules` and `forge` lines after you write them.
 
-A valid file has both lines. `rules` matches a relative path with no `..`. The forge line is `forge: github` or `forge: gitlab`. Anything else is asked again.
+A valid file has `alwaysApply: true`, a `rules` line, and a `forge` line. `rules` matches a relative path with no `..`. The forge line is `forge: github` or `forge: gitlab`. Anything else is asked again.
 
 ## How a playbook uses it
 

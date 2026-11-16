@@ -53,7 +53,7 @@ The workflow controller is the pm51stack plugin in `plugins/pm51stack`. When `/p
 
 ## Project rules and forge
 
-Ask where this project's rules live, and whether the forge is GitHub or GitLab. Write the answers to `.cursor/pm51stack.md` in the current project. A user-profile install still uses that project file. The git remote is not an answer. `.cursor/rules` is an answer only when the user chooses it.
+Ask where this project's rules live, and whether the forge is GitHub or GitLab. Write the answers to `.cursor/rules/pm51stack.mdc` in the current project. A user-profile install still uses that project file. The git remote is not an answer. `.cursor/rules` is an answer only when the user chooses it.
 
 When `plugins/pm51stack/skills/pm51-mode/project-config.md` is in this workspace, read it and follow it. Otherwise use AskQuestion.
 
@@ -70,4 +70,4 @@ Forge. Offer only these options.
 - GitHub
 - GitLab
 
-Write `rules: <path>` and `forge: github` or `forge: gitlab` under the heading `# pm51stack project`.
+Write `.cursor/rules/pm51stack.mdc` with `alwaysApply: true`, the heading `# pm51stack project`, `rules: <path>`, and `forge: github` or `forge: gitlab`.

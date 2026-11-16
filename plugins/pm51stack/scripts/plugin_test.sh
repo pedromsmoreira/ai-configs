@@ -131,21 +131,22 @@ if [[ ! -f "$config" ]]; then
 fi
 
 for phrase in \
-  '.cursor/pm51stack.md' \
+  '.cursor/rules/pm51stack.mdc' \
   '.cursor/rules' \
   'A path I will type' \
   'GitHub' \
   'GitLab' \
   'forge: github' \
   'forge: gitlab' \
-  'The git remote is not an answer'
+  'The git remote is not an answer' \
+  'alwaysApply: true'
 do
   if ! grep -F -q -- "$phrase" "$config"; then
     fail "project-config.md is missing: $phrase"
   fi
 done
 
-for phrase in '.cursor/pm51stack.md' 'GitHub' 'GitLab' 'project-config.md'; do
+for phrase in '.cursor/rules/pm51stack.mdc' 'GitHub' 'GitLab' 'project-config.md'; do
   if ! grep -F -q -- "$phrase" "$plugin/skills/pm51-mode/SKILL.md"; then
     fail "pm51-mode is missing: $phrase"
   fi
@@ -155,7 +156,7 @@ for path in \
   "$plugin/skills/setup-pm51stack/SKILL.md" \
   skills/setup-pm51stack/SKILL.md
 do
-  for phrase in '.cursor/pm51stack.md' 'GitHub' 'GitLab' '.cursor/rules' 'A path I will type'; do
+  for phrase in '.cursor/rules/pm51stack.mdc' 'GitHub' 'GitLab' '.cursor/rules' 'A path I will type'; do
     if ! grep -F -q -- "$phrase" "$path"; then
       fail "$path is missing: $phrase"
     fi

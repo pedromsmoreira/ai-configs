@@ -16,7 +16,7 @@ The workflow is a controller, not a fourth copy of someone else's skills.
 ## Use it
 
 1. Load this plugin (below).
-2. Run `/setup-pm51stack` and choose **user profile** or **current project**. Then answer where this project's rules live, and whether the forge is **GitHub** or **GitLab**. The skill writes those answers to `.cursor/pm51stack.md`. It asks you. The git remote is not an answer.
+2. Run `/setup-pm51stack` and choose **user profile** or **current project**. Then answer where this project's rules live, and whether the forge is **GitHub** or **GitLab**. The skill writes those answers to `.cursor/rules/pm51stack.mdc`. It asks you. The git remote is not an answer.
 3. Run `/add-plugin pstack`, then `/setup-pstack` once.
 4. Start the task with `/pm51-mode` and the outcome you want, including how you will know it worked.
 

@@ -61,7 +61,7 @@ A later refresh is `npx skills update -g -y` after a user-profile install, and `
 
 ## Ask for this project
 
-Read [../pm51-mode/project-config.md](../pm51-mode/project-config.md) and follow it in the current project. Ask where the rules live, and whether the forge is GitHub or GitLab. Write `.cursor/pm51stack.md`. The git remote is not an answer. `.cursor/rules` is an answer only when the user chooses it.
+Read [../pm51-mode/project-config.md](../pm51-mode/project-config.md) and follow it in the current project. Ask where the rules live, and whether the forge is GitHub or GitLab. Write `.cursor/rules/pm51stack.mdc`. The git remote is not an answer. `.cursor/rules` is an answer only when the user chooses it.
 
 Rules. Offer only `.cursor/rules`, `rules`, or `A path I will type`. Forge. Offer only GitHub or GitLab.
 
