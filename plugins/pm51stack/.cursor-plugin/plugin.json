@@ -1,0 +1,19 @@
+{
+  "name": "pm51stack",
+  "displayName": "pm51stack",
+  "version": "0.1.0",
+  "description": "A development workflow with one entry point. /pm51-mode picks a phase and the skill that owns it: Matt Pocock for framing and specs, Addy Osmani for security, observability, and launch, pstack for a rigorous build, and this pack for Go, React, tests, and git.",
+  "author": {
+    "name": "Pedro Moreira"
+  },
+  "homepage": "https://github.com/pedromsmoreira/ai-configs",
+  "repository": "https://github.com/pedromsmoreira/ai-configs",
+  "license": "MIT",
+  "keywords": ["pm51stack", "workflow", "planning", "tdd", "review", "pstack"],
+  "category": "developer-tools",
+  "tags": ["workflow", "planning", "review"],
+  "logo": "assets/logo.svg",
+  "skills": "./skills/",
+  "agents": "./agents/",
+  "rules": "./rules/"
+}

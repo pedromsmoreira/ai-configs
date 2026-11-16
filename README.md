@@ -19,6 +19,8 @@ Clone this repository into whatever parent directory you use for tooling (for ex
 
 There is no git submodule flow. Copying `skills/` gives you the Go, React, testing, and git skills in this pack. To install Matt Pocock skills and Addy Osmani skills, run `bash skills/setup-pm51stack/scripts/install.sh` on a machine with Node.js 22.20 or later. The script asks whether to install into the user profile or the current project. In Cursor, `/setup-pm51stack` asks the same question, runs that script, and then tells you to install pstack with `/add-plugin pstack`.
 
+The development workflow itself is the [`pm51stack`](plugins/pm51stack/README.md) Cursor plugin. `/pm51-mode` picks one phase and the skill that owns it. Link the plugin, run `/setup-pm51stack`, install pstack, run `/setup-pstack` once, then start a task with `/pm51-mode`.
+
 ## Quick install (Cursor project)
 
 From this repository’s root:

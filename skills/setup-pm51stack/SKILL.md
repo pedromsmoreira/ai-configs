@@ -48,3 +48,5 @@ The skills CLI overwrites a skill when the second repository uses the same name.
 ## pstack
 
 pstack is not in either repository. After the script exits 0, tell the user to run `/add-plugin pstack` in Cursor. Do not say pstack is installed unless Cursor reports that the plugin installed.
+
+The workflow controller is the pm51stack plugin in `plugins/pm51stack`. When `/pm51-mode` is missing, load that plugin (see its README). After pstack is installed, run `/setup-pstack` once so pstack can choose models. Start the task with `/pm51-mode`.

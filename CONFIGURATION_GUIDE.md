@@ -16,6 +16,8 @@ ai-configs/                 # clone root
 ├── agents/                 # AI personas (BE, FE, Product Owner, DevOps)
 ├── rules/                  # Coding standards (.mdc)
 ├── skills/                 # Agent Skills–compliant task guides
+├── plugins/pm51stack/      # Cursor plugin: the development workflow
+├── .cursor-plugin/         # Marketplace manifest for that plugin
 ├── AGENTS.md               # Cross-editor baseline (optional in each app repo)
 ├── CONFIGURATION_GUIDE.md  # This file
 └── CONFIGURATION_CHECKLIST.md
@@ -107,6 +109,8 @@ Skills are task-focused instructions following the [Agent Skills specification](
 ### Available Skills
 
 See [skills/README.md](skills/README.md) for the skills that ship in this pack, grouped as Go, React, testing, git, and setup. Matt Pocock skills and Addy Osmani skills are installed by [skills/setup-pm51stack/SKILL.md](skills/setup-pm51stack/SKILL.md). When to use each one is [skills/setup-pm51stack/decision-graph.md](skills/setup-pm51stack/decision-graph.md).
+
+The day-to-day workflow is the [pm51stack plugin](plugins/pm51stack/README.md). `/pm51-mode` picks the phase and reads the skill that owns it. `/pm51-help` names that phase and stops.
 
 ### Quick Reference
 

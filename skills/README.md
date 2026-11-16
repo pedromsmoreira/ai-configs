@@ -40,7 +40,7 @@ Matt Pocock skills and Addy Osmani skills are not in this pack. [`setup-pm51stac
 
 | Skill | Purpose |
 |-------|---------|
-| `setup-pm51stack` | Install Matt Pocock skills and Addy Osmani skills with `npx skills`, then tell you how to add the pstack plugin |
+| `setup-pm51stack` | Install Matt Pocock skills and Addy Osmani skills with `npx skills`, then tell you how to add the pstack plugin and start `/pm51-mode` |
 
 ## Validation
 
@@ -55,6 +55,7 @@ From the repository root, run:
 ```bash
 bash skills/setup-pm51stack/scripts/shipped_test.sh
 bash skills/setup-pm51stack/scripts/install_test.sh
+bash plugins/pm51stack/scripts/plugin_test.sh
 ```
 
 ### Manual checks

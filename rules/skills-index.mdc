@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Skills that ship in this pack
 
-This index lists only the skills in `skills/`. Matt Pocock skills and Addy Osmani skills are installed by `setup-pm51stack`. When to use those, read `../skills/setup-pm51stack/decision-graph.md`.
+This index lists the skills in `skills/`, plus the pm51stack plugin entry point. Matt Pocock skills and Addy Osmani skills are installed by `setup-pm51stack`. When to use those, read `../skills/setup-pm51stack/decision-graph.md`. The runnable workflow is `plugins/pm51stack`.
 
 | Task | Skill | Key rules |
 |------|-------|-----------|
@@ -19,6 +19,7 @@ This index lists only the skills in `skills/`. Matt Pocock skills and Addy Osman
 | Commit messages and pull-request titles | `conventional-commits` | agent-behavior |
 | Stage and create git commits | `git-commit` | conventional-commits, agent-behavior |
 | Install Matt Pocock skills, Addy Osmani skills, and point at pstack | `setup-pm51stack` | - |
+| Run the development workflow (plugin) | `/pm51-mode` in the pm51stack plugin | `plugins/pm51stack/skills/pm51-mode/SKILL.md` |
 
 Skills are in `../skills/<name>/SKILL.md`. That path is relative to `rules/`. At the repository root the same files are `skills/<name>/SKILL.md`.
 
