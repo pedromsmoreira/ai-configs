@@ -19,7 +19,7 @@ Upstream skill text stays in those installs. When a step names a skill, read tha
 
 ## Start
 
-1. Read `.cursor/rules/pm51stack.mdc` in the project root. It needs a `rules` path and a `forge` of `github` or `gitlab`, as [project-config.md](project-config.md) describes. When the file is missing or a line is invalid, follow project-config.md, write `.cursor/rules/pm51stack.mdc`, then continue.
+1. Read `.cursor/rules/pm51stack.mdc` in the project root. When that file is missing, read `rules/pm51stack.mdc` in the Cursor user profile. The profile is the directory that already contains `rules`. A `.cursor` directory inside that profile is not the profile. The file needs a `rules` path and a `forge` of `github` or `gitlab`, as [project-config.md](project-config.md) describes. When both files are missing or a line is invalid, follow project-config.md, write `.cursor/rules/pm51stack.mdc` in the project root, then continue.
 2. Read [routing.md](routing.md) and match one playbook. Open its file under `playbooks/`.
 3. Restate the user's goal, the problem, and the check that would prove the work. Use their words. Continue without waiting.
 4. Copy the playbook's numbered steps into the todo list before any edit and before any task-specific todo. Copy the step text. A step you skip stays in the list with `skip:` and the reason.

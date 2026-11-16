@@ -1,0 +1,12 @@
+---
+description: pm51stack project choices for the standards directory and the forge
+alwaysApply: true
+---
+# pm51stack project
+
+rules: rules
+forge: github
+
+Standards are the other .mdc files in the rules directory. This file records the choices.
+forge github: open a pull request on GitHub.
+forge gitlab: open a merge request on GitLab.

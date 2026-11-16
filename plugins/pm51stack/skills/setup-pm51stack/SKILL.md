@@ -47,11 +47,18 @@ The skills CLI overwrites a skill when the second repository uses the same name.
 
 ## Ask for this project
 
-Read [../pm51-mode/project-config.md](../pm51-mode/project-config.md) and follow it in the current project. Ask where the rules live, and whether the forge is GitHub or GitLab. Write `.cursor/rules/pm51stack.mdc`. The git remote is not an answer. `.cursor/rules` is an answer only when the user chooses it.
+Read [../pm51-mode/project-config.md](../pm51-mode/project-config.md) and follow it. Ask where the rules live, and whether the forge is GitHub or GitLab. The git remote is not an answer. `.cursor/rules` is an answer only when the user chooses it.
 
 Rules. Offer only `.cursor/rules`, `rules`, or `A path I will type`. Forge. Offer only GitHub or GitLab.
 
-A user-profile skill install still writes this file in the current project.
+Write the answers with `scripts/project_config.sh` in this skill's directory. Pass the same scope you passed to `install.sh`, the rules path, and `github` or `gitlab`. Do not write the file by hand.
+
+```bash
+bash scripts/project_config.sh user rules github
+bash scripts/project_config.sh project .cursor/rules github
+```
+
+`user` writes `rules/pm51stack.mdc` inside the user profile. The user profile is the directory that already contains `rules`. Do not create a `.cursor` directory inside it. `project` writes `.cursor/rules/pm51stack.mdc` from the project root.
 
 ## After the install exits 0
 

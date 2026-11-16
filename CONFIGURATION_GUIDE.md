@@ -110,7 +110,7 @@ Skills are task-focused instructions following the [Agent Skills specification](
 
 See [skills/README.md](skills/README.md) for the skills that ship in this pack, grouped as Go, React, testing, and git. Matt Pocock skills and Addy Osmani skills are installed by [setup-pm51stack](plugins/pm51stack/skills/setup-pm51stack/SKILL.md). When to use each one is [decision-graph.md](plugins/pm51stack/skills/setup-pm51stack/decision-graph.md).
 
-The day-to-day workflow is the [pm51stack plugin](plugins/pm51stack/README.md). `/pm51-mode` picks the phase and reads the skill that owns it. `/pm51-help` names that phase and stops. `/setup-pm51stack` runs `plugins/pm51stack/skills/setup-pm51stack/scripts/install.sh`, asks where this project's rules live and whether the forge is GitHub or GitLab, then writes `.cursor/rules/pm51stack.mdc`.
+The day-to-day workflow is the [pm51stack plugin](plugins/pm51stack/README.md). `/pm51-mode` picks the phase and reads the skill that owns it. `/pm51-help` names that phase and stops. `/setup-pm51stack` runs `plugins/pm51stack/skills/setup-pm51stack/scripts/install.sh`, asks where this project's rules live and whether the forge is GitHub or GitLab, then runs `plugins/pm51stack/skills/setup-pm51stack/scripts/project_config.sh`. User profile writes `rules/pm51stack.mdc` in the existing user-profile `rules` folder. Current project writes `.cursor/rules/pm51stack.mdc`.
 
 ### Quick Reference
 
