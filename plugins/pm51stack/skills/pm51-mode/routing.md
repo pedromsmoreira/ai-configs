@@ -31,7 +31,7 @@ On `feature`, `refactor`, and `bug`, a non-trivial slice uses `poteto-mode` when
 
 `/setup-pstack` is the model choice. Run it once before the first rigorous build. This router does not assign models.
 
-When pstack is absent, stay on `tdd-workflow` plus the pack skill the playbook names.
+When pstack is absent, stay on `tdd-workflow`. Read a skill from the pack table below when that skill is installed.
 
 ## Pack skills inside a slice
 
