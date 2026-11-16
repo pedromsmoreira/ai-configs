@@ -125,4 +125,48 @@ for banned in poteto-mode how why setup-pstack; do
   fi
 done
 
+config="$plugin/skills/pm51-mode/project-config.md"
+if [[ ! -f "$config" ]]; then
+  fail "missing $config"
+fi
+
+for phrase in \
+  '.cursor/pm51stack.md' \
+  '.cursor/rules' \
+  'A path I will type' \
+  'GitHub' \
+  'GitLab' \
+  'forge: github' \
+  'forge: gitlab' \
+  'The git remote is not an answer'
+do
+  if ! grep -F -q -- "$phrase" "$config"; then
+    fail "project-config.md is missing: $phrase"
+  fi
+done
+
+for phrase in '.cursor/pm51stack.md' 'GitHub' 'GitLab' 'project-config.md'; do
+  if ! grep -F -q -- "$phrase" "$plugin/skills/pm51-mode/SKILL.md"; then
+    fail "pm51-mode is missing: $phrase"
+  fi
+done
+
+for path in \
+  "$plugin/skills/setup-pm51stack/SKILL.md" \
+  skills/setup-pm51stack/SKILL.md
+do
+  for phrase in '.cursor/pm51stack.md' 'GitHub' 'GitLab' '.cursor/rules' 'A path I will type'; do
+    if ! grep -F -q -- "$phrase" "$path"; then
+      fail "$path is missing: $phrase"
+    fi
+  done
+done
+
+if ! grep -F -q 'project-config.md' "$plugin/skills/pm51-mode/playbooks/ship.md"; then
+  fail "ship playbook does not follow project-config.md"
+fi
+if ! grep -F -q 'gitlab' "$plugin/skills/pm51-mode/playbooks/ship.md"; then
+  fail "ship playbook does not name gitlab"
+fi
+
 printf '%s\n' "ok"

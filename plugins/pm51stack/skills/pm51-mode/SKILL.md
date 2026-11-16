@@ -1,6 +1,6 @@
 ---
 name: pm51-mode
-description: Route a development task through one playbook. Matt Pocock skills own framing, specs, and tickets. Addy Osmani skills own security, observability, and launch. pstack builds a non-trivial slice once it has a check. This pack owns Go, React, tests, and git. Use when the user runs /pm51-mode or asks to follow the pm51stack workflow.
+description: Route a development task through one playbook. Matt Pocock skills own framing, specs, and tickets. Addy Osmani skills own security, observability, and launch. pstack builds a non-trivial slice once it has a check. This pack owns Go, React, tests, and git. The rules path and GitHub or GitLab come from .cursor/pm51stack.md, and are asked when that file is missing. Use when the user runs /pm51-mode or asks to follow the pm51stack workflow.
 disable-model-invocation: true
 ---
 
@@ -10,7 +10,7 @@ This is the controller. Three installed sources plus this pack each have one job
 
 | Source | Owns | Hands onward |
 | --- | --- | --- |
-| Matt Pocock skills, installed by `/setup-pm51stack` | Framing a decision, domain terms, specs, tracer-bullet tickets, cited research, throwaway prototypes, bug diagnosis, two-axis review, the pull request body, human-only steps, handoff | The build goes to pstack or `tdd-workflow`. Model choice goes to `/setup-pstack`. Go and React conventions go to this pack. |
+| Matt Pocock skills, installed by `/setup-pm51stack` | Framing a decision, domain terms, specs, tracer-bullet tickets, cited research, throwaway prototypes, bug diagnosis, two-axis review, the change-request body, human-only steps, handoff | The build goes to pstack or `tdd-workflow`. Model choice goes to `/setup-pstack`. Go and React conventions go to this pack. |
 | Addy Osmani skills, same installer | Security on a trust boundary, observability, deploy and rollback | The spec and the tickets go to the Matt Pocock skills. Red, green, refactor goes to `tdd-workflow`. |
 | pstack, installed with `/add-plugin pstack` | A rigorous build or diagnosis once the slice and its check are named. Model choice via `/setup-pstack` | Product decisions and the spec stay with the Matt Pocock skills. |
 | This pack | `go-backend`, `rest-api-design`, `frontend-react`, `database-migrations`, `tdd-workflow`, `testing`, `conventional-commits`, `git-commit` | The phase sequence stays with this mode. |
@@ -19,10 +19,11 @@ Upstream skill text stays in those installs. When a step names a skill, read tha
 
 ## Start
 
-1. Read [routing.md](routing.md) and match one playbook. Open its file under `playbooks/`.
-2. Restate the user's goal, the problem, and the check that would prove the work. Use their words. Continue without waiting.
-3. Copy the playbook's numbered steps into the todo list before any edit and before any task-specific todo. Copy the step text. A step you skip stays in the list with `skip:` and the reason.
-4. Work the steps in order. When a step sends you to a different playbook, replace the todo list with that playbook's steps and say why in one sentence.
+1. Read `.cursor/pm51stack.md` in the project root. It needs a `rules` path and a `forge` of `github` or `gitlab`, as [project-config.md](project-config.md) describes. When the file is missing or a line is invalid, follow project-config.md, write `.cursor/pm51stack.md`, then continue.
+2. Read [routing.md](routing.md) and match one playbook. Open its file under `playbooks/`.
+3. Restate the user's goal, the problem, and the check that would prove the work. Use their words. Continue without waiting.
+4. Copy the playbook's numbered steps into the todo list before any edit and before any task-specific todo. Copy the step text. A step you skip stays in the list with `skip:` and the reason.
+5. Work the steps in order. When a step sends you to a different playbook, replace the todo list with that playbook's steps and say why in one sentence.
 
 ## While you work
 
@@ -32,6 +33,8 @@ Upstream skill text stays in those installs. When a step names a skill, read tha
 - This mode does not pick models. After pstack is installed, `/setup-pstack` does that once.
 - A non-trivial slice is more than one module, or a change the user asked to treat rigorously. For that slice, when pstack is installed, read `poteto-mode` and follow the pstack playbook the step names. The check from this mode is the proof the playbook produces. When pstack is absent, `tdd-workflow` is the build.
 - The check is behavior on the real surface: a command the user could run, or a pass through the UI. Record the command and the result.
+- Project conventions are the `.mdc` files in the `rules` directory from `.cursor/pm51stack.md`. A pack skill that names `architecture.mdc` means that directory plus `/architecture.mdc`.
+- Publish, review, and ship follow the forge section of [project-config.md](project-config.md). `github` is a pull request. `gitlab` is a merge request.
 
 ## Reply
 

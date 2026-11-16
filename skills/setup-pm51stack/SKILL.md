@@ -50,3 +50,24 @@ The skills CLI overwrites a skill when the second repository uses the same name.
 pstack is not in either repository. After the script exits 0, tell the user to run `/add-plugin pstack` in Cursor. Do not say pstack is installed unless Cursor reports that the plugin installed.
 
 The workflow controller is the pm51stack plugin in `plugins/pm51stack`. When `/pm51-mode` is missing, load that plugin (see its README). After pstack is installed, run `/setup-pstack` once so pstack can choose models. Start the task with `/pm51-mode`.
+
+## Project rules and forge
+
+Ask where this project's rules live, and whether the forge is GitHub or GitLab. Write the answers to `.cursor/pm51stack.md` in the current project. A user-profile install still uses that project file. The git remote is not an answer. `.cursor/rules` is an answer only when the user chooses it.
+
+When `plugins/pm51stack/skills/pm51-mode/project-config.md` is in this workspace, read it and follow it. Otherwise use AskQuestion.
+
+Rules. Offer only these options.
+
+- `.cursor/rules`
+- `rules`
+- A path I will type
+
+A typed path is relative to the project root. It has no `..` and no leading slash. Ask for it in the next message.
+
+Forge. Offer only these options.
+
+- GitHub
+- GitLab
+
+Write `rules: <path>` and `forge: github` or `forge: gitlab` under the heading `# pm51stack project`.

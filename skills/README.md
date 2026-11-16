@@ -40,7 +40,7 @@ Matt Pocock skills and Addy Osmani skills are not in this pack. [`setup-pm51stac
 
 | Skill | Purpose |
 |-------|---------|
-| `setup-pm51stack` | Install Matt Pocock skills and Addy Osmani skills with `npx skills`, then tell you how to add the pstack plugin and start `/pm51-mode` |
+| `setup-pm51stack` | Install Matt Pocock skills and Addy Osmani skills with `npx skills`, ask where project rules live and whether the forge is GitHub or GitLab, then tell you how to add the pstack plugin and start `/pm51-mode` |
 
 ## Validation
 

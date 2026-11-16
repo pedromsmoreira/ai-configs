@@ -8,6 +8,6 @@ A behavior-preserving change to structure or shape. The existing observable beha
 4. Read `tdd-workflow`. Run the existing check and confirm it passes before you edit. Keep it passing after each move.
 5. When the change is non-trivial and pstack is installed, read `poteto-mode` and follow its refactoring playbook. The passing check from step 1 is the proof.
 6. Run the same check again and record the result.
-7. Open the review playbook. Open the ship playbook when the user asked for a commit or a pull request.
+7. Open the review playbook. Open the ship playbook when the user asked for a commit or a change request.
 
 Reply with what moved, what stayed observable, and the check you re-ran.

@@ -7,7 +7,7 @@ Match the first row that fits. The playbook file is `playbooks/<id>.md` next to 
 | Situation | Playbook | First skill |
 | --- | --- | --- |
 | Read-only question about how something works | [question](playbooks/question.md) | `how` when pstack is installed. Otherwise answer from files you open. |
-| Read-only question about why something was built this way | [question](playbooks/question.md) | `why` when pstack is installed. Otherwise answer from commits and pull requests you open. |
+| Read-only question about why something was built this way | [question](playbooks/question.md) | `why` when pstack is installed. Otherwise answer from commits and the forge's change requests. |
 | The ask is still a decision a person has to make | [frame](playbooks/frame.md) | `grilling` |
 | The fight is a term, the glossary, or an ADR | [frame](playbooks/frame.md) | `domain-modeling` |
 | The missing piece is a fact outside this working tree | [frame](playbooks/frame.md) | `research` |
@@ -21,7 +21,7 @@ Match the first row that fits. The playbook file is `playbooks/<id>.md` next to 
 | Something is broken, throwing, failing, or slow right now | [bug](playbooks/bug.md) | `diagnosing-bugs` |
 | Add or repair logs, metrics, traces, or alerts | [signal](playbooks/signal.md) | `observability-and-instrumentation` |
 | Judge the diff since a commit, branch, tag, or merge-base | [review](playbooks/review.md) | `code-review` |
-| Write the pull request, commit, or prepare a deploy, rollout, or rollback | [ship](playbooks/ship.md) | `pr` |
+| Write the change request, commit, or prepare a deploy, rollout, or rollback. A pull request when `forge` is `github`, a merge request when `forge` is `gitlab` | [ship](playbooks/ship.md) | `pr` when `forge` is `github`. The forge section of [project-config.md](project-config.md) when `forge` is `gitlab` |
 | A person must click a dashboard, paste a secret, or run a cutover | [ship](playbooks/ship.md) | `wizard` |
 | This conversation has to continue in a fresh agent | [handoff](playbooks/handoff.md) | `handoff` |
 
@@ -43,7 +43,7 @@ When pstack is absent, stay on `tdd-workflow` plus the pack skill the playbook n
 | PostgreSQL schema | `database-migrations` |
 | Test shape, integration, regression | `testing` |
 | Red, green, refactor | `tdd-workflow` |
-| Commit message or pull request title | `conventional-commits` |
+| Commit message or change-request title | `conventional-commits` |
 | Creating the commit | `git-commit` |
 
 ## Ship skills

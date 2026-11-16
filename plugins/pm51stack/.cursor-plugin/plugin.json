@@ -1,7 +1,7 @@
 {
   "name": "pm51stack",
   "displayName": "pm51stack",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A development workflow with one entry point. /pm51-mode picks a phase and the skill that owns it: Matt Pocock for framing and specs, Addy Osmani for security, observability, and launch, pstack for a rigorous build, and this pack for Go, React, tests, and git.",
   "author": {
     "name": "Pedro Moreira"

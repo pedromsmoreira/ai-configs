@@ -16,7 +16,7 @@ The workflow is a controller, not a fourth copy of someone else's skills.
 ## Use it
 
 1. Load this plugin (below).
-2. Run `/setup-pm51stack` and choose **user profile** or **current project**.
+2. Run `/setup-pm51stack` and choose **user profile** or **current project**. Then answer where this project's rules live, and whether the forge is **GitHub** or **GitLab**. The skill writes those answers to `.cursor/pm51stack.md`. It asks you. The git remote is not an answer.
 3. Run `/add-plugin pstack`, then `/setup-pstack` once.
 4. Start the task with `/pm51-mode` and the outcome you want, including how you will know it worked.
 
@@ -42,7 +42,7 @@ It reads [skills/pm51-mode/routing.md](skills/pm51-mode/routing.md), opens one p
 | `bug` | Something is broken, throwing, failing, or slow |
 | `signal` | Logs, metrics, traces, or alerts |
 | `review` | Judge the diff |
-| `ship` | Commit, pull request, deploy, rollout, or a step only a person can click |
+| `ship` | Commit, pull request or merge request, deploy, rollout, or a step only a person can click |
 | `handoff` | Continue in a fresh agent |
 
 A current failure takes `bug`. An open product decision takes `frame`. Work that crosses more than one module without a spec takes `specify` before `feature`.

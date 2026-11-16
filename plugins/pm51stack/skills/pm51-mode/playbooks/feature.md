@@ -10,6 +10,6 @@ New or changed behavior, built as a vertical slice and proven with an observable
 6. Build test-first. Read `tdd-workflow` and follow red, green, refactor. Read `testing` when the check is an integration or regression test.
 7. When the slice is non-trivial and pstack is installed, read `poteto-mode` and follow its feature playbook for this slice. The check from step 1 is the proof. When pstack is absent, `tdd-workflow` remains the build.
 8. Run the check on the real surface. A UI change gets a browser pass. Record the command and the result.
-9. Open the review playbook for the diff. Open the ship playbook when the user asked for a commit or a pull request.
+9. Open the review playbook for the diff. Open the ship playbook when the user asked for a commit or a change request.
 
 Reply with the slice, the check you ran, and the result.

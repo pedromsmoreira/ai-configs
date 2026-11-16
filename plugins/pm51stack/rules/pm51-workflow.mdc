@@ -5,7 +5,7 @@ alwaysApply: false
 
 # pm51stack workflow
 
-`/pm51-mode` is the controller for non-trivial engineering work. Read `skills/pm51-mode/SKILL.md` inside this plugin and follow it.
+`/pm51-mode` is the controller for non-trivial engineering work. Read `skills/pm51-mode/SKILL.md` inside this plugin and follow it. Project rules and the forge (GitHub or GitLab) come from `.cursor/pm51stack.md`. When that file is missing, ask the user.
 
 `/pm51-help` answers which playbook fits and stops there. It does not start the task.
 

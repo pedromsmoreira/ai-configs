@@ -1,6 +1,6 @@
 ---
 name: setup-pm51stack
-description: Install Matt Pocock skills and Addy Osmani agent skills with npx skills, then point at pstack and /pm51-mode. Use when the user runs /setup-pm51stack or asks to install pstack, mattpocock/skills, or addyosmani/agent-skills.
+description: Install Matt Pocock skills and Addy Osmani agent skills with npx skills, then ask where project rules live and whether the forge is GitHub or GitLab. Point at pstack and /pm51-mode. Use when the user runs /setup-pm51stack or asks to install pstack, mattpocock/skills, or addyosmani/agent-skills.
 disable-model-invocation: true
 ---
 
@@ -58,6 +58,14 @@ Matt Pocock is first. Addy Osmani is second. The skills CLI overwrites a skill w
 A later refresh is `npx skills update -g -y` after a user-profile install, and `npx skills update -p -y` after a current-project install.
 
 `database-migrations` ships in the ai-configs pack. This install does not replace it.
+
+## Ask for this project
+
+Read [../pm51-mode/project-config.md](../pm51-mode/project-config.md) and follow it in the current project. Ask where the rules live, and whether the forge is GitHub or GitLab. Write `.cursor/pm51stack.md`. The git remote is not an answer. `.cursor/rules` is an answer only when the user chooses it.
+
+Rules. Offer only `.cursor/rules`, `rules`, or `A path I will type`. Forge. Offer only GitHub or GitLab.
+
+A user-profile skill install still writes this file in the current project.
 
 ## After the install exits 0
 
