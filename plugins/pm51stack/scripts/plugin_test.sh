@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Fails when the plugin manifest, playbooks, and installed skill names disagree.
 set -euo pipefail
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)

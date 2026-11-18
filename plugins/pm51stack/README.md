@@ -30,14 +30,14 @@ The workflow is a controller, not a fourth copy of someone else's skills.
 
 ## What `/pm51-mode` does
 
-It reads [skills/pm51-mode/routing.md](skills/pm51-mode/routing.md), opens one playbook, and copies that playbook's steps into the todo list before any edit. The shape comes from pstack: one controller, a playbook, and a check on the real surface. The phase order comes from Addy Osmani's define, plan, build, verify, review, and ship. The installed Addy Osmani skills are security, observability, and launch. Define and plan call the Matt Pocock skills. Build and verify call this pack, and pstack when the slice is non-trivial.
+It reads [skills/pm51-mode/routing.md](skills/pm51-mode/routing.md), opens one playbook, and copies that playbook's steps into the todo list before any edit. The shape comes from pstack: one controller, a playbook, and a check on the real surface. The phase order comes from Addy Osmani's define, plan, build, verify, review, and ship. The installed Addy Osmani skills are security, observability, and launch. Define and plan call the Matt Pocock skills. Build and verify call pstack when it is installed, and `tdd-workflow` when it is absent.
 
 | Playbook | When |
 | --- | --- |
 | `question` | You want an answer from the code or the history, and no edit |
 | `frame` | A person still has to decide, or a sketch or a cited fact would decide it |
 | `specify` | The decisions are made and should become a spec and slices |
-| `feature` | New or changed behavior |
+| `feature` | New behavior, and nothing is currently broken or waiting on a signal |
 | `refactor` | The behavior stays; the structure changes |
 | `bug` | Something is broken, throwing, failing, or slow |
 | `signal` | Logs, metrics, traces, or alerts |
@@ -47,7 +47,7 @@ It reads [skills/pm51-mode/routing.md](skills/pm51-mode/routing.md), opens one p
 
 A current failure takes `bug`. An open product decision takes `frame`. Work that crosses more than one module without a spec takes `specify` before `feature`.
 
-On a non-trivial slice, `feature`, `refactor`, and `bug` hand the build to pstack's `/poteto-mode` when that plugin is installed. The check named in this mode is the proof pstack has to produce. Without pstack, the build is this pack's `tdd-workflow`.
+`feature`, `refactor`, and `bug` hand the build to pstack's `/poteto-mode` when that plugin is installed. The check named in this mode is the proof pstack has to produce. Without pstack, the build is this pack's `tdd-workflow`. One of those two runs.
 
 ## Load the plugin locally
 
@@ -80,9 +80,9 @@ plugins/pm51stack/
 ├── .cursor-plugin/plugin.json
 ├── agents/workflow-lead.md
 ├── rules/pm51-workflow.mdc
-├── skills/pm51-mode/          # controller, routing, playbooks
+├── skills/pm51-mode/
 ├── skills/pm51-help/
-└── skills/setup-pm51stack/   # installer and decision graph
+└── skills/setup-pm51stack/
 ```
 
 ## Check
