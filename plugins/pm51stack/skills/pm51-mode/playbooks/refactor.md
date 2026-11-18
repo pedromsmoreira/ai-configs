@@ -1,0 +1,13 @@
+# Refactor
+
+A behavior-preserving change to structure or shape. The existing observable behavior is the check.
+
+1. Restate the structure you are changing and the behavior that must stay the same. Name the tests or the user-visible path that already prove that behavior.
+2. When the desired end state is actually new behavior, stop and open the feature playbook.
+3. When routing lists a skill for this slice and that skill is installed, read it and follow it. When a persona for this slice is installed, follow that persona together with that skill. When neither is installed, continue. The rules directory from project config still applies.
+4. When pstack is installed, read `poteto-mode` and follow its refactoring playbook. The passing check from step 1 is the proof.
+5. When pstack is absent, read `tdd-workflow`. Run the existing check and confirm it passes before you edit. Keep it passing after each move.
+6. Run the same check again and record the result.
+7. Open the review playbook. Open the ship playbook when the user asked for a commit or a change request.
+
+Reply with what moved, what stayed observable, and the check you re-ran.

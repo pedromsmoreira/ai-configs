@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Skills that ship in this pack
 
-This index lists only the skills in `skills/`. Matt Pocock skills and Addy Osmani skills are installed by `setup-pm51stack`. When to use those, read `../skills/setup-pm51stack/decision-graph.md`.
+This index lists the skills in `skills/`. Matt Pocock skills and Addy Osmani skills are installed by `/setup-pm51stack` in the pm51stack plugin. When to use those, read `../plugins/pm51stack/skills/setup-pm51stack/decision-graph.md`. The runnable workflow is `plugins/pm51stack`.
 
 | Task | Skill | Key rules |
 |------|-------|-----------|
@@ -18,9 +18,10 @@ This index lists only the skills in `skills/`. Matt Pocock skills and Addy Osman
 | TDD cycle | `tdd-workflow` | test-driven-development |
 | Commit messages and pull-request titles | `conventional-commits` | agent-behavior |
 | Stage and create git commits | `git-commit` | conventional-commits, agent-behavior |
-| Install Matt Pocock skills, Addy Osmani skills, and point at pstack | `setup-pm51stack` | - |
+| Install Matt Pocock skills, Addy Osmani skills, and point at pstack | `/setup-pm51stack` in the pm51stack plugin | `plugins/pm51stack/skills/setup-pm51stack/SKILL.md` |
+| Run the development workflow (plugin) | `/pm51-mode` in the pm51stack plugin | `plugins/pm51stack/skills/pm51-mode/SKILL.md` |
 
-Skills are in `../skills/<name>/SKILL.md`. That path is relative to `rules/`. At the repository root the same files are `skills/<name>/SKILL.md`.
+Skills in this pack are in `../skills/<name>/SKILL.md`. That path is relative to `rules/`. At the repository root the same files are `skills/<name>/SKILL.md`. `/setup-pm51stack` and `/pm51-mode` are commands in the pm51stack plugin.
 
 ## How to use
 
@@ -28,7 +29,7 @@ Skills are in `../skills/<name>/SKILL.md`. That path is relative to `rules/`. At
 2. Read that skill.
 3. Follow the rules the table names.
 
-For planning, debugging, review, and launch, run `setup-pm51stack`, then use `../skills/setup-pm51stack/decision-graph.md`.
+For planning, debugging, review, and launch, run `/setup-pm51stack`, then use `../plugins/pm51stack/skills/setup-pm51stack/decision-graph.md`.
 
 ## Rule reference
 

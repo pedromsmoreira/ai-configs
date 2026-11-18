@@ -4,7 +4,7 @@ These skills follow the [Agent Skills specification](https://agentskills.io/spec
 
 Skills in this pack complement the agents in `../agents/` and point at `../rules/`. [`../rules/skills-index.mdc`](../rules/skills-index.mdc) maps tasks to the skills that ship here.
 
-Matt Pocock skills and Addy Osmani skills are not in this pack. [`setup-pm51stack`](setup-pm51stack/SKILL.md) installs them. When to use each installed skill is [decision-graph.md](setup-pm51stack/decision-graph.md).
+Matt Pocock skills and Addy Osmani skills are not in this pack. The pm51stack plugin's `/setup-pm51stack` installs them. When to use each installed skill is [decision-graph.md](../plugins/pm51stack/skills/setup-pm51stack/decision-graph.md).
 
 `disable-model-invocation: true` means the skill loads when you name it, for example `/go-backend`. `conventional-commits` omits that flag, so Cursor can invoke it from the task.
 
@@ -36,12 +36,6 @@ Matt Pocock skills and Addy Osmani skills are not in this pack. [`setup-pm51stac
 | `conventional-commits` | Commit messages and pull-request titles per Conventional Commits |
 | `git-commit` | Stage files and create commits |
 
-## Setup
-
-| Skill | Purpose |
-|-------|---------|
-| `setup-pm51stack` | Install Matt Pocock skills and Addy Osmani skills with `npx skills`, then tell you how to add the pstack plugin |
-
 ## Validation
 
 If you have the [skills-ref](https://agentskills.io/specification) tool, from this directory run:
@@ -53,8 +47,9 @@ skills-ref validate .
 From the repository root, run:
 
 ```bash
-bash skills/setup-pm51stack/scripts/shipped_test.sh
-bash skills/setup-pm51stack/scripts/install_test.sh
+bash skills/shipped_test.sh
+bash plugins/pm51stack/skills/setup-pm51stack/scripts/install_test.sh
+bash plugins/pm51stack/scripts/plugin_test.sh
 ```
 
 ### Manual checks
