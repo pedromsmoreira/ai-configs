@@ -105,6 +105,21 @@ if (( bug_line > feature_line || signal_line > feature_line )); then
   fail "bug and signal must be matched before feature"
 fi
 
+build_cell='`poteto-mode` when pstack is installed. `tdd-workflow` when pstack is absent.'
+for id in feature refactor; do
+  row=$(grep "playbooks/${id}.md" "$plugin/skills/pm51-mode/routing.md" | head -1)
+  if ! grep -F -q -- "$build_cell" <<<"$row"; then
+    fail "$id row must name poteto-mode when pstack is installed and tdd-workflow when it is absent"
+  fi
+  play="$plugin/skills/pm51-mode/playbooks/${id}.md"
+  if ! grep -F -q 'When pstack is installed, read `poteto-mode`' "$play"; then
+    fail "$id playbook does not build with poteto-mode when pstack is installed"
+  fi
+  if ! grep -F -q 'When pstack is absent, read `tdd-workflow`' "$play"; then
+    fail "$id playbook does not build with tdd-workflow when pstack is absent"
+  fi
+done
+
 install="$plugin/skills/setup-pm51stack/scripts/install.sh"
 graph="$plugin/skills/setup-pm51stack/decision-graph.md"
 
