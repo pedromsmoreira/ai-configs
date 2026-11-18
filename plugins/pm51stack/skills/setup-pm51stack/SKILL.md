@@ -23,7 +23,7 @@ Use AskQuestion when it is available. Do not pick for the user. Do not add a thi
 
 The script needs Node.js 22.20 or later, `npx`, and a network path to npm and GitHub.
 
-Run `scripts/install.sh` from this skill's directory. Pass the answer. Passing `user` or `project` skips the script's own prompt.
+Run `scripts/install.sh` with the answer. Passing `user` or `project` skips the script's own prompt. A project install also takes the workspace root, so the skills land in that project and not in this skill's directory.
 
 User profile:
 
@@ -34,10 +34,10 @@ bash scripts/install.sh user
 Current project:
 
 ```bash
-bash scripts/install.sh project
+bash scripts/install.sh project /absolute/path/to/the/workspace
 ```
 
-User profile adds `-g`, so the skills load in every project. Current project omits `-g`, so they land in the directory where the script is run. `-y` skips the skills picker. `-a cursor` selects Cursor.
+User profile adds `-g`, so the skills load in every project. Current project omits `-g` and runs in the workspace root you pass. `-y` skips the skills picker. `-a cursor` selects Cursor.
 
 A later refresh is `npx skills update -g -y` after a user-profile install, and `npx skills update -p -y` after a current-project install.
 
@@ -51,14 +51,11 @@ Read [../pm51-mode/project-config.md](../pm51-mode/project-config.md) and follow
 
 Rules. Offer only `.cursor/rules`, `rules`, or `A path I will type`. Forge. Offer only GitHub or GitLab.
 
-Write the answers with `scripts/project_config.sh` in this skill's directory. Pass the same scope you passed to `install.sh`, the rules path, and `github` or `gitlab`. Do not write the file by hand.
+Write the answers with `scripts/project_config.sh`. Pass the rules path, `github` or `gitlab`, and the workspace root of the open project. Do not write the file by hand. The file is `.cursor/rules/pm51stack.mdc` in that project, including after a user-profile skill install.
 
 ```bash
-bash scripts/project_config.sh user rules github
-bash scripts/project_config.sh project .cursor/rules github
+bash scripts/project_config.sh .cursor/rules github /absolute/path/to/the/workspace
 ```
-
-`user` writes `rules/pm51stack.mdc` inside the user profile. The user profile is the directory that already contains `rules`. Do not create a `.cursor` directory inside it. `project` writes `.cursor/rules/pm51stack.mdc` from the project root.
 
 ## After the install exits 0
 

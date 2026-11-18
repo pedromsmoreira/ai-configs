@@ -16,10 +16,10 @@ Match the first row that fits. The playbook file is `playbooks/<id>.md` next to 
 | A spec or plan should become buildable slices | [specify](playbooks/specify.md) | `to-tickets` |
 | The work is bigger than one session and the destination is still foggy | [specify](playbooks/specify.md) | `wayfinder` |
 | You are about to publish, and `docs/agents/issue-tracker.md` is missing | [specify](playbooks/specify.md) | `setup-matt-pocock-skills` |
-| New or changed behavior | [feature](playbooks/feature.md) | `tdd-workflow` |
-| Behavior-preserving structure change | [refactor](playbooks/refactor.md) | `tdd-workflow` |
 | Something is broken, throwing, failing, or slow right now | [bug](playbooks/bug.md) | `diagnosing-bugs` |
 | Add or repair logs, metrics, traces, or alerts | [signal](playbooks/signal.md) | `observability-and-instrumentation` |
+| New behavior, and nothing is currently broken or waiting on a signal | [feature](playbooks/feature.md) | `tdd-workflow` |
+| Behavior-preserving structure change | [refactor](playbooks/refactor.md) | `tdd-workflow` |
 | Judge the diff since a commit, branch, tag, or merge-base | [review](playbooks/review.md) | `code-review` |
 | Write the change request, commit, or prepare a deploy, rollout, or rollback. A pull request when `forge` is `github`, a merge request when `forge` is `gitlab` | [ship](playbooks/ship.md) | `pr` when `forge` is `github`. The forge section of [project-config.md](project-config.md) when `forge` is `gitlab` |
 | A person must click a dashboard, paste a secret, or run a cutover | [ship](playbooks/ship.md) | `wizard` |
@@ -27,7 +27,7 @@ Match the first row that fits. The playbook file is `playbooks/<id>.md` next to 
 
 ## Build handoff
 
-On `feature`, `refactor`, and `bug`, a non-trivial slice uses `poteto-mode` when pstack is installed. Feature and refactor follow pstack's feature or refactoring playbook. Bug follows pstack's bug-fix playbook. The observable check from this mode is the proof the playbook produces.
+On `feature`, `refactor`, and `bug`, the build is `poteto-mode` when pstack is installed, and `tdd-workflow` when pstack is absent. Feature and refactor follow pstack's feature or refactoring playbook. Bug follows pstack's bug-fix playbook. The observable check from this mode is the proof the playbook produces.
 
 `/setup-pstack` is the model choice. Run it once before the first rigorous build. This router does not assign models.
 

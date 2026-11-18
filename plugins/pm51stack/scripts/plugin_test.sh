@@ -39,6 +39,10 @@ if [[ ! -f "$plugin/assets/logo.svg" ]]; then
   fail "missing $plugin/assets/logo.svg"
 fi
 
+if [[ -e rules/pm51stack.mdc ]]; then
+  fail "the pack ships a filled-in rules/pm51stack.mdc"
+fi
+
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
@@ -90,6 +94,16 @@ while IFS= read -r rel; do
     fail "$rel has no numbered steps"
   fi
 done <"$tmp/files"
+
+bug_line=$(grep -n 'playbooks/bug.md' "$plugin/skills/pm51-mode/routing.md" | head -1 | cut -d: -f1)
+feature_line=$(grep -n 'playbooks/feature.md' "$plugin/skills/pm51-mode/routing.md" | head -1 | cut -d: -f1)
+signal_line=$(grep -n 'playbooks/signal.md' "$plugin/skills/pm51-mode/routing.md" | head -1 | cut -d: -f1)
+if [[ -z "$bug_line" || -z "$feature_line" || -z "$signal_line" ]]; then
+  fail "routing.md is missing bug, feature, or signal"
+fi
+if (( bug_line > feature_line || signal_line > feature_line )); then
+  fail "bug and signal must be matched before feature"
+fi
 
 install="$plugin/skills/setup-pm51stack/scripts/install.sh"
 graph="$plugin/skills/setup-pm51stack/decision-graph.md"

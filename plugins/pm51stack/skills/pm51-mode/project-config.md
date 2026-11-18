@@ -6,7 +6,7 @@ The `rules` line is the standards directory. This rule is the record of the answ
 
 The workflow asks the user. The git remote is not an answer. A CI file is not an answer. A directory that happens to exist is not an answer. `.cursor/rules` is an answer only when the user chooses it.
 
-A user-profile install writes `rules/pm51stack.mdc` in the user profile's existing `rules` directory. That directory is already inside the Cursor user directory. Do not create `.cursor/rules` inside the user profile. A current-project install writes `.cursor/rules/pm51stack.mdc` from the project root. When `.cursor/pm51stack.md` exists and the rule does not, copy its `rules` and `forge` lines into the rule and delete `.cursor/pm51stack.md`. Tell the user. When both the project file and the user-profile file exist, the project file wins.
+The file is always `.cursor/rules/pm51stack.mdc` in the project those answers belong to. A user-profile install places skills in every project. It does not place this rule in the user profile. One project's forge must not become the answer for every other project. When `.cursor/pm51stack.md` exists and the rule does not, copy its `rules` and `forge` lines into the project rule and delete `.cursor/pm51stack.md`. Tell the user.
 
 `docs/agents/issue-tracker.md` is the Matt Pocock tracker file. It stays a separate file. The `forge` line is what you tell `setup-matt-pocock-skills` when that skill asks.
 
@@ -19,7 +19,7 @@ A user-profile install writes `rules/pm51stack.mdc` in the user profile's existi
 
 Keep leaves the file as it is. Answer again asks the two questions below.
 
-`/pm51-mode` reads `.cursor/rules/pm51stack.mdc` in the project root. When that file is missing, it reads `rules/pm51stack.mdc` in the Cursor user profile, the directory that already contains `rules`. A `.cursor` directory inside that profile is not the profile. A valid file is used as written. When both files are missing, or a line fails the checks below, ask the two questions, write `.cursor/rules/pm51stack.mdc` in the project root, then continue the task.
+`/pm51-mode` reads `.cursor/rules/pm51stack.mdc` in the project root. A valid file is used as written. When it is missing, or a line fails the checks below, ask the two questions, write that file in this project, then continue the task.
 
 When the user has already named the rules path and the forge in this conversation, confirm the two lines and write them. Ask only for the one they have not named.
 
@@ -33,7 +33,7 @@ Offer only these options.
 - `rules`
 - A path I will type
 
-The third option asks for the path in the next message. The path is relative to the project root. It has no `..` and no leading slash. A path that fails that check is asked again.
+The third option asks for the path in the next message. The path is one relative path. It has no newline or other control character, no `..`, and no leading slash. A path that fails that check is asked again.
 
 ## Forge question
 
@@ -48,9 +48,7 @@ Record `github` or `gitlab`.
 
 The file has exactly this shape. `<path>` is the standards directory. `<forge>` is `github` or `gitlab`. `alwaysApply` stays true.
 
-`/setup-pm51stack` writes it by running `scripts/project_config.sh` in the setup skill. Pass `user` or `project`, the rules path, and `github` or `gitlab`. Do not write the file by hand.
-
-`user` writes `<profile>/rules/pm51stack.mdc`. `<profile>` is the Cursor user directory, the one that already contains `rules`. `project` writes `<project>/.cursor/rules/pm51stack.mdc`. `/pm51-mode` creates the project file when it has to write one.
+`/setup-pm51stack` writes it by running `scripts/project_config.sh` in the setup skill. Pass the rules path, `github` or `gitlab`, and the workspace root. Do not write the file by hand. The workspace root is the project the user has open. It is not this skill's directory and it is not the Cursor user profile.
 
 ```markdown
 ---

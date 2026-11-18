@@ -16,7 +16,7 @@ The workflow is a controller, not a fourth copy of someone else's skills.
 ## Use it
 
 1. Load this plugin (below).
-2. Run `/setup-pm51stack` and choose **user profile** or **current project**. Then answer where this project's rules live, and whether the forge is **GitHub** or **GitLab**. User profile writes `rules/pm51stack.mdc` in the user profile's existing `rules` folder. Current project writes `.cursor/rules/pm51stack.mdc` from the project root. It asks you. The git remote is not an answer.
+2. Run `/setup-pm51stack` and choose **user profile** or **current project** for the skills. Then answer where this project's rules live, and whether the forge is **GitHub** or **GitLab**. The answers are written to `.cursor/rules/pm51stack.mdc` in that project. A user-profile skill install does not copy those answers into every project. It asks you. The git remote is not an answer.
 3. Run `/add-plugin pstack`, then `/setup-pstack` once.
 4. Start the task with `/pm51-mode` and the outcome you want, including how you will know it worked.
 

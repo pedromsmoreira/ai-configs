@@ -1,32 +1,21 @@
 #!/usr/bin/env bash
-# Writes pm51stack.mdc.
-# user: the profile's existing rules folder. The profile is already the .cursor directory.
-# project: .cursor/rules from the project root.
+# Writes <project>/.cursor/rules/pm51stack.mdc.
+# The forge and the standards path belong to one project. The file is never
+# written into the Cursor user profile.
 set -euo pipefail
 
 usage() {
-  echo "Usage: project_config.sh <user|project> <rules-path> <github|gitlab> [root]" >&2
+  echo "Usage: project_config.sh <rules-path> <github|gitlab> <project-root>" >&2
 }
 
-if [[ $# -lt 3 || $# -gt 4 ]]; then
+if [[ $# -ne 3 ]]; then
   usage
   exit 2
 fi
 
-scope="$1"
-rules_path="$2"
-forge="$3"
-root="${4:-}"
-
-case "$scope" in
-  user|profile|"user profile") scope=user ;;
-  project|"current project") scope=project ;;
-  *)
-    usage
-    echo "setup-pm51stack: unknown destination '${scope}'." >&2
-    exit 2
-    ;;
-esac
+rules_path="$1"
+forge="$2"
+root="$3"
 
 case "$forge" in
   github|gitlab) ;;
@@ -36,38 +25,33 @@ case "$forge" in
     ;;
 esac
 
-if [[ "$rules_path" == *\\* || "$rules_path" == /* || "$rules_path" =~ ^[A-Za-z]: ]]; then
-  echo "setup-pm51stack: rules path must be relative to the project root." >&2
+if [[ "$rules_path" == *[[:cntrl:]]* || "$rules_path" == *\\* || "$rules_path" == /* || "$rules_path" =~ ^[A-Za-z]: ]]; then
+  echo "setup-pm51stack: rules path must be a single relative path." >&2
   exit 2
 fi
 
 IFS=/ read -ra parts <<< "$rules_path"
 if [[ ${#parts[@]} -eq 0 ]]; then
-  echo "setup-pm51stack: rules path must be relative to the project root." >&2
+  echo "setup-pm51stack: rules path must be a single relative path." >&2
   exit 2
 fi
 for part in "${parts[@]}"; do
   if [[ -z "$part" || "$part" == "." || "$part" == ".." ]]; then
-    echo "setup-pm51stack: rules path must be relative to the project root." >&2
+    echo "setup-pm51stack: rules path must be a single relative path." >&2
     exit 2
   fi
 done
 
-if [[ "$scope" == user ]]; then
-  if [[ -z "$root" ]]; then
-    root="${HOME}/.cursor"
-  fi
-  dest="${root}/rules/pm51stack.mdc"
-else
-  if [[ -z "$root" ]]; then
-    root="$(pwd)"
-  fi
-  dest="${root}/.cursor/rules/pm51stack.mdc"
+if [[ -z "$root" || ! -d "$root" ]]; then
+  echo "setup-pm51stack: project root is required." >&2
+  exit 2
 fi
 
+cd "$root"
+dest="${PWD}/.cursor/rules/pm51stack.mdc"
 case "$dest" in
   */.cursor/.cursor/*)
-    echo "setup-pm51stack: refusing to create .cursor/rules inside the user profile." >&2
+    echo "setup-pm51stack: refusing to create .cursor/rules inside a directory that is already .cursor." >&2
     exit 1
     ;;
 esac

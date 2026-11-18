@@ -21,6 +21,7 @@ EOF
 
 cat >"$tmp/bin/npx" <<'EOF'
 #!/usr/bin/env bash
+printf '%s\n' "cwd=$(pwd)" >>"${NPX_LOG:?}"
 printf '%s\n' "$*" >>"${NPX_LOG:?}"
 exit 0
 EOF
@@ -61,5 +62,33 @@ grep -q 'add addyosmani/agent-skills' "$NPX_LOG" || fail "npx did not add addyos
 grep -q -- '-g' "$NPX_LOG" || fail "user install did not pass -g"
 if [[ -e "$tmp/tree/skills/grilling/SKILL.md" ]]; then
   fail "fixture included grilling"
+fi
+
+workspace="$tmp/workspace"
+mkdir -p "$workspace"
+: >"$NPX_LOG"
+set +e
+bash "$tmp/tree/plugins/pm51stack/skills/setup-pm51stack/scripts/install.sh" project "$workspace" >"$tmp/project-out.txt" 2>"$tmp/project-err.txt"
+project_code=$?
+set -e
+if [[ "$project_code" -ne 0 ]]; then
+  fail "install.sh project exited $project_code"
+fi
+grep -q "Installed into the current project: ${workspace}" "$tmp/project-out.txt" || fail "missing project confirmation"
+grep -q "cwd=${workspace}" "$NPX_LOG" || fail "project install did not run in the workspace root"
+if grep -q -- '-g' "$NPX_LOG"; then
+  fail "project install passed -g"
+fi
+
+: >"$NPX_LOG"
+set +e
+bash "$tmp/tree/plugins/pm51stack/skills/setup-pm51stack/scripts/install.sh" project >"$tmp/missing-out.txt" 2>"$tmp/missing-err.txt"
+missing_code=$?
+set -e
+if [[ "$missing_code" -eq 0 ]]; then
+  fail "project install without a workspace root was accepted"
+fi
+if [[ -s "$NPX_LOG" ]]; then
+  fail "project install without a workspace root still ran npx"
 fi
 printf '%s\n' "ok"
