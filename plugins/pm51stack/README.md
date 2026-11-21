@@ -11,12 +11,12 @@ The workflow is a controller, not a fourth copy of someone else's skills.
 | [pstack](https://github.com/cursor/plugins/tree/main/pstack) | Optional `how` and `why` answers on the question playbook |
 | This pack | Go, React, HTTP, migrations, tests, and git |
 
-`/setup-pm51stack` installs the Matt Pocock and Addy Osmani skills this router knows how to call. Their text stays in those repositories. pstack stays a separate plugin for those two question skills. This plugin does not choose models.
+`/setup-pm51stack` installs the Matt Pocock and Addy Osmani skills this router knows how to call. Their text stays in those repositories. pstack stays a separate plugin for those two question skills. This plugin chooses a model for a skill only through `~/.cursor/rules/pm51-models.mdc`. `/setup-pm51stack` writes that rule.
 
 ## Use it
 
 1. Load this plugin (below).
-2. Run `/setup-pm51stack` and choose **user profile** or **current project** for the skills. Then answer where this project's rules live, and whether the forge is **GitHub** or **GitLab**. The answers are written to `.cursor/rules/pm51stack.mdc` in that project. A user-profile skill install does not copy those answers into every project. It asks you. The git remote is not an answer.
+2. Run `/setup-pm51stack` and choose **user profile** or **current project** for the skills. Then answer where this project's rules live, and whether the forge is **GitHub** or **GitLab**. The answers are written to `.cursor/rules/pm51stack.mdc` in that project. A user-profile skill install does not copy those answers into every project. It asks you. The git remote is not an answer. The same command writes `~/.cursor/rules/pm51-models.mdc`, one slug per role, for the model that runs each skill. That file is per user.
 3. Start the task with `/pm51-mode` and the outcome you want, including how you will know it worked. `/add-plugin pstack` is optional, for how a subsystem works and why it was built that way.
 
 ```text
@@ -47,6 +47,8 @@ It reads [skills/pm51-mode/routing.md](skills/pm51-mode/routing.md), opens one p
 A current failure takes `bug`. An open product decision takes `frame`. Work that crosses more than one module without a spec takes `specify` before `feature`.
 
 On `feature`, a spec that already has tickets is built with `implement-spec`, which calls `tdd` for each ticket. `refactor` and `bug` stay on this pack's `tdd-workflow`. When `implement-spec` is not installed, the build is `tdd-workflow`. The check named in this mode is the proof.
+
+A skill step runs on the slug in `~/.cursor/rules/pm51-models.mdc` for that skill's role in [skills/pm51-mode/models.md](skills/pm51-mode/models.md). With no rule, the step stays in the chat. The parent chat keeps the model you picked.
 
 ## Load the plugin locally
 

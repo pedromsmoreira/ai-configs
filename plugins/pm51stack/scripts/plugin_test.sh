@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export LC_ALL=C
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 root=$(cd "$here/../../.." && pwd)
@@ -11,28 +12,81 @@ fail() {
   exit 1
 }
 
-python3 - "$plugin/.cursor-plugin/plugin.json" ".cursor-plugin/marketplace.json" <<'PY' || exit 1
-import json, sys
-plugin_path, market_path = sys.argv[1:]
-plugin = json.load(open(plugin_path))
-market = json.load(open(market_path))
-if plugin.get("name") != "pm51stack":
-    raise SystemExit("plugin name is not pm51stack")
-for key in ("description", "version", "license", "logo"):
-    if not plugin.get(key):
-        raise SystemExit(f"plugin.json missing {key}")
-if plugin.get("logo") != "assets/logo.svg":
-    raise SystemExit("plugin logo path is not assets/logo.svg")
-for field in ("skills", "agents", "rules"):
-    value = plugin.get(field, "")
-    if not isinstance(value, str) or value.startswith("/") or ".." in value:
-        raise SystemExit(f"plugin.json {field} must be a relative path")
-entries = [item for item in market.get("plugins", []) if item.get("name") == "pm51stack"]
-if len(entries) != 1:
-    raise SystemExit("marketplace.json must list pm51stack once")
-if entries[0].get("source") != "plugins/pm51stack":
-    raise SystemExit("marketplace source is not plugins/pm51stack")
-PY
+# Top-level string values are indented two spaces. Nested keys are indented further.
+manifest_string() {
+  awk -v key="$2" '
+    { sub(/\r$/, "") }
+    $0 ~ "^  \"" key "\": \"" {
+      line = $0
+      sub("^  \"" key "\": \"", "", line)
+      sub("\"[[:space:]]*,?[[:space:]]*$", "", line)
+      print line
+      found = 1
+      exit
+    }
+    END { exit !found }
+  ' "$1"
+}
+
+check_marketplace() {
+  awk '
+    function field(line, key,    s) {
+      s = line
+      sub(".*\"" key "\"[[:space:]]*:[[:space:]]*\"", "", s)
+      sub("\".*", "", s)
+      return s
+    }
+    {
+      sub(/\r$/, "")
+      if ($0 ~ /"plugins"[[:space:]]*:[[:space:]]*\[/) in_plugins = 1
+      if (!in_plugins) next
+      if ($0 ~ /\{/) {
+        if (depth == 0) { name = ""; source = "" }
+        depth++
+      }
+      if (depth == 1 && $0 ~ /"name"[[:space:]]*:/) name = field($0, "name")
+      if (depth == 1 && $0 ~ /"source"[[:space:]]*:/) source = field($0, "source")
+      if ($0 ~ /\}/) {
+        depth--
+        if (depth == 0 && name == "pm51stack") {
+          count++
+          found_source = source
+        }
+      }
+    }
+    END {
+      if (count != 1) {
+        print "marketplace.json must list pm51stack once" > "/dev/stderr"
+        exit 1
+      }
+      if (found_source != "plugins/pm51stack") {
+        print "marketplace source is not plugins/pm51stack" > "/dev/stderr"
+        exit 1
+      }
+    }
+  ' "$1"
+}
+
+plugin_json="$plugin/.cursor-plugin/plugin.json"
+name=$(manifest_string "$plugin_json" name) || fail "plugin name is not pm51stack"
+[[ "$name" == pm51stack ]] || fail "plugin name is not pm51stack"
+
+for key in description version license logo; do
+  value=$(manifest_string "$plugin_json" "$key") || fail "plugin.json missing $key"
+  [[ -n "$value" ]] || fail "plugin.json missing $key"
+done
+
+logo=$(manifest_string "$plugin_json" logo) || fail "plugin.json missing logo"
+[[ "$logo" == assets/logo.svg ]] || fail "plugin logo path is not assets/logo.svg"
+
+for field in skills agents rules; do
+  value=$(manifest_string "$plugin_json" "$field") || fail "plugin.json $field must be a relative path"
+  if [[ "$value" == /* || "$value" == *..* ]]; then
+    fail "plugin.json $field must be a relative path"
+  fi
+done
+
+check_marketplace ".cursor-plugin/marketplace.json"
 
 if [[ ! -f "$plugin/assets/logo.svg" ]]; then
   fail "missing $plugin/assets/logo.svg"
@@ -235,6 +289,86 @@ if ! grep -F -q 'project-config.md' "$plugin/skills/pm51-mode/playbooks/ship.md"
 fi
 if ! grep -F -q 'gitlab' "$plugin/skills/pm51-mode/playbooks/ship.md"; then
   fail "ship playbook does not name gitlab"
+fi
+
+models="$plugin/skills/pm51-mode/models.md"
+routing="$plugin/skills/pm51-mode/routing.md"
+mode="$plugin/skills/pm51-mode/SKILL.md"
+setup="$plugin/skills/setup-pm51stack/SKILL.md"
+lead="$plugin/agents/workflow-lead.md"
+[[ -f "$models" ]] || fail "missing $models"
+
+: >"$tmp/roles"
+: >"$tmp/model-skills"
+while IFS= read -r line || [[ -n "$line" ]]; do
+  line=${line%$'\r'}
+  [[ "$line" == \|* ]] || continue
+  rest=${line#|}
+  rest=${rest%|}
+  role=${rest%%|*}
+  role="${role#"${role%%[![:space:]]*}"}"
+  role="${role%"${role##*[![:space:]]}"}"
+  [[ "$role" =~ ^[abcdefghijklmnopqrstuvwxyz]+$ ]] || continue
+  printf '%s\n' "$role" >>"$tmp/roles"
+  skills_cell=${rest#*|}
+  grep -oE '`[a-z0-9]+(-[a-z0-9]+)*`' <<<"$skills_cell" | tr -d '`' >>"$tmp/model-skills" || true
+done <"$models"
+
+if [[ -n "$(sort "$tmp/roles" | uniq -d)" ]]; then
+  fail "models.md repeats a role"
+fi
+if [[ -n "$(sort "$tmp/model-skills" | uniq -d)" ]]; then
+  fail "models.md repeats a skill"
+fi
+
+# Playbook ids named in prose, plus the forge words, are not skills.
+# handoff is both a playbook and a skill, so it stays.
+grep -oE '`[a-z0-9]+(-[a-z0-9]+)*`' "$routing" \
+  | tr -d '`' \
+  | grep -v -x -E 'forge|github|gitlab|feature|refactor|bug|ship' \
+  | sort -u >"$tmp/routed" || true
+sort -u "$tmp/model-skills" >"$tmp/mapped"
+if ! diff -u "$tmp/routed" "$tmp/mapped" >"$tmp/skill-map-diff"; then
+  printf '%s\n' "models.md skills and routing.md skills disagree" >&2
+  cat "$tmp/skill-map-diff" >&2
+  exit 1
+fi
+
+awk '
+  /^```text$/ { capture = 1; next }
+  capture && /^```$/ { exit }
+  capture { sub(/\r$/, ""); print }
+' "$setup" >"$tmp/defaults-block"
+[[ -s "$tmp/defaults-block" ]] || fail "setup skill is missing the role default block"
+
+: >"$tmp/defaults"
+while IFS= read -r line || [[ -n "$line" ]]; do
+  line=${line%$'\r'}
+  if [[ ! "$line" =~ ^([a-z]+):\ [^[:space:]]+$ ]]; then
+    fail "setup role default is not role: value: $line"
+  fi
+  printf '%s\n' "${BASH_REMATCH[1]}" >>"$tmp/defaults"
+done <"$tmp/defaults-block"
+if ! diff -u "$tmp/roles" "$tmp/defaults" >"$tmp/role-diff"; then
+  printf '%s\n' "setup role defaults and models.md roles disagree" >&2
+  cat "$tmp/role-diff" >&2
+  exit 1
+fi
+
+rule='~/.cursor/rules/pm51-models.mdc'
+if ! grep -F -q -- "$rule" "$mode"; then
+  fail "pm51-mode is missing: $rule"
+fi
+if ! grep -F -q -- "$rule" "$setup"; then
+  fail "setup skill is missing: $rule"
+fi
+
+if ! awk '
+  /^---$/ { f++; next }
+  f == 1 && /^model:/ { found = 1 }
+  END { exit (f < 2 || found) }
+' "$lead"; then
+  fail "workflow-lead must leave model unset"
 fi
 
 printf '%s\n' "ok"

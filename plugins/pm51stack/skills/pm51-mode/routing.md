@@ -31,7 +31,7 @@ On `feature`, when a spec and its tickets already exist, read `implement-spec` o
 
 When `implement-spec` is absent, stay on `tdd-workflow` and say `/setup-pm51stack`. Read a skill from the pack table below when that skill is installed.
 
-This router does not assign models. pstack's `how` and `why` stay on the question playbook.
+Model choices are [models.md](models.md) plus `~/.cursor/rules/pm51-models.mdc`. pstack's `how` and `why` stay on the question playbook.
 
 ## Pack skills inside a slice
 

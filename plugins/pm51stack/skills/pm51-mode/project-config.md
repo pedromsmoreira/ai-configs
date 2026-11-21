@@ -1,6 +1,6 @@
 # Project configuration
 
-`.cursor/rules/pm51stack.mdc` is an always-applied Cursor rule. It records two answers: where that project's standards live, and whether the forge is GitHub or GitLab. Cursor loads it on every session in the project, the same way pstack loads `~/.cursor/rules/pstack-models.mdc` for model choices. pstack's file is per user. This file is per project.
+`.cursor/rules/pm51stack.mdc` is an always-applied Cursor rule. It records two answers: where that project's standards live, and whether the forge is GitHub or GitLab. Cursor loads it on every session in the project. Model choices for this workflow live in `~/.cursor/rules/pm51-models.mdc`, which `/setup-pm51stack` writes. That file is per user. This file is per project.
 
 The `rules` line is the standards directory. This rule is the record of the answers. It is not a coding standard. When the standards directory is `.cursor/rules`, skip `pm51stack.mdc` while reading standards.
 
