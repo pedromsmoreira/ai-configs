@@ -87,7 +87,7 @@ The [pm51stack plugin](plugins/pm51stack/README.md) is the controller for a task
 - [ ] Link `plugins/pm51stack` into `~/.cursor/plugins/local/pm51stack` (command in the plugin README)
 - [ ] Run `/setup-pm51stack` and choose user profile or current project
 - [ ] Answer where this project's rules live (`.cursor/rules`, `rules`, or a path you type) and whether the forge is GitHub or GitLab. The answers are written to that project's `.cursor/rules/pm51stack.mdc`
-- [ ] Run `/add-plugin pstack`, then `/setup-pstack` once
+- [ ] Optional: `/add-plugin pstack` when you want how and why answers on a read-only question
 - [ ] Try `/pm51-help` on a real task, then send the `/pm51-mode` prompt it gives you
 
 ## Optional Customizations

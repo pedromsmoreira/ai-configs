@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Setup pm51stack
 
-Install the Matt Pocock skills and the Addy Osmani agent skills for Cursor. Then tell the user how to load pstack and start `/pm51-mode`.
+Install the Matt Pocock skills and the Addy Osmani agent skills for Cursor. Then tell the user to start `/pm51-mode`. pstack is optional, for a read-only question.
 
 The installer is `scripts/install.sh` in this skill's directory. The flags in that script are the list. Add no others. Do not retype the `npx` lines. Do not call an installer outside this skill.
 
@@ -61,8 +61,6 @@ bash scripts/project_config.sh .cursor/rules github /absolute/path/to/the/worksp
 
 Tell the user to do the rest in Cursor:
 
-1. `/add-plugin pstack`
-2. `/setup-pstack` once, to choose models
-3. `/pm51-mode` plus the task
+1. `/pm51-mode` plus the task
 
-pstack is installed only when Cursor reports that the plugin installed. `/pm51-mode` comes from this plugin.
+`/add-plugin pstack` is optional. It supplies `how` and `why` for a read-only question. `/pm51-mode` comes from this plugin. pstack is installed only when Cursor reports that the plugin installed.

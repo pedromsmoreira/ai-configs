@@ -18,8 +18,8 @@ Match the first row that fits. The playbook file is `playbooks/<id>.md` next to 
 | You are about to publish, and `docs/agents/issue-tracker.md` is missing | [specify](playbooks/specify.md) | `setup-matt-pocock-skills` |
 | Something is broken, throwing, failing, or slow right now | [bug](playbooks/bug.md) | `diagnosing-bugs` |
 | Add or repair logs, metrics, traces, or alerts | [signal](playbooks/signal.md) | `observability-and-instrumentation` |
-| New behavior, and nothing is currently broken or waiting on a signal | [feature](playbooks/feature.md) | `poteto-mode` when pstack is installed. `tdd-workflow` when pstack is absent. |
-| Behavior-preserving structure change | [refactor](playbooks/refactor.md) | `poteto-mode` when pstack is installed. `tdd-workflow` when pstack is absent. |
+| New behavior, and nothing is currently broken or waiting on a signal | [feature](playbooks/feature.md) | `implement-spec` when a spec and its tickets already exist. `tdd-workflow` otherwise. |
+| Behavior-preserving structure change | [refactor](playbooks/refactor.md) | `tdd-workflow` |
 | Judge the diff since a commit, branch, tag, or merge-base | [review](playbooks/review.md) | `code-review` |
 | Write the change request, commit, or prepare a deploy, rollout, or rollback. A pull request when `forge` is `github`, a merge request when `forge` is `gitlab` | [ship](playbooks/ship.md) | `pr` when `forge` is `github`. The forge section of [project-config.md](project-config.md) when `forge` is `gitlab` |
 | A person must click a dashboard, paste a secret, or run a cutover | [ship](playbooks/ship.md) | `wizard` |
@@ -27,11 +27,11 @@ Match the first row that fits. The playbook file is `playbooks/<id>.md` next to 
 
 ## Build handoff
 
-On `feature`, `refactor`, and `bug`, the build is `poteto-mode` when pstack is installed, and `tdd-workflow` when pstack is absent. Feature and refactor follow pstack's feature or refactoring playbook. Bug follows pstack's bug-fix playbook. The observable check from this mode is the proof the playbook produces.
+On `feature`, when a spec and its tickets already exist, read `implement-spec` once. When it tells an implementer to call `tdd`, read `tdd`. That skill owns the tests. The observable check from this mode is the proof. `refactor` and `bug` stay on `tdd-workflow`. `bug` still starts at `diagnosing-bugs`.
 
-`/setup-pstack` is the model choice. Run it once before the first rigorous build. This router does not assign models.
+When `implement-spec` is absent, stay on `tdd-workflow` and say `/setup-pm51stack`. Read a skill from the pack table below when that skill is installed.
 
-When pstack is absent, stay on `tdd-workflow`. Read a skill from the pack table below when that skill is installed.
+This router does not assign models. pstack's `how` and `why` stay on the question playbook.
 
 ## Pack skills inside a slice
 

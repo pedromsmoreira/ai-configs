@@ -97,6 +97,8 @@ run_add mattpocock/skills \
   --skill handoff \
   --skill to-spec \
   --skill to-tickets \
+  --skill implement-spec \
+  --skill tdd \
   --skill wayfinder \
   --skill research \
   --skill prototype \
@@ -112,4 +114,4 @@ if [[ "$scope" == user ]]; then
 else
   echo "Installed into the current project: ${PWD}"
 fi
-echo "pstack is a Cursor plugin. In Cursor, run: /add-plugin pstack"
+echo "pstack is optional. In Cursor, /add-plugin pstack supplies how and why for a read-only question."

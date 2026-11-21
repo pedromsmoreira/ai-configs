@@ -18,5 +18,5 @@ Answer the routing question and stop. Do not edit the project, do not run the pl
 /pm51-mode <their task, in their words, plus the check they named>
 ```
 
-4. When pstack or `/setup-pm51stack` is required for that row and you can see it is missing, say the install command in the same reply. The install commands are `/setup-pm51stack`, `/add-plugin pstack`, and `/setup-pstack`.
+4. When the row names a Matt Pocock or Addy Osmani skill and that skill is missing, say `/setup-pm51stack`. When the row names `how` or `why` and pstack is missing, say `/add-plugin pstack`.
 5. Stop.

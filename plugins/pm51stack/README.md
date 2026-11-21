@@ -6,19 +6,18 @@ The workflow is a controller, not a fourth copy of someone else's skills.
 
 | Source | Job in this workflow |
 | --- | --- |
-| [Matt Pocock's skills](https://github.com/mattpocock/skills) | Frame the decision, write the spec, split tracer-bullet slices, diagnose, review, hand off |
+| [Matt Pocock's skills](https://github.com/mattpocock/skills) | Frame the decision, write the spec, split tracer-bullet slices, build that ticket graph, diagnose, review, hand off |
 | [Addy Osmani's agent skills](https://github.com/addyosmani/agent-skills) | Hold the bar on security, observability, and launch |
-| [pstack](https://github.com/cursor/plugins/tree/main/pstack) | Build a slice rigorously once it has an observable check, and choose models |
+| [pstack](https://github.com/cursor/plugins/tree/main/pstack) | Optional `how` and `why` answers on the question playbook |
 | This pack | Go, React, HTTP, migrations, tests, and git |
 
-`/setup-pm51stack` installs the Matt Pocock and Addy Osmani skills this router knows how to call. Their text stays in those repositories. pstack stays a separate plugin. `/setup-pstack` chooses models. This plugin does not.
+`/setup-pm51stack` installs the Matt Pocock and Addy Osmani skills this router knows how to call. Their text stays in those repositories. pstack stays a separate plugin for those two question skills. This plugin does not choose models.
 
 ## Use it
 
 1. Load this plugin (below).
 2. Run `/setup-pm51stack` and choose **user profile** or **current project** for the skills. Then answer where this project's rules live, and whether the forge is **GitHub** or **GitLab**. The answers are written to `.cursor/rules/pm51stack.mdc` in that project. A user-profile skill install does not copy those answers into every project. It asks you. The git remote is not an answer.
-3. Run `/add-plugin pstack`, then `/setup-pstack` once.
-4. Start the task with `/pm51-mode` and the outcome you want, including how you will know it worked.
+3. Start the task with `/pm51-mode` and the outcome you want, including how you will know it worked. `/add-plugin pstack` is optional, for how a subsystem works and why it was built that way.
 
 ```text
 /pm51-mode the export writes duplicate rows when a retry lands mid-run. repro first, then fix and verify.
@@ -30,7 +29,7 @@ The workflow is a controller, not a fourth copy of someone else's skills.
 
 ## What `/pm51-mode` does
 
-It reads [skills/pm51-mode/routing.md](skills/pm51-mode/routing.md), opens one playbook, and copies that playbook's steps into the todo list before any edit. The shape comes from pstack: one controller, a playbook, and a check on the real surface. The phase order comes from Addy Osmani's define, plan, build, verify, review, and ship. The installed Addy Osmani skills are security, observability, and launch. Define and plan call the Matt Pocock skills. Build and verify call pstack when it is installed, and `tdd-workflow` when it is absent.
+It reads [skills/pm51-mode/routing.md](skills/pm51-mode/routing.md), opens one playbook, and copies that playbook's steps into the todo list before any edit. One controller, a playbook, and a check on the real surface. The phase order comes from Addy Osmani's define, plan, build, verify, review, and ship. The installed Addy Osmani skills are security, observability, and launch. Define and plan call the Matt Pocock skills. A spec that already has tickets is built with `implement-spec`. Other builds use this pack.
 
 | Playbook | When |
 | --- | --- |
@@ -47,7 +46,7 @@ It reads [skills/pm51-mode/routing.md](skills/pm51-mode/routing.md), opens one p
 
 A current failure takes `bug`. An open product decision takes `frame`. Work that crosses more than one module without a spec takes `specify` before `feature`.
 
-`feature`, `refactor`, and `bug` hand the build to pstack's `/poteto-mode` when that plugin is installed. The check named in this mode is the proof pstack has to produce. Without pstack, the build is this pack's `tdd-workflow`. One of those two runs.
+On `feature`, a spec that already has tickets is built with `implement-spec`, which calls `tdd` for each ticket. `refactor` and `bug` stay on this pack's `tdd-workflow`. When `implement-spec` is not installed, the build is `tdd-workflow`. The check named in this mode is the proof.
 
 ## Load the plugin locally
 

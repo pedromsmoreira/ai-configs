@@ -104,20 +104,31 @@ if (( bug_line > feature_line || signal_line > feature_line )); then
   fail "bug and signal must be matched before feature"
 fi
 
-build_cell='`poteto-mode` when pstack is installed. `tdd-workflow` when pstack is absent.'
-for id in feature refactor; do
-  row=$(grep "playbooks/${id}.md" "$plugin/skills/pm51-mode/routing.md" | head -1)
-  if ! grep -F -q -- "$build_cell" <<<"$row"; then
-    fail "$id row must name poteto-mode when pstack is installed and tdd-workflow when it is absent"
-  fi
-  play="$plugin/skills/pm51-mode/playbooks/${id}.md"
-  if ! grep -F -q 'When pstack is installed, read `poteto-mode`' "$play"; then
-    fail "$id playbook does not build with poteto-mode when pstack is installed"
-  fi
-  if ! grep -F -q 'When pstack is absent, read `tdd-workflow`' "$play"; then
-    fail "$id playbook does not build with tdd-workflow when pstack is absent"
-  fi
-done
+feature_row=$(grep 'playbooks/feature.md' "$plugin/skills/pm51-mode/routing.md" | head -1)
+if ! grep -F -q -- '`implement-spec` when a spec and its tickets already exist. `tdd-workflow` otherwise.' <<<"$feature_row"; then
+  fail "feature row must name implement-spec when a spec and tickets exist, and tdd-workflow otherwise"
+fi
+feature_play="$plugin/skills/pm51-mode/playbooks/feature.md"
+if ! grep -F -q 'read `implement-spec`' "$feature_play"; then
+  fail "feature playbook does not build with implement-spec"
+fi
+if ! grep -F -q 'read `tdd-workflow`' "$feature_play"; then
+  fail "feature playbook does not fall back to tdd-workflow"
+fi
+refactor_row=$(grep 'playbooks/refactor.md' "$plugin/skills/pm51-mode/routing.md" | head -1)
+if ! grep -F -q -- '`tdd-workflow`' <<<"$refactor_row"; then
+  fail "refactor row must name tdd-workflow"
+fi
+if grep -F -q 'poteto-mode' <<<"$refactor_row"; then
+  fail "refactor row names poteto-mode"
+fi
+refactor_play="$plugin/skills/pm51-mode/playbooks/refactor.md"
+if ! grep -F -q 'Read `tdd-workflow`' "$refactor_play"; then
+  fail "refactor playbook does not build with tdd-workflow"
+fi
+if grep -F -q 'poteto-mode' "$refactor_play"; then
+  fail "refactor playbook names poteto-mode"
+fi
 
 install="$plugin/skills/setup-pm51stack/scripts/install.sh"
 graph="$plugin/skills/setup-pm51stack/decision-graph.md"
