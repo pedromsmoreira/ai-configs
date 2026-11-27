@@ -37,4 +37,4 @@ For full Cursor conventions after install, use the other **`.mdc` files in `rule
 
 ## Using this file elsewhere
 
-Copy or symlink `AGENTS.md` into another repository’s root so assistants pick up the same baseline. For Cursor-only depth (rules, skills, agents), copy **`agents/`**, **`rules/`**, and **`skills/`** from this pack into that repo’s `.cursor/` folder.
+Copy or symlink `AGENTS.md` into another repository’s root so assistants pick up the same baseline. For Cursor-only depth (rules, skills, agents), copy **`agents/`**, **`rules/`**, and **`skills/`** from this pack into that repo’s `.cursor/` folder. The development workflow is the **`pm51stack`** plugin under `plugins/pm51stack` (see that directory’s README).

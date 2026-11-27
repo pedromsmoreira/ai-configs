@@ -4,9 +4,9 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: install.sh [user|project]" >&2
-  echo "  user     user profile" >&2
-  echo "  project  current project" >&2
+  echo "Usage: install.sh <user|project> [project-root]" >&2
+  echo "  user     user profile. Skills load in every project." >&2
+  echo "  project  current project. project-root is required." >&2
 }
 
 choose_scope() {
@@ -29,6 +29,7 @@ choose_scope() {
 }
 
 scope="${1:-}"
+project_root="${2:-}"
 if [[ -z "$scope" ]]; then
   if [[ -t 0 ]]; then
     scope=$(choose_scope)
@@ -62,6 +63,19 @@ if (( major < 22 )) || { (( major == 22 )) && (( minor < 20 )); }; then
   exit 1
 fi
 
+if [[ "$scope" == project && -z "$project_root" && -t 0 ]]; then
+  printf "Workspace root: " >/dev/tty
+  read -r project_root </dev/tty
+fi
+
+if [[ "$scope" == project ]]; then
+  if [[ -z "$project_root" || ! -d "$project_root" ]]; then
+    echo "setup-pm51stack: project install needs the workspace root." >&2
+    exit 2
+  fi
+  cd "$project_root"
+fi
+
 run_add() {
   local repo="$1"
   shift
@@ -83,6 +97,8 @@ run_add mattpocock/skills \
   --skill handoff \
   --skill to-spec \
   --skill to-tickets \
+  --skill implement-spec \
+  --skill tdd \
   --skill wayfinder \
   --skill research \
   --skill prototype \
@@ -96,6 +112,6 @@ run_add addyosmani/agent-skills \
 if [[ "$scope" == user ]]; then
   echo "Installed into the user profile."
 else
-  echo "Installed into the current project."
+  echo "Installed into the current project: ${PWD}"
 fi
-echo "pstack is a Cursor plugin. In Cursor, run: /add-plugin pstack"
+echo "pstack is optional. In Cursor, /add-plugin pstack supplies how and why for a read-only question."

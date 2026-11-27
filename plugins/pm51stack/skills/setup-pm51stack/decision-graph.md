@@ -1,6 +1,8 @@
 # When to use a pm51stack skill
 
-The walk below is the decision graph for the 16 skills `setup-pm51stack` installs, plus the setup skill itself. Use the table to look up a skill. Use the chart to pick one from the job in front of you.
+The walk below is the decision graph for the 18 skills `setup-pm51stack` installs, plus the setup skill itself. Use the table to look up a skill. Use the chart to pick one from the job in front of you.
+
+To run the graph, use `/pm51-mode` from the pm51stack plugin. The playbook for each job is [routing.md](../pm51-mode/routing.md).
 
 | Skill | Who invokes it | Use it when |
 | --- | --- | --- |
@@ -11,6 +13,8 @@ The walk below is the decision graph for the 16 skills `setup-pm51stack` install
 | `domain-modeling` | You or the agent | Sharpen terms, edit `GLOSSARY.md`, or record an ADR |
 | `to-spec` | You type it | The conversation is settled and you want it published as a spec, with no further interview |
 | `to-tickets` | You type it | Break a plan or spec into tracer-bullet tickets that name what blocks them |
+| `implement-spec` | You or the agent | A spec and its tickets are ready, and the feature playbook is building them |
+| `tdd` | The `implement-spec` skill | An implementer is building one ticket test-first |
 | `research` | You or the agent | You need a cited fact from primary sources outside this working tree |
 | `prototype` | You or the agent | A throwaway check of logic, state, or UI will answer the question |
 | `diagnosing-bugs` | You or the agent | Something is broken, throwing, failing, or slow right now |
@@ -52,7 +56,10 @@ flowchart TD
   settled -->|One spec| toSpec[to-spec]
   settled -->|Build tickets| toTickets[to-tickets]
   toSpec -.-> toTickets
+  toTickets -.-> implementSpec[implement-spec]
+  implementSpec -.-> tddSkill[tdd]
 
+  code -->|A spec and its tickets are ready| implementSpec
   code -->|Broken or slow right now| diagnosing[diagnosing-bugs]
   code -->|Logs, metrics, traces, or alerts| observability[observability-and-instrumentation]
   code -->|Deploy, rollout, or rollback| shipping[shipping-and-launch]

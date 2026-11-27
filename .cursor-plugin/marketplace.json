@@ -1,0 +1,19 @@
+{
+  "name": "ai-configs",
+  "owner": {
+    "name": "Pedro Moreira"
+  },
+  "metadata": {
+    "description": "Cursor plugins from the ai-configs pack. pm51stack is the development workflow."
+  },
+  "plugins": [
+    {
+      "name": "pm51stack",
+      "source": "plugins/pm51stack",
+      "description": "Development workflow that routes a task to Matt Pocock skills, Addy Osmani skills, pstack, and the Go, React, testing, and git skills in this pack.",
+      "category": "developer-tools",
+      "keywords": ["workflow", "pm51stack", "planning", "tdd", "review"],
+      "tags": ["workflow", "planning", "review"]
+    }
+  ]
+}

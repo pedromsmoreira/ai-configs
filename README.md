@@ -17,7 +17,9 @@ Clone this repository into whatever parent directory you use for tooling (for ex
 
 **Cursor** expects `agents`, `rules`, and `skills` under each workspace’s **`.cursor/`** folder. Copy or symlink this repo’s three directories into `your-app/.cursor/` (see the configuration guide). Other tools can rely on **`AGENTS.md`** alone or mirror sections into `CLAUDE.md` / Copilot instructions as you prefer.
 
-There is no git submodule flow. Copying `skills/` gives you the Go, React, testing, and git skills in this pack. To install Matt Pocock skills and Addy Osmani skills, run `bash skills/setup-pm51stack/scripts/install.sh` on a machine with Node.js 22.20 or later. The script asks whether to install into the user profile or the current project. In Cursor, `/setup-pm51stack` asks the same question, runs that script, and then tells you to install pstack with `/add-plugin pstack`.
+There is no git submodule flow. Copying `skills/` gives you the Go, React, testing, and git skills in this pack. To install Matt Pocock skills and Addy Osmani skills, run `bash plugins/pm51stack/skills/setup-pm51stack/scripts/install.sh` on a machine with Node.js 22.20 or later. The script asks whether to install into the user profile or the current project. A project install takes the workspace root as its second argument. In Cursor, `/setup-pm51stack` asks the same question and runs that script. `/add-plugin pstack` is optional, for a read-only question about how something works or why it was built that way.
+
+The development workflow itself is the [`pm51stack`](plugins/pm51stack/README.md) Cursor plugin. `/pm51-mode` picks one phase and the skill that owns it. Link the plugin, run `/setup-pm51stack`, then start a task with `/pm51-mode`.
 
 ## Quick install (Cursor project)
 

@@ -112,7 +112,7 @@ Skills provide step-by-step implementation guidance. **Use skills when** impleme
 - **`rest-api-design`**. REST and HTTP endpoint design. URLs, methods, and status codes.
 - **`testing`**. Unit, integration, and end-to-end tests.
 - **`tdd-workflow`**. The red, green, refactor cycle, with examples.
-- Planning, debugging, review, and launch skills are not in this pack. `setup-pm51stack` installs them. See `../skills/setup-pm51stack/decision-graph.md`.
+- Planning, debugging, review, and launch skills are not in this pack. `/setup-pm51stack` installs them. See `../plugins/pm51stack/skills/setup-pm51stack/decision-graph.md`.
 
 ### Reference Documentation
 
